@@ -61,6 +61,8 @@ LDLIBS := -lpthread
 SRC := main.c
 SRC += server.c
 SRC += cgr101.c
+SRC += scpi.tab.c
+SRC += scpi.c
 
 OBJ := $(SRC:%.c=%.o)
 DEP := $(SRC:%.c=%.d)
@@ -72,7 +74,8 @@ all: $(NAME)
 $(NAME): $(OBJ)
 	$(CC) $(LDFLAGS) -o $@ $(OBJ) $(LDLIBS)
 
-u3cal: u3cal.c
+scpi.tab.c: scpi.y
+	bison $<
 
 check: compile_commands.json
 	-$(CODECHECKER) analyze $< $(CODECHECKER_ARGS)
@@ -82,7 +85,7 @@ compile_commands.json:
 	$(BEAR) $(MAKE)
 
 clean:
-	-rm -rf $(OBJ) $(DEP) $(NAME) u3cal \
+	-rm -rf $(OBJ) $(DEP) $(NAME) scpi.tab.c \
 		compile_commands.json $(CODECHECKER_OUT)
 
 -include $(DEP)
