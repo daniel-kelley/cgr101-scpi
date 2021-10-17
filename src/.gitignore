@@ -1,0 +1,6 @@
+*.o
+*.d
+scanner.c
+scanner.h
+scpi.tab.c
+scpi.tab.h
