@@ -1,5 +1,5 @@
 /*
-   scpi.c
+   scpi_core.c
 
    Copyright (c) 2021 by Daniel Kelley
 

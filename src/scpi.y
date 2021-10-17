@@ -99,9 +99,37 @@ cmd
     | dev-cmd
     ;
 
+/*
+ * IEEE 488.2 elements
+ *
+ * PROGRAM_DATA
+ *    7.7.1.2 CHARACTER (IDENT: [A-Za-z]+[A-Za-z0-9_]*)
+ *    7.7.2.2 DECIMAL_NUMERIC
+ *            MANTISSA|MANTISSA[ ]*EXPONENT
+ *              MANTISSA [+-]*([0-9]+ | [0-9]*\.[0-9]+)
+ *              EXPONENT [Ee][ ]*[+-]*[0-9]+
+ *    7.7.3.2 SUFFIX (ignore for now)
+ *    7.7.4.2 NONDECIMAL_NUMERIC
+ *              #[Hh][A-Fa-f0-9]+
+ *              #[Qq][0-7]+
+ *              #[Bb][0-1]+
+ *
+ *    7.7.5.2 STRING
+ *              '[^']|('')'
+ *              "[^"]|("")"
+ *    7.7.6.2 ARBITRARY_BLOCK (#0 disallowed by SCPI)
+ *              #[0-9]+<byte>+
+ *    7.7.7.2 EXPRESSION (ignore for now)
+ */
+
+
 sys-cmd
+    /* COMMAND_PROGRAM_HEADER */
     : CLS
-    | ESE
+    { /*scpi_common_cls();*/ }
+/* COMMAND PROGRAM HEADER ROGRAM HEADER SEPARATOR */
+    | ESE NUM
+    { /*scpi_common_cls();*/ }
     | ESEQ
     | ESRQ
     | IDNQ

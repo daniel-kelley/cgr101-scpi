@@ -62,7 +62,8 @@ SRC := main.c
 SRC += server.c
 SRC += cgr101.c
 SRC += scpi.tab.c
-SRC += scpi.c
+SRC += scpi_core.c
+SRC += scanner.c
 
 OBJ := $(SRC:%.c=%.o)
 DEP := $(SRC:%.c=%.d)
@@ -75,7 +76,10 @@ $(NAME): $(OBJ)
 	$(CC) $(LDFLAGS) -o $@ $(OBJ) $(LDLIBS)
 
 scpi.tab.c: scpi.y
-	bison $<
+	bison -d $<
+
+scanner.c: scanner.l
+	flex $<
 
 check: compile_commands.json
 	-$(CODECHECKER) analyze $< $(CODECHECKER_ARGS)
@@ -85,7 +89,9 @@ compile_commands.json:
 	$(BEAR) $(MAKE)
 
 clean:
-	-rm -rf $(OBJ) $(DEP) $(NAME) scpi.tab.c \
+	-rm -rf $(OBJ) $(DEP) $(NAME) \
+		scanner.c scanner.h \
+		scpi.tab.c scpi.tab.h \
 		compile_commands.json $(CODECHECKER_OUT)
 
 -include $(DEP)
