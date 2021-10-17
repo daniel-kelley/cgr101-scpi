@@ -8,9 +8,12 @@
 #ifndef   PARSER_H_
 #define   PARSER_H_
 
-#include "scpi.tab.h"
+#include "info.h"
 
-#define YYSTYPE SCPI_YYSTYPE
-#define YYLTYPE SCPI_YYLTYPE
+extern void parser_input(
+    struct info *info,
+    char *buf,
+    int result,
+    int max_size);
 
 #endif /* PARSER_H_ */

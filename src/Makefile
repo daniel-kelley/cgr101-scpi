@@ -64,6 +64,7 @@ SRC += cgr101.c
 SRC += scpi.tab.c
 SRC += scpi_core.c
 SRC += scanner.c
+SRC += parser.c
 
 OBJ := $(SRC:%.c=%.o)
 DEP := $(SRC:%.c=%.d)

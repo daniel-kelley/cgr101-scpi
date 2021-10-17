@@ -12,11 +12,13 @@
 
 %token IDENT
 %token NUM
-%token LPAREN  "("
-%token RPAREN  ")"
-%token COMMA   ","
-%token SEMIS   ";"
-%token COLON   ":"
+%token LPAREN
+%token RPAREN
+%token COMMA
+%token SEMIS
+%token COLON
+%token DASH
+%token AT
 
 %token ABOR
 %token CAL
@@ -60,10 +62,11 @@
 %token STAT
 %token STBQ
 %token SYST
-%token TCPI
+%token TCP
 %token TSTQ
 %token VERSQ
 %token WAI
+%token OTHER
 
 %start top
 
@@ -162,7 +165,7 @@ dev-cmd
     | READ COLON DIG COLON DATQ
     | FETC COLON DIG COLON DATQ
     | INIT
-    | SYST COLON COMM COLON TCPI COLON CONTQ
+    | SYST COLON COMM COLON TCP COLON CONTQ
     | SYST COLON INT COLON QUIT
     | SYST COLON INT COLON CAL
     | SYST COLON INT COLON CONF
