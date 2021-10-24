@@ -14,3 +14,7 @@ void yyerror(void *loc, struct info *info, const char *s)
     (void)s;
 }
 
+void scpi_common_cls(struct info *info)
+{
+    (void)info;
+}

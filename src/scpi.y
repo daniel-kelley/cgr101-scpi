@@ -92,10 +92,25 @@ top
 
 
 cmd-list
-    : cmd
-    | cmd-list SEMIS cmd
+    : cmd-path
+    | cmd-list SEMIS cmd-path
     ;
 
+
+cmd-path
+    : cmd-first
+    | cmd-first cmd-rest
+    ;
+
+cmd-first
+    : cmd
+    | COLON
+    ;
+
+cmd-rest
+    : cmd
+    | cmd-rest COLON cmd
+    ;
 
 cmd
     : sys-cmd
@@ -127,23 +142,59 @@ cmd
 
 
 sys-cmd
-    /* COMMAND_PROGRAM_HEADER */
+    /* 488.2 10.3 */
     : CLS
-    { /*scpi_common_cls();*/ }
-/* COMMAND PROGRAM HEADER ROGRAM HEADER SEPARATOR */
+    { scpi_common_cls(info); }
+
+    /* 488.2 10.10 */
     | ESE NUM
-    { /*scpi_common_cls();*/ }
+    { /*scpi_common_ese($2);*/ }
+
+    /* 488.2 10.11 */
     | ESEQ
+    { /*scpi_common_eseq();*/ }
+
+    /* 488.2 10.11 */
     | ESRQ
+    { /*scpi_common_esrq();*/ }
+
+    /* 488.2 10.14 */
     | IDNQ
+    { /*scpi_common_idnq();*/ }
+
+    /* 488.2 10.18 */
     | OPC
+    { /*scpi_common_opc();*/ }
+
+    /* 488.2 10.19 */
     | OPCQ
+    { /*scpi_common_opcq();*/ }
+
+    /* 488.2 10.32 */
     | RST
-    | SRE
+    { /*scpi_common_rst();*/ }
+
+    /* 488.2 10.34 */
+    | SRE NUM
+    { /*scpi_common_sre($2);*/ }
+
+
+    /* 488.2 10.35 */
     | SREQ
+    { /*scpi_common_sreq($2);*/ }
+
+    /* 488.2 10.36 */
     | STBQ
+    { /*scpi_common_stbq($2);*/ }
+
+    /* 488.2 10.38 */
     | TSTQ
+    { /*scpi_common_tstq($2);*/ }
+
+    /* 488.2 10.39 */
     | WAI
+    { /*scpi_common_wai($2);*/ }
+
     | SYST COLON ERRQ
     | SYST COLON ERR COLON NEXTQ
     | SYST COLON ERR COLON COUNQ

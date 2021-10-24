@@ -11,5 +11,6 @@
 #include "info.h"
 
 extern void yyerror(void *loc, struct info *info, const char *s);
+extern void scpi_common_cls(struct info *info);
 
 #endif /* SCPI_H_ */
