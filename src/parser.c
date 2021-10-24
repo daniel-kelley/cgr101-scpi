@@ -57,7 +57,7 @@ int parser_init(struct info *info)
     return rv;
 }
 
-int parser_fini(struct info *info)
+int parser_done(struct info *info)
 {
     if (info->lexer) {
         yylex_destroy(&info->lexer->scanner);
@@ -73,7 +73,17 @@ int parser_fini(struct info *info)
 }
 
 /* line modified in place, needs *two* NULs at end; len reflects this */
-int parser_read(struct info *info, char *line, size_t len)
+/*
+ * Lexer/Parser feedback: to accommodate 488.2 7.6.1.5 Header
+ * Compounding, the lexer needs to keep track of leading program
+ * mnemonics and command separators. The idea is that if there is a
+ * program mnemonic IDENT immediately after a command separator, then
+ * the 'header-path' tokens (supplied by the parser) are passed back
+ * via the lexer before supplying the program mnemonic that triggered
+ * the header-path injection. The intial command, and any 'absolute'
+ * commands that start with ':' reset the header-path.
+ */
+int parser_send(struct info *info, char *line, size_t len)
 {
     YY_BUFFER_STATE bs;
     int status;

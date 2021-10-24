@@ -25,6 +25,7 @@
 #include <signal.h>
 
 /* CGR-101 stuff here... */
+#include "parser.h"
 #include "server.h"
 
 /* bitwise flags */
@@ -282,7 +283,7 @@ static int server_cli(struct info *info)
     rc = (int)read(info->cli_in_fd, info->cli_buf, sizeof(info->cli_buf));
     if (rc < 0) {
         if (errno != EWOULDBLOCK) {
-            perror("  read() failed");
+            perror("read() failed");
         }
     } else if (rc == 0) {
         /* Get the next conf file, if any. */
@@ -292,10 +293,7 @@ static int server_cli(struct info *info)
             }
         }
     } else {
-        /* FIXME */
-#if 0
-        SCPI_Input(&scpi_context, info->cli_buf, rc);
-#endif
+        parser_send(info, info->cli_buf, sizeof(info->cli_buf));
     }
 
     return rc;
@@ -314,10 +312,8 @@ int server_run(struct info *info)
     if (!info->no_trap) {
         server_trap(info);
     }
-    /* FIXME */
-#if 0
-    scpi_ctl_init(info);
-#endif
+
+    parser_init(info);
     server_init(info);
     while (!server_quit(info)) {
         rc = server_select(info);
@@ -325,10 +321,7 @@ int server_run(struct info *info)
             perror("  recv() failed");
             break;
         } else if (rc == 0) { /* timeout */
-    /* FIXME */
-#if 0
-            SCPI_Input(&scpi_context, NULL, 0);
-#endif
+            /* What goes here? Anything? */
         } else {
             if (rc & SERVER_ACCEPT) {
                 server_accept(info);
@@ -339,6 +332,7 @@ int server_run(struct info *info)
         }
     }
     server_done(info);
+    parser_done(info);
 
     return (rc < 0);
 }
