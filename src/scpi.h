@@ -8,6 +8,8 @@
 #ifndef   SCPI_H_
 #define   SCPI_H_
 
-extern void yyerror(void *loc, const char *s); //FIXME
+#include "info.h"
+
+extern void yyerror(void *loc, struct info *info, const char *s);
 
 #endif /* SCPI_H_ */

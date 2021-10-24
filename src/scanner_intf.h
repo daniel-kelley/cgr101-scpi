@@ -8,8 +8,8 @@
 #ifndef   SCANNER_INTF_H_
 #define   SCANNER_INTF_H_
 
-#include "scpi.tab.h"
 #include "parser.h"
+#include "scpi.tab.h"
 
 #define YY_EXTRA_TYPE struct info *
 #define YY_INPUT(buf,result,max_size) \

@@ -96,7 +96,7 @@ int parser_send(struct info *info, char *line, size_t len)
 
     do {
         c = yylex(&yys, &yyl, scanner);
-        status = yypush_parse(info->parser->ps, c, &yys, &yyl);
+        status = yypush_parse(info->parser->ps, c, &yys, &yyl, info);
     } while (status == YYPUSH_MORE);
 
     yy_delete_buffer(bs, scanner);

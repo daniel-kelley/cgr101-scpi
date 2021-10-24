@@ -78,6 +78,7 @@
 %define parse.trace
 %define parse.error detailed
 %define parse.lac full
+%param {struct info *info}
 
 %{
     #include "scpi.h"
