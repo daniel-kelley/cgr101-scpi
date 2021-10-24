@@ -9,7 +9,6 @@
 %option case-insensitive
 %option stack
 %option noyywrap
-%option prefix="scanner"
 %option fast
 %option debug
 /*%option perf-report*/

@@ -16,7 +16,7 @@ DEBUG += -fsanitize=$(SANITIZE)
 endif
 
 
-INC := -I/usr/local/include
+INC :=
 CPPFLAGS := $(INC) -MMD
 
 BEAR ?= bear

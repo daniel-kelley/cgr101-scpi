@@ -11,8 +11,6 @@
 #include "scpi.tab.h"
 #include "parser.h"
 
-#define YYSTYPE SCPI_YYSTYPE
-#define YYLTYPE SCPI_YYLTYPE
 #define YY_EXTRA_TYPE struct info *
 #define YY_INPUT(buf,result,max_size) \
     parser_input(yyextra, buf, result, max_size)

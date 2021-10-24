@@ -74,7 +74,6 @@
 
 %define api.pure full
 %define api.push-pull push
-%define api.prefix {scpi_yy}
 %define parse.assert
 %define parse.trace
 %define parse.error detailed

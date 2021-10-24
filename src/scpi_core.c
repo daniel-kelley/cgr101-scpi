@@ -7,7 +7,7 @@
 
 #include "scpi.h"
 
-void scpi_yyerror(void *loc, const char *s)
+void yyerror(void *loc, const char *s)
 {
     (void)loc;
     (void)s;

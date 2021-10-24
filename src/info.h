@@ -24,6 +24,8 @@ struct info {
     char cli_buf[INFO_CLI_LEN];
     const char *conf_rsp;
     void *hdl;
+    struct lexer *lexer;
+    struct parser *parser;
     /* others..., like command queue */
 };
 

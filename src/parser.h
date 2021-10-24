@@ -16,4 +16,8 @@ extern void parser_input(
     int result,
     int max_size);
 
+extern int parser_init(struct info *info);
+extern int parser_fini(struct info *info);
+extern int parser_read(struct info *info, char *line, size_t len);
+
 #endif /* PARSER_H_ */
