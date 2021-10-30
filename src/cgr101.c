@@ -9,11 +9,11 @@
 
 int cgr101_open(struct info *)
 {
-    return -1;
+    return 0;
 }
 
 int cgr101_close(struct info *)
 {
-    return -1;
+    return 0;
 }
 

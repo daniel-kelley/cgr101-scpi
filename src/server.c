@@ -293,7 +293,7 @@ static int server_cli(struct info *info)
             }
         }
     } else {
-        parser_send(info, info->cli_buf, sizeof(info->cli_buf));
+        rc = parser_send(info, info->cli_buf, sizeof(info->cli_buf));
     }
 
     return rc;
@@ -304,17 +304,10 @@ static int server_quit(const struct info *info)
     return (server_exit || info->quit);
 }
 
-
-int server_run(struct info *info)
+static int server_loop(struct info *info)
 {
     int rc = 1;
 
-    if (!info->no_trap) {
-        server_trap(info);
-    }
-
-    parser_init(info);
-    server_init(info);
     while (!server_quit(info)) {
         rc = server_select(info);
         if (rc < 0) { /* failed */
@@ -327,10 +320,35 @@ int server_run(struct info *info)
                 server_accept(info);
             }
             if (rc & SERVER_CLI) {
-                server_cli(info);
+                if (server_cli(info)) {
+                    rc = 1;
+                    break;
+                }
             }
         }
     }
+
+    return (rc < 0);
+}
+
+int server_run(struct info *info)
+{
+    int rc = 1;
+
+    if (!info->no_trap) {
+        server_trap(info);
+    }
+
+    do {
+        if (parser_init(info)) {
+            break;
+        }
+        if (server_init(info)) {
+            break;
+        }
+        rc = server_loop(info);
+    } while (0);
+
     server_done(info);
     parser_done(info);
 

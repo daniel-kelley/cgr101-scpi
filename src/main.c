@@ -28,6 +28,7 @@ static void usage(const char *prog)
     fprintf(stderr,"  -p        server port (default %d)\n", SCPI_PORT);
     fprintf(stderr,"  -v        Verbose mode\n");
     fprintf(stderr,"  -c        Configuration file\n");
+    fprintf(stderr,"  -D[flag]  Debug flags\n");
 }
 
 /*
@@ -40,7 +41,7 @@ int main(int argc, char *argv[])
 
     info.port = SCPI_PORT;
     info.bus = -1;
-    while ((c = getopt(argc, argv, "b:c:d:p:r:vxh")) != EOF) {
+    while ((c = getopt(argc, argv, "b:c:d:p:r:D:vxh")) != EOF) {
         switch (c) {
         case 'b':
             info.bus = (int)strtol(optarg, NULL, 0);
@@ -65,6 +66,9 @@ int main(int argc, char *argv[])
             break;
         case 'x':
             info.no_trap = 1;
+            break;
+        case 'D':
+            info.debug = optarg;
             break;
         case 'h':
             usage(argv[0]);

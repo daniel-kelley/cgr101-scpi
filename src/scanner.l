@@ -75,6 +75,7 @@ SHOW\?                  { return SHOWQ; }
 :                       { return COLON; }
 -                       { return DASH; }
 @                       { return AT; }
-[:digit:]+              { return NUM; }
-[:alpha:]+[:alnum:]*    { return IDENT; }
+[[:digit:]]+            { return NUM; }
+[[:alpha:]]+[[:alnum:]]* { return IDENT; }
+\n                      { return EOL; }
 .                       { return OTHER; }

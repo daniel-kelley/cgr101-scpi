@@ -21,6 +21,7 @@ struct info {
     int bus;
     int dev;
     int port;
+    const char *debug;
     char cli_buf[INFO_CLI_LEN];
     const char *conf_rsp;
     void *hdl;

@@ -50,6 +50,16 @@ int parser_init(struct info *info)
         if (!info->parser->ps) {
             break;
         }
+
+        if (info->debug) {
+            if (strchr(info->debug,'f')) {
+                yyset_debug(1, info->lexer->scanner);
+            }
+            if (strchr(info->debug,'b')) {
+                yydebug = 1;
+            }
+        }
+
         rv = 0;
 
     } while (0);
@@ -60,7 +70,7 @@ int parser_init(struct info *info)
 int parser_done(struct info *info)
 {
     if (info->lexer) {
-        yylex_destroy(&info->lexer->scanner);
+        yylex_destroy(info->lexer->scanner);
         free(info->lexer);
     }
 
@@ -90,16 +100,20 @@ int parser_send(struct info *info, char *line, size_t len)
     int c;
     YYSTYPE yys;
     YYLTYPE yyl;
-    yyscan_t *scanner = &info->lexer->scanner;
+    yyscan_t scanner = info->lexer->scanner;
 
     bs = yy_scan_buffer(line, len, scanner);
 
-    do {
-        c = yylex(&yys, &yyl, scanner);
-        status = yypush_parse(info->parser->ps, c, &yys, &yyl, info);
-    } while (status == YYPUSH_MORE);
+    memset(&yys, 0, sizeof(yys));
+    memset(&yyl, 0, sizeof(yyl));
 
-    yy_delete_buffer(bs, scanner);
+    if (bs != NULL) {
+        do {
+            c = yylex(&yys, &yyl, scanner);
+            status = yypush_parse(info->parser->ps, c, &yys, &yyl, info);
+        } while (status == YYPUSH_MORE);
+        yy_delete_buffer(bs, scanner);
+    }
 
-    return 0;
+    return (bs == NULL);
 }

@@ -18,3 +18,8 @@ void scpi_common_cls(struct info *info)
 {
     (void)info;
 }
+
+void scpi_system_internal_quit(struct info *info)
+{
+    info->quit = 1;
+}

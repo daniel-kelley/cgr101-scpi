@@ -67,6 +67,7 @@
 %token VERSQ
 %token WAI
 %token OTHER
+%token EOL
 
 %start top
 
@@ -217,7 +218,10 @@ dev-cmd
     | FETC COLON DIG COLON DATQ
     | INIT
     | SYST COLON COMM COLON TCP COLON CONTQ
+
     | SYST COLON INT COLON QUIT
+    { scpi_system_internal_quit(info); }
+
     | SYST COLON INT COLON CAL
     | SYST COLON INT COLON CONF
     | SYST COLON INT COLON SHOWQ
