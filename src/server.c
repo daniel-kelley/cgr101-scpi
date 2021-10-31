@@ -25,7 +25,7 @@
 #include <signal.h>
 
 /* CGR-101 stuff here... */
-#include "parser.h"
+#include "scpi.h"
 #include "server.h"
 
 /* bitwise flags */
@@ -293,7 +293,7 @@ static int server_cli(struct info *info)
             }
         }
     } else {
-        rc = parser_send(info, info->cli_buf, sizeof(info->cli_buf));
+        rc = scpi_core_send(info);
     }
 
     return rc;
@@ -340,7 +340,7 @@ int server_run(struct info *info)
     }
 
     do {
-        if (parser_init(info)) {
+        if (scpi_core_init(info)) {
             break;
         }
         if (server_init(info)) {
@@ -350,7 +350,7 @@ int server_run(struct info *info)
     } while (0);
 
     server_done(info);
-    parser_done(info);
+    scpi_core_done(info);
 
     return (rc < 0);
 }

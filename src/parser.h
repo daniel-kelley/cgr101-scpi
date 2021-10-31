@@ -8,6 +8,7 @@
 #ifndef   PARSER_H_
 #define   PARSER_H_
 
+#include <stddef.h>
 #include "info.h"
 
 extern void parser_input(

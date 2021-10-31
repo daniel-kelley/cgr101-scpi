@@ -27,6 +27,7 @@ struct info {
     void *hdl;
     struct lexer *lexer;
     struct parser *parser;
+    struct scpi_core *scpi;
     /* others..., like command queue */
 };
 
