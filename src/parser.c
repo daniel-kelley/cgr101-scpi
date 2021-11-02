@@ -8,6 +8,7 @@
 #include <stddef.h>
 #include <string.h>
 #include "parser.h"
+#include "scpi_type.h"
 #include "scpi.tab.h"
 #include "scanner.h"
 
@@ -116,4 +117,13 @@ int parser_send(struct info *info, char *line, size_t len)
     }
 
     return (bs == NULL);
+}
+
+int parser_num(const char *s, struct scpi_type *val, int token)
+{
+    /* FIXME: needs error checking. */
+    val->type = SCPI_TYPE_INT;
+    val->val.ival = strtol(s, NULL, 10);
+    val->src = s;
+    return token;
 }

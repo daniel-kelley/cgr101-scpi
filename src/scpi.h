@@ -9,8 +9,11 @@
 #define   SCPI_H_
 
 #include "info.h"
+#include "scpi_type.h"
 
 extern void yyerror(void *loc, struct info *info, const char *s);
+extern void scpi_common_ese(struct scpi_type *val, struct info *info);
+extern void scpi_common_eseq(struct info *info);
 extern void scpi_common_cls(struct info *info);
 extern void scpi_system_internal_quit(struct info *info);
 extern int scpi_core_init(struct info *info);

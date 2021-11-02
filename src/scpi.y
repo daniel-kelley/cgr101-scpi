@@ -67,7 +67,6 @@
 %token VERSQ
 %token WAI
 %token OTHER
-%token EOL
 
 %start top
 
@@ -80,6 +79,7 @@
 %define parse.error detailed
 %define parse.lac full
 %param {struct info *info}
+%define api.value.type {struct scpi_type}
 
 %{
     #include "scpi.h"
@@ -149,11 +149,11 @@ sys-cmd
 
     /* 488.2 10.10 */
     | ESE NUM
-    { /*scpi_common_ese($2);*/ }
+    { scpi_common_ese(&$2, info); }
 
     /* 488.2 10.11 */
     | ESEQ
-    { /*scpi_common_eseq();*/ }
+    { scpi_common_eseq(info); }
 
     /* 488.2 10.11 */
     | ESRQ

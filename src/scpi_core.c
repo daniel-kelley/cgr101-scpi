@@ -8,19 +8,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "scpi.h"
+#include "scpi_error.h"
 #include "parser.h"
-
-struct scpi_err {
-    int error;
-    char *syndrome;
-};
-
-#define ERRQ_SIZE 32
-struct scpi_errq {
-    uint32_t            head;
-    uint32_t            tail;
-    struct scpi_err     q[ERRQ_SIZE];
-};
 
 #define OUTBUF_SIZE 1024
 struct scpi_outbuf {
@@ -57,6 +46,23 @@ void scpi_common_cls(struct info *info)
     scpi->error.head = 0;
     scpi->error.tail = 0;
     scpi->output.len = 0;
+}
+
+void scpi_common_ese(struct scpi_type *val, struct info *info)
+{
+    if (val->type == SCPI_TYPE_INT &&
+        val->val.ival >= 0 &&
+        val->val.ival <= 255)
+    {
+        info->scpi->event = (uint8_t)val->val.ival;
+    } else {
+        /*scpi_error(info->scpi, SCPI_ERR_DATA_OUT_OF_RANGE, val->src);*/
+    }
+}
+
+void scpi_common_eseq(struct info *info)
+{
+    (void)info;
 }
 
 void scpi_system_internal_quit(struct info *info)
