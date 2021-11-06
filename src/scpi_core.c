@@ -94,3 +94,8 @@ void scpi_core_top(struct info *info)
 {
     info->busy = 0;
 }
+
+void scpi_core_cmd_sep(struct info *info)
+{
+    (void)info;
+}

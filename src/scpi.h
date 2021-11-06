@@ -20,5 +20,6 @@ extern int scpi_core_init(struct info *info);
 extern int scpi_core_done(struct info *info);
 extern int scpi_core_send(struct info *info, int len);
 extern void scpi_core_top(struct info *info);
+extern void scpi_core_cmd_sep(struct info *info);
 
 #endif /* SCPI_H_ */

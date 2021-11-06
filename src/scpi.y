@@ -95,9 +95,13 @@ top
 cmd-list
     : %empty
     | cmd-path
-    | cmd-list SEMIS cmd-path
+    | cmd-list semis cmd-path
     ;
 
+semis
+    : SEMIS
+    { scpi_core_cmd_sep(info); }
+    ;
 
 cmd-path
     : cmd-first
