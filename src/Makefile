@@ -64,6 +64,7 @@ SRC += cgr101.c
 SRC += scpi.tab.c
 SRC += scpi_core.c
 SRC += scpi_error.c
+SRC += scpi_output.c
 SRC += scanner.c
 SRC += parser.c
 

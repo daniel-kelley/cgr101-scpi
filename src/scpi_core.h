@@ -9,12 +9,7 @@
 #define   SCPI_CORE_H_
 
 #include "scpi_error.h"
-
-#define OUTBUF_SIZE 1024
-struct scpi_outbuf {
-    uint32_t            len;
-    uint8_t             buf[OUTBUF_SIZE];
-};
+#include "scpi_output.h"
 
 struct scpi_core {
     /* Standard Status Registers */
@@ -22,8 +17,9 @@ struct scpi_core {
     uint16_t            oper;
     uint8_t             event;
     uint8_t             status;
+    /* Outputs */
     struct scpi_errq    error;
-    struct scpi_outbuf  output;
+    struct scpi_output  output;
 };
 
 #endif /* SCPI_CORE_H_ */
