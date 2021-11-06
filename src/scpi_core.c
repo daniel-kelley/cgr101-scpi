@@ -5,6 +5,7 @@
 
 */
 
+#include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include "scpi.h"
@@ -14,8 +15,9 @@
 void yyerror(void *loc, struct info *info, const char *s)
 {
     (void)loc;
-    (void)info;
-    (void)s;
+    if (info->verbose) {
+        fprintf(stderr,">>> %s:\n", s);
+    }
 }
 
 void scpi_common_cls(struct info *info)
@@ -53,9 +55,9 @@ void scpi_system_internal_quit(struct info *info)
     info->quit = 1;
 }
 
-int scpi_core_send(struct info *info)
+int scpi_core_send(struct info *info, int len)
 {
-    return parser_send(info, info->cli_buf, sizeof(info->cli_buf));
+    return parser_send(info, info->cli_buf, (size_t)len+2);
 }
 
 int scpi_core_init(struct info *info)
@@ -86,4 +88,9 @@ int scpi_core_done(struct info *info)
     } while (0);
 
     return err;
+}
+
+void scpi_core_top(struct info *info)
+{
+    info->busy = 0;
 }

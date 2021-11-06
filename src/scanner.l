@@ -79,5 +79,5 @@ SHOW\?                  { return SHOWQ; }
 [[:alpha:]]+[[:alnum:]]* { return IDENT; }
 [[:blank:]]*
 \n
-\0
+\0                      { return YYEOF; }
 .                       { return OTHER; }

@@ -79,7 +79,7 @@ $(NAME): $(OBJ)
 	$(CC) $(LDFLAGS) -o $@ $(OBJ) $(LDLIBS)
 
 scpi.tab.c: scpi.y
-	bison -d $<
+	bison --report all -d $<
 
 scanner.c: scanner.l
 	flex $<
@@ -94,7 +94,7 @@ compile_commands.json:
 clean:
 	-rm -rf $(OBJ) $(DEP) $(NAME) \
 		scanner.c scanner.h \
-		scpi.tab.c scpi.tab.h \
+		scpi.tab.c scpi.tab.h scpi.output \
 		compile_commands.json $(CODECHECKER_OUT)
 
 -include $(DEP)

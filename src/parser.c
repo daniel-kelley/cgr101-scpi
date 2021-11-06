@@ -5,6 +5,7 @@
 
 */
 
+#include <stdio.h>
 #include <stddef.h>
 #include <string.h>
 #include "parser.h"
@@ -47,11 +48,6 @@ int parser_init(struct info *info)
             break;
         }
 
-        info->parser->ps = yypstate_new();
-        if (!info->parser->ps) {
-            break;
-        }
-
         if (info->debug) {
             if (strchr(info->debug,'f')) {
                 yyset_debug(1, info->lexer->scanner);
@@ -76,11 +72,26 @@ int parser_done(struct info *info)
     }
 
     if (info->parser) {
-        yypstate_delete(info->parser->ps);
         free(info->parser);
     }
 
     return 0;
+}
+
+static void parser_loop(struct info *info,
+                        yyscan_t scanner)
+{
+    int status;
+    int c;
+    YYSTYPE yys;
+    YYLTYPE yyl;
+
+    do {
+        memset(&yys, 0, sizeof(yys));
+        memset(&yyl, 0, sizeof(yyl));
+        c = yylex(&yys, &yyl, scanner);
+        status = yypush_parse(info->parser->ps, c, &yys, &yyl, info);
+    } while (status == YYPUSH_MORE);
 }
 
 /* line modified in place, needs *two* NULs at end; len reflects this */
@@ -97,26 +108,35 @@ int parser_done(struct info *info)
 int parser_send(struct info *info, char *line, size_t len)
 {
     YY_BUFFER_STATE bs;
-    int status;
-    int c;
-    YYSTYPE yys;
-    YYLTYPE yyl;
     yyscan_t scanner = info->lexer->scanner;
+    int err = 1;
 
     bs = yy_scan_buffer(line, len, scanner);
 
-    memset(&yys, 0, sizeof(yys));
-    memset(&yyl, 0, sizeof(yyl));
+    do {
+        if (bs == NULL) {
+            fprintf(stderr, "yy_scan_buffer(%s)[%lu] failed\n", line, len);
+            break;
+        }
 
-    if (bs != NULL) {
-        do {
-            c = yylex(&yys, &yyl, scanner);
-            status = yypush_parse(info->parser->ps, c, &yys, &yyl, info);
-        } while (status == YYPUSH_MORE);
+        if (!info->busy) {
+            info->parser->ps = yypstate_new();
+            if (!info->parser->ps) {
+                fprintf(stderr, "yypstate_new() failed\n");
+                break;
+            }
+            info->busy = 1;
+        }
+
+        parser_loop(info, scanner);
+        if (!info->busy) {
+            yypstate_delete(info->parser->ps);
+        }
         yy_delete_buffer(bs, scanner);
-    }
+        err = 0;
+    } while (0);
 
-    return (bs == NULL);
+    return err;
 }
 
 int parser_num(const char *s, struct scpi_type *val, int token)

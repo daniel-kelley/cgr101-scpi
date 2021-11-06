@@ -280,6 +280,7 @@ static int server_cli(struct info *info)
     int rc;
 
     /* Was recv(...,0), but we want to read from a file too. */
+    memset(info->cli_buf, 0, sizeof(info->cli_buf));
     rc = (int)read(info->cli_in_fd, info->cli_buf, sizeof(info->cli_buf));
     if (rc < 0) {
         if (errno != EWOULDBLOCK) {
@@ -293,7 +294,7 @@ static int server_cli(struct info *info)
             }
         }
     } else {
-        rc = scpi_core_send(info);
+        rc = scpi_core_send(info, rc);
     }
 
     return rc;

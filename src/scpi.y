@@ -89,11 +89,12 @@
 
 top
     : cmd-list
+    { scpi_core_top(info); }
     ;
 
-
 cmd-list
-    : cmd-path
+    : %empty
+    | cmd-path
     | cmd-list SEMIS cmd-path
     ;
 
@@ -104,13 +105,17 @@ cmd-path
     ;
 
 cmd-first
-    : cmd
-    | COLON
+    : cmd-abs
+    | cmd
     ;
 
 cmd-rest
-    : cmd
-    | cmd-rest COLON cmd
+    : cmd-abs
+    | cmd-rest cmd-abs
+    ;
+
+cmd-abs
+    : COLON cmd
     ;
 
 cmd
