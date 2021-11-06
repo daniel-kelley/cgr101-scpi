@@ -5,15 +5,22 @@
 
 */
 
+#include <string.h>
 #include "cgr101.h"
 
-int cgr101_open(struct info *)
+int cgr101_open(struct info *info)
 {
-    return 0;
+    if (info->debug && strchr(info->debug,'E')) {
+        info->emulation = 1;
+    }
+
+    /* Only emulation for now. */
+    return !(info->emulation == 1);
 }
 
-int cgr101_close(struct info *)
+int cgr101_close(struct info *info)
 {
+    (void)info;
     return 0;
 }
 

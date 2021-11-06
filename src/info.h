@@ -12,6 +12,7 @@
 
 struct info {
     int verbose;
+    int emulation;
     int no_trap;
     int quit;
     int cli_in_fd;

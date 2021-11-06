@@ -79,16 +79,16 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (info.bus >= 0) {
-        rc = cgr101_open(&info);
+    rc = cgr101_open(&info);
 
-        if (!rc) {
-            rc = server_run(&info);
-        }
+    if (!rc) {
+        rc = server_run(&info);
+    } else {
+        fprintf(stderr, "CGR-101 open failed.\n");
+    }
 
-        if (info.hdl) {
-            cgr101_close(&info);
-        }
+    if (info.hdl) {
+        cgr101_close(&info);
     }
 #if 0
     conf_done(&info.conf);
