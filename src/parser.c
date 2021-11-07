@@ -126,6 +126,7 @@ int parser_send(struct info *info, char *line, size_t len)
                 break;
             }
             info->busy = 1;
+            info->rsp.valid = 0;
         }
 
         parser_loop(info, scanner);

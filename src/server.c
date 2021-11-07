@@ -295,6 +295,9 @@ static int server_cli(struct info *info)
         }
     } else {
         rc = scpi_core_send(info, rc);
+        if (!rc && info->rsp.valid) {
+            write(info->cli_out_fd, info->rsp.buf, info->rsp.len);
+        }
     }
 
     return rc;

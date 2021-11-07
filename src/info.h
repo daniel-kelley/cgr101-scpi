@@ -8,7 +8,16 @@
 #ifndef   INFO_H_
 #define   INFO_H_
 
+#include <stddef.h>
+#include <stdint.h>
+
 #define INFO_CLI_LEN 80
+
+struct response {
+    int valid;
+    uint8_t *buf;
+    size_t len;
+};
 
 struct info {
     int verbose;
@@ -25,6 +34,7 @@ struct info {
     int busy;
     const char *debug;
     char cli_buf[INFO_CLI_LEN];
+    struct response rsp;
     const char *conf_rsp;
     void *hdl;
     struct lexer *lexer;

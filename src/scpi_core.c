@@ -47,7 +47,7 @@ void scpi_common_ese(struct scpi_type *val, struct info *info)
 
 void scpi_common_eseq(struct info *info)
 {
-    (void)info;
+    scpi_output_int(&info->scpi->output, info->scpi->event);
 }
 
 void scpi_system_internal_quit(struct info *info)
@@ -57,7 +57,27 @@ void scpi_system_internal_quit(struct info *info)
 
 int scpi_core_send(struct info *info, int len)
 {
-    return parser_send(info, info->cli_buf, (size_t)len+2);
+    int err;
+
+    do {
+        err = parser_send(info, info->cli_buf, (size_t)len+2);
+        if (err || !info->busy) {
+            break;
+        }
+
+        err = scpi_output_get(
+            &info->scpi->output, &info->rsp.buf, &info->rsp.len);
+
+        if (err) {
+            /* handle error */
+            break;
+        }
+
+        info->rsp.valid = 1;
+
+    } while (0);
+
+    return err;
 }
 
 int scpi_core_init(struct info *info)
@@ -97,5 +117,5 @@ void scpi_core_top(struct info *info)
 
 void scpi_core_cmd_sep(struct info *info)
 {
-    (void)info;
+    scpi_output_cmd_sep(&info->scpi->output);
 }
