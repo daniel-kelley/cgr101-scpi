@@ -63,8 +63,15 @@ void scpi_output_clear(struct scpi_output *output)
 
 int scpi_output_get(struct scpi_output *output, uint8_t **buf, size_t *sz)
 {
+    int err = 0;
+
+    if (output->len != 0) {
+        /* If there is any output, terminate output with newline. */
+        err = scpi_output_printf(output, "\n");
+    }
+
     *buf = output->buf;
     *sz  = output->len;
 
-    return output->overflow;
+    return err;
 }

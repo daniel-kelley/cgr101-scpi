@@ -60,8 +60,12 @@ int scpi_core_send(struct info *info, int len)
     int err;
 
     do {
+
+        info->rsp.valid = 0;
+        scpi_output_clear(&info->scpi->output);
+
         err = parser_send(info, info->cli_buf, (size_t)len+2);
-        if (err || !info->busy) {
+        if (err || info->busy) {
             break;
         }
 
@@ -73,7 +77,7 @@ int scpi_core_send(struct info *info, int len)
             break;
         }
 
-        info->rsp.valid = 1;
+        info->rsp.valid = (info->rsp.len != 0);
 
     } while (0);
 

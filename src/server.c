@@ -275,6 +275,29 @@ static int server_accept(struct info *info)
     return err;
 }
 
+static int server_rsp(struct info *info)
+{
+    ssize_t outlen;
+
+    outlen = write(info->cli_out_fd, info->rsp.buf, info->rsp.len);
+
+    /* Handle truncated writes. */
+
+    return (outlen <= 0);
+}
+
+static int server_scpi_io(struct info *info, int len)
+{
+    int rc;
+
+    rc = scpi_core_send(info, len);
+    if (!rc && info->rsp.valid) {
+        rc = server_rsp(info);
+    }
+
+    return rc;
+}
+
 static int server_cli(struct info *info)
 {
     int rc;
@@ -294,10 +317,7 @@ static int server_cli(struct info *info)
             }
         }
     } else {
-        rc = scpi_core_send(info, rc);
-        if (!rc && info->rsp.valid) {
-            write(info->cli_out_fd, info->rsp.buf, info->rsp.len);
-        }
+        rc = server_scpi_io(info, rc);
     }
 
     return rc;
