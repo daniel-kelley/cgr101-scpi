@@ -15,7 +15,7 @@ prog: src/cgr101-scpi
 src/cgr101-scpi: src/*.[ch]
 	$(MAKE) -C src
 
-test: prog test-prog # test-net
+check: prog test-prog # test-net
 
 test-prog:
 	$(RUBY) -I test test/test_prog.rb $(TEST_ARG)
