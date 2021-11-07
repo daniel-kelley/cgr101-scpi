@@ -286,14 +286,41 @@ static int server_rsp(struct info *info)
     return (outlen <= 0);
 }
 
-static int server_scpi_io(struct info *info, int len)
+static int server_scpi_io(struct info *info)
 {
     int rc;
+    char *buf = info->cli_buf;
+    char *eol;
+    int len;
 
-    rc = scpi_core_send(info, len);
-    if (!rc && info->rsp.valid) {
-        rc = server_rsp(info);
-    }
+    do {
+        /* Find EOL */
+        eol = strchr(buf, '\n');
+        if (eol) {
+            len = (int)(eol - buf);
+        } else {
+            len = (int)strlen(buf);
+        }
+
+        if (len) {
+            rc = scpi_core_send(info, buf, len);
+            if (!rc && info->rsp.valid) {
+                rc = server_rsp(info);
+            }
+        } else {
+            break;
+        }
+
+        if (eol) {
+            buf = eol + 1;
+
+            if (*buf == 0) {
+                /* no more */
+                break;
+            }
+        }
+
+    } while (!rc && eol != NULL);
 
     return rc;
 }
@@ -317,7 +344,7 @@ static int server_cli(struct info *info)
             }
         }
     } else {
-        rc = server_scpi_io(info, rc);
+        rc = server_scpi_io(info);
     }
 
     return rc;

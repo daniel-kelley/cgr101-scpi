@@ -55,7 +55,7 @@ void scpi_system_internal_quit(struct info *info)
     info->quit = 1;
 }
 
-int scpi_core_send(struct info *info, int len)
+int scpi_core_send(struct info *info, char *buf, int len)
 {
     int err;
 
@@ -64,7 +64,7 @@ int scpi_core_send(struct info *info, int len)
         info->rsp.valid = 0;
         scpi_output_clear(&info->scpi->output);
 
-        err = parser_send(info, info->cli_buf, (size_t)len+2);
+        err = parser_send(info, buf, len);
         if (err || info->busy) {
             break;
         }

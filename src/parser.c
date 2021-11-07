@@ -94,28 +94,30 @@ static void parser_loop(struct info *info,
     } while (status == YYPUSH_MORE);
 }
 
-/* line modified in place, needs *two* NULs at end; len reflects this */
 /*
  * Lexer/Parser feedback: to accommodate 488.2 7.6.1.5 Header
  * Compounding, the lexer needs to keep track of leading program
  * mnemonics and command separators. The idea is that if there is a
  * program mnemonic IDENT immediately after a command separator, then
- * the 'header-path' tokens (supplied by the parser) are passed back
- * via the lexer before supplying the program mnemonic that triggered
- * the header-path injection. The intial command, and any 'absolute'
- * commands that start with ':' reset the header-path.
+ * the 'header-path' tokens (supplied by the lexer) are passed back
+ * instead of the lexer before supplying the program mnemonic that
+ * triggered the header-path injection. The intial command, and any
+ * 'absolute' commands that start with ':' reset the header-path.
+ *
+ * This function handles exactly one line. Multiple lines need to be
+ * split up by the caller.
  */
-int parser_send(struct info *info, char *line, size_t len)
+int parser_send(struct info *info, char *line, int len)
 {
     YY_BUFFER_STATE bs;
     yyscan_t scanner = info->lexer->scanner;
     int err = 1;
 
-    bs = yy_scan_buffer(line, len, scanner);
+    bs = yy_scan_bytes(line, len, scanner);
 
     do {
         if (bs == NULL) {
-            fprintf(stderr, "yy_scan_buffer(%s)[%lu] failed\n", line, len);
+            fprintf(stderr, "yy_scan_bytes(%s)[%d] failed\n", line, len);
             break;
         }
 
