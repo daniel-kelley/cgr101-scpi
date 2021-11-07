@@ -128,10 +128,10 @@ int scpi_error_get(struct scpi_errq *errq, char *buf, size_t len)
      */
     syndrome = errq->q[cur].syndrome;
     if (syndrome) {
-        plen = snprintf(buf, len, "\"%s;%s\"", msg, syndrome);
+        snprintf(buf, len, "\"%s;%s\"", msg, syndrome);
         free((void *)syndrome);
     } else {
-        plen = snprintf(buf, len, "\"%s\"", msg);
+        snprintf(buf, len, "\"%s\"", msg);
     }
 
     return err;

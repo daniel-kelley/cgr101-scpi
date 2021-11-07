@@ -288,7 +288,7 @@ static int server_rsp(struct info *info)
 
 static int server_scpi_io(struct info *info)
 {
-    int rc;
+    int rc = 0;
     char *buf = info->cli_buf;
     char *eol;
     int len;

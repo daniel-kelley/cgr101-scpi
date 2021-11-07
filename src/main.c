@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
             break;
         case 'h':
             usage(argv[0]);
-            rc = EXIT_SUCCESS;
+            return EXIT_SUCCESS;
             break;
         default:
             break;

@@ -40,6 +40,7 @@ CODECHECKER_ARGS += --enable bugprone-string-integer-assignment
 CODECHECKER_ARGS += --enable bugprone-suspicious-include
 CODECHECKER_ARGS += --enable bugprone-suspicious-string-compare
 CODECHECKER_ARGS += --enable bugprone-unhandled-self-assignment
+CODECHECKER_ARGS += --skip .codechecker.skip
 CODECHECKER_ARGS += --output $(CODECHECKER_OUT)
 
 WARN := -Wall
@@ -89,7 +90,7 @@ check: compile_commands.json
 	$(CODECHECKER) parse $< $(CODECHECKER_OUT)
 
 compile_commands.json:
-	$(BEAR) $(MAKE)
+	$(BEAR) -- $(MAKE)
 
 clean:
 	-rm -rf $(OBJ) $(DEP) $(NAME) \
