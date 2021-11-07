@@ -15,8 +15,9 @@ module CGR101Testcase
   # Interface handle check
   #
   def test_001
-    assert_not_nil self.class.hdl
-    #pp self.class.hdl
+    hdl = self.class.hdl
+    assert_not_nil hdl
+    assert hdl.wthr.alive?
   end
 
   #

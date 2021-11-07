@@ -14,7 +14,8 @@ require 'timeout'
 #
 class CGR101
 
-  PROG = 'src/cgr101-scpi'
+  attr_reader :wthr
+  PROG = ENV['CGR101_PROG'] || 'src/cgr101-scpi'
   SWITCHES = ENV['CGR101_TEST'] || '-DE' # Default: Emulation
   RECV_TIMEOUT = 5
 
