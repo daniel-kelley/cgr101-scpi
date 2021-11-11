@@ -55,6 +55,11 @@ void scpi_system_versionq(struct info *info)
     scpi_output_str(&info->scpi->output, "1999.0");
 }
 
+void scpi_system_error_countq(struct info *info)
+{
+    scpi_output_int(&info->scpi->output, 0);
+}
+
 void scpi_system_internal_quit(struct info *info)
 {
     info->quit = 1;

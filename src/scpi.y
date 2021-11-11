@@ -208,6 +208,8 @@ sys-cmd
     | SYST COLON ERRQ
     | SYST COLON ERR COLON NEXTQ
     | SYST COLON ERR COLON COUNQ
+    { scpi_system_error_countq(info); }
+
     | SYST COLON VERSQ
     { scpi_system_versionq(info); }
 

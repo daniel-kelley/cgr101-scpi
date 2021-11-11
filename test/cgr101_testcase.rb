@@ -44,7 +44,7 @@ module CGR101Testcase
   #
   # SCPI standard SYSTem:ERRor:COUNt?
   #
-  def no_test_004
+  def test_004
     self.class.hdl.send("SYSTem:ERRor:COUNt?")
     out = self.class.hdl.recv
     assert_equal("0", out)
