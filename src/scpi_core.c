@@ -50,6 +50,11 @@ void scpi_common_eseq(struct info *info)
     scpi_output_int(&info->scpi->output, info->scpi->event);
 }
 
+void scpi_system_versionq(struct info *info)
+{
+    scpi_output_str(&info->scpi->output, "1999.0");
+}
+
 void scpi_system_internal_quit(struct info *info)
 {
     info->quit = 1;

@@ -209,6 +209,8 @@ sys-cmd
     | SYST COLON ERR COLON NEXTQ
     | SYST COLON ERR COLON COUNQ
     | SYST COLON VERSQ
+    { scpi_system_versionq(info); }
+
     | SYST COLON CAPQ
     | STAT COLON OPERQ
     | STAT COLON OPER COLON EVENQ

@@ -33,7 +33,7 @@ module CGR101Testcase
   #
   # SCPI standard SYST:VERS?
   #
-  def no_test_003
+  def test_003
     self.class.hdl.send("SYST:VERS?")
     out = self.class.hdl.recv
     assert_equal("1999.0", out)
