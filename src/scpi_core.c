@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include "scpi.h"
 #include "scpi_core.h"
+#include "scpi_error.h"
 #include "parser.h"
 
 void yyerror(void *loc, struct info *info, const char *s)
@@ -57,7 +58,8 @@ void scpi_system_versionq(struct info *info)
 
 void scpi_system_error_countq(struct info *info)
 {
-    scpi_output_int(&info->scpi->output, 0);
+    int n = scpi_error_count(&info->scpi->error);
+    scpi_output_int(&info->scpi->output, n);
 }
 
 void scpi_system_internal_quit(struct info *info)
