@@ -206,7 +206,11 @@ sys-cmd
     { /*scpi_common_wai($2);*/ }
 
     | SYST COLON ERRQ
+    { scpi_system_error_nextq(info); }
+
     | SYST COLON ERR COLON NEXTQ
+    { scpi_system_error_nextq(info); }
+
     | SYST COLON ERR COLON COUNQ
     { scpi_system_error_countq(info); }
 

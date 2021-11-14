@@ -45,6 +45,10 @@ int scpi_error(struct scpi_errq *errq,
     } else {
         errq->q[errq->head].error = num;
         if (syndrome) {
+            /*
+             * Note: may need to add quote escapes if any string has
+             * embedded quote characters.
+             */
             errq->q[errq->head].syndrome = strdup(syndrome);
             if (errq->q[errq->head].syndrome) {
                 /* internal error! */
@@ -93,46 +97,30 @@ static const char *scpi_errmsg(enum scpi_err_num num)
     return msg;
 }
 
-/* Format: <num>,"<msg>[,<syndrome>]"*/
-int scpi_error_get(struct scpi_errq *errq, char *buf, size_t len)
+int scpi_error_get(struct scpi_errq *errq,
+                   enum scpi_err_num *error,
+                   const char **msg,
+                   const char **syndrome)
 {
-    const char *msg;
-    const char *syndrome;
     uint32_t cur = errq->tail;
-    int plen;
-    enum scpi_err_num error;
     int err = 0;
 
     if (errq->head != errq->tail) {
-        error = errq->q[cur].error;
+        *error = errq->q[cur].error;
         errq->tail = errq->tail + 1;
         if (errq->tail == ERRQ_SIZE) {
             errq->tail = 0;
         }
     } else if (errq->overflow) {
-        error = SCPI_ERR_QUEUE_OVERFLOW;
+        *error = SCPI_ERR_QUEUE_OVERFLOW;
         errq->overflow = !errq->overflow;
     } else {
-        error = SCPI_ERR_NONE;
+        *error = SCPI_ERR_NONE;
     }
 
-    msg = scpi_errmsg(error);
+    *msg = scpi_errmsg(*error);
 
-    plen = snprintf(buf, len, "%d", (int)error);
-    len -= (size_t)plen;
-    buf += plen;
-
-    /*
-     * Note: may need to add quote escapes if any string has
-     * embedded quote characters.
-     */
-    syndrome = errq->q[cur].syndrome;
-    if (syndrome) {
-        snprintf(buf, len, "\"%s;%s\"", msg, syndrome);
-        free((void *)syndrome);
-    } else {
-        snprintf(buf, len, "\"%s\"", msg);
-    }
+    *syndrome = errq->q[cur].syndrome;
 
     return err;
 }

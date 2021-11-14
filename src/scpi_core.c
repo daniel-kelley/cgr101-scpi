@@ -62,6 +62,24 @@ void scpi_system_error_countq(struct info *info)
     scpi_output_int(&info->scpi->output, n);
 }
 
+void scpi_system_error_nextq(struct info *info)
+{
+    enum scpi_err_num error;
+    const char *msg;
+    const char *syndrome;
+
+    scpi_error_get(&info->scpi->error, &error, &msg, &syndrome);
+
+    if (syndrome) {
+        scpi_output_printf(&info->scpi->output,
+                           "%d,\"%s;%s\"",
+                           error, msg, syndrome);
+        free((void *)syndrome);
+    } else {
+        scpi_output_printf(&info->scpi->output,"%d,\"%s\"", error, msg);
+    }
+}
+
 void scpi_system_internal_quit(struct info *info)
 {
     info->quit = 1;

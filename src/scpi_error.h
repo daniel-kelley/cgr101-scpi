@@ -40,7 +40,8 @@ extern int scpi_error(struct scpi_errq *errq,
 extern int scpi_error_count(struct scpi_errq *errq);
 
 extern int scpi_error_get(struct scpi_errq *errq,
-                          char *buf,
-                          size_t len);
+                          enum scpi_err_num *num,
+                          const char **msg,
+                          const char **syndrome);
 
 #endif /* SCPI_ERROR_H_ */

@@ -23,6 +23,10 @@ test-prog:
 test-net:
 	$(RUBY) -I test test/test_net.rb $(TEST_ARG)
 
+vtest-prog: prog
+	CGR101_PROG="valgrind -q src/cgr101-scpi" \
+	$(RUBY) -I test test/test_prog.rb $(TEST_ARG)
+
 clean:
 	$(MAKE) -C src $@
 

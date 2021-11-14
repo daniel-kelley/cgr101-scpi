@@ -55,7 +55,7 @@ module CGR101Testcase
   #
   # SCPI standard SYSTem:ERRor?
   #
-  def no_test_005
+  def test_005
     self.class.hdl.send("SYSTem:ERRor?")
     out = self.class.hdl.recv
     assert_equal("0,\"No error\"", out)
@@ -66,7 +66,7 @@ module CGR101Testcase
   #
   # "No error" command behavior
   #
-  def no_test_006
+  def test_006
     self.class.hdl.send("SYSTem:ERRor:NEXT?")
     out = self.class.hdl.recv
     assert_equal("0,\"No error\"", out)
