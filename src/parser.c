@@ -20,11 +20,18 @@ struct lexer {
 
 struct parser {
     yypstate *ps;
+    struct {
+        const YYLTYPE *loc;
+        const char *msg;
+    } error;
+    int trace_yyerror;
 };
 
 void yyerror(const YYLTYPE *loc, struct info *info, const char *s)
 {
-    (void)loc;
+    info->parser->error.loc = loc;
+    info->parser->error.msg = s;
+    info->busy = 0;
     if (info->verbose) {
         fprintf(stderr,">>> %s:\n", s);
     }
@@ -62,6 +69,9 @@ int parser_init(struct info *info)
             }
             if (strchr(info->debug,'b')) {
                 yydebug = 1;
+            }
+            if (strchr(info->debug,'y')) {
+                info->parser->trace_yyerror = 1;
             }
         }
 
@@ -144,8 +154,22 @@ int parser_send(struct info *info, char *line, int len)
             yypstate_delete(info->parser->ps);
         }
         yy_delete_buffer(bs, scanner);
-        err = 0;
+        err = (info->parser->error.msg != NULL);
     } while (0);
+
+    return err;
+}
+
+int parser_error_get(struct info *info, const char **msg, int *trace)
+{
+    int err = 1;
+
+    if (msg != NULL && trace != NULL && info->parser->error.msg != NULL) {
+        *msg = info->parser->error.msg;
+        *trace = info->parser->trace_yyerror;
+        memset(&info->parser->error, 0, sizeof(info->parser->error));
+        err = 0;
+    }
 
     return err;
 }

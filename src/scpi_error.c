@@ -19,11 +19,17 @@ static struct {
     { SCPI_ERR_NONE,
       "No error"
     },
+    { SCPI_ERR_UNDEFINED_HEADER,
+      "Undefined header"
+    },
     { SCPI_ERR_DATA_OUT_OF_RANGE,
       "Data out of range"
     },
     { SCPI_ERR_QUEUE_OVERFLOW,
       "Queue Overflow"
+    },
+    { SCPI_ERR_INTERNAL_PARSER_ERROR,
+      "Parser Error"
     },
     { SCPI_ERR_NONE,
       NULL,
@@ -97,6 +103,14 @@ static const char *scpi_errmsg(enum scpi_err_num num)
     return msg;
 }
 
+static void scpi_error_pop(struct scpi_errq *errq)
+{
+    errq->tail = errq->tail + 1;
+    if (errq->tail == ERRQ_SIZE) {
+        errq->tail = 0;
+    }
+}
+
 int scpi_error_get(struct scpi_errq *errq,
                    enum scpi_err_num *error,
                    const char **msg,
@@ -107,10 +121,7 @@ int scpi_error_get(struct scpi_errq *errq,
 
     if (errq->head != errq->tail) {
         *error = errq->q[cur].error;
-        errq->tail = errq->tail + 1;
-        if (errq->tail == ERRQ_SIZE) {
-            errq->tail = 0;
-        }
+        scpi_error_pop(errq);
     } else if (errq->overflow) {
         *error = SCPI_ERR_QUEUE_OVERFLOW;
         errq->overflow = !errq->overflow;
@@ -121,7 +132,21 @@ int scpi_error_get(struct scpi_errq *errq,
     *msg = scpi_errmsg(*error);
 
     *syndrome = errq->q[cur].syndrome;
+    errq->q[cur].syndrome = NULL;
 
     return err;
+}
+
+int scpi_error_done(struct scpi_errq *errq)
+{
+    while (errq->head != errq->tail) {
+        char *syndrome = errq->q[errq->tail].syndrome;
+        if (syndrome) {
+            free(syndrome);
+        }
+        scpi_error_pop(errq);
+    }
+
+    return 0;
 }
 

@@ -78,7 +78,7 @@ module CGR101Testcase
   #
   # "Has error" command behavior
   #
-  def no_test_007
+  def test_007
     # bogus command
     self.class.hdl.send("SYSTem:BOGUS")
     assert_equal(0, self.class.hdl.out_length)

@@ -5,9 +5,11 @@
 
 */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include "scpi.h"
 #include "scpi_core.h"
 #include "scpi_error.h"
@@ -82,26 +84,77 @@ void scpi_system_internal_quit(struct info *info)
     info->quit = 1;
 }
 
+static int scpi_core_parser_error(struct info *info,
+                                  int err_in,
+                                  const char *msg)
+{
+    int err = 1;
+    char *syndrome;
+
+    if (err_in) {
+        scpi_error(&info->scpi->error,
+                   SCPI_ERR_INTERNAL_PARSER_ERROR,
+                   NULL);
+    } else {
+        char *p;
+
+        syndrome = strdup(info->cli_buf);
+        p = strchr(syndrome, '\n');
+        if (p) {
+            *p = 0;
+        }
+        assert(syndrome);
+
+        if (msg) {
+            /* syndrome appended with ;<msg> */
+            size_t slen = strlen(syndrome);
+            size_t mlen = strlen(msg);
+            syndrome = realloc(syndrome, mlen+slen+2);
+            assert(syndrome);
+            syndrome[slen] = ';';
+            memcpy(syndrome+slen+1,msg,mlen+1);
+        }
+
+        scpi_error(&info->scpi->error,
+                   SCPI_ERR_UNDEFINED_HEADER,
+                   syndrome);
+
+        free(syndrome); /* scpi_error() makes own copy */
+    }
+
+    err = 0;
+
+    return err;
+}
+
 int scpi_core_send(struct info *info, char *buf, int len)
 {
     int err;
 
     do {
 
-        info->rsp.valid = 0;
+        memset(&info->rsp, 0, sizeof(info->rsp));
         scpi_output_clear(&info->scpi->output);
 
         err = parser_send(info, buf, len);
-        if (err || info->busy) {
+        if (info->busy) {
             break;
         }
 
-        err = scpi_output_get(
-            &info->scpi->output, &info->rsp.buf, &info->rsp.len);
-
         if (err) {
-            /* handle error */
-            break;
+            const char *errmsg;
+            int trace;
+            err = parser_error_get(info, &errmsg, &trace);
+            err = scpi_core_parser_error(info, err, trace ? errmsg : NULL);
+        } else {
+            err = scpi_output_get(
+                &info->scpi->output, &info->rsp.buf, &info->rsp.len);
+
+            if (err) {
+                /* handle error */
+                assert(0);
+                break;
+            }
         }
 
         info->rsp.valid = (info->rsp.len != 0);
@@ -132,6 +185,7 @@ int scpi_core_done(struct info *info)
     int err;
 
     do {
+        scpi_error_done(&info->scpi->error);
         if (info->scpi) {
             free(info->scpi);
         }
