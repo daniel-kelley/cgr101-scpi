@@ -13,14 +13,6 @@
 #include "scpi_error.h"
 #include "parser.h"
 
-void yyerror(void *loc, struct info *info, const char *s)
-{
-    (void)loc;
-    if (info->verbose) {
-        fprintf(stderr,">>> %s:\n", s);
-    }
-}
-
 void scpi_common_cls(struct info *info)
 {
     struct scpi_core *scpi = info->scpi;

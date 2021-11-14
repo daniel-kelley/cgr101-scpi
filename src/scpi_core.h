@@ -8,6 +8,7 @@
 #ifndef   SCPI_CORE_H_
 #define   SCPI_CORE_H_
 
+#include "info.h"
 #include "scpi_error.h"
 #include "scpi_output.h"
 
@@ -21,5 +22,9 @@ struct scpi_core {
     struct scpi_errq    error;
     struct scpi_output  output;
 };
+
+extern int scpi_core_init(struct info *info);
+extern int scpi_core_done(struct info *info);
+extern int scpi_core_send(struct info *info, char *buf, int len);
 
 #endif /* SCPI_CORE_H_ */

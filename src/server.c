@@ -25,7 +25,7 @@
 #include <signal.h>
 
 /* CGR-101 stuff here... */
-#include "scpi.h"
+#include "scpi_core.h"
 #include "server.h"
 
 /* bitwise flags */

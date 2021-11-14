@@ -10,6 +10,7 @@
 #include <string.h>
 #include "parser.h"
 #include "scpi_type.h"
+#include "yyerror.h"
 #include "scpi.tab.h"
 #include "scanner.h"
 
@@ -21,6 +22,13 @@ struct parser {
     yypstate *ps;
 };
 
+void yyerror(const YYLTYPE *loc, struct info *info, const char *s)
+{
+    (void)loc;
+    if (info->verbose) {
+        fprintf(stderr,">>> %s:\n", s);
+    }
+}
 
 void parser_input(struct info *info, char *buf, int result, int max_size)
 {
