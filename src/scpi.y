@@ -242,7 +242,9 @@ dev-cmd
     | SYST COLON INT COLON CAL
     | SYST COLON INT COLON CONF
     | SYST COLON INT COLON SHOWQ
+
     | SYST COLON INT COLON SETUQ
+    { scpi_system_internal_setupq(info); }
     ;
 
 %%

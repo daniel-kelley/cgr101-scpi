@@ -23,9 +23,10 @@ module CGR101Testcase
   #
   # Device Setup completed correctly
   #
-  def no_test_002
+  def test_002
     self.class.hdl.send("SYSTem:INTernal:SETUP?")
     out = self.class.hdl.recv
+    assert_equal("0", out)
     assert_equal(0, self.class.hdl.out_length)
     assert_equal(0, self.class.hdl.err_length)
   end

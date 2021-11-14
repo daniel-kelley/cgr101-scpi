@@ -80,6 +80,11 @@ void scpi_system_error_nextq(struct info *info)
     }
 }
 
+void scpi_system_internal_setupq(struct info *info)
+{
+    scpi_output_int(&info->scpi->output, 0);
+}
+
 void scpi_system_internal_quit(struct info *info)
 {
     info->quit = 1;
