@@ -21,16 +21,22 @@ struct lexer {
 struct parser {
     yypstate *ps;
     struct {
+        int valid;
         const YYLTYPE *loc;
-        const char *msg;
+        char *msg;
     } error;
     int trace_yyerror;
 };
 
 void yyerror(const YYLTYPE *loc, struct info *info, const char *s)
 {
+    /* 's' may be transient, (it is last I looked) so make a copy. */
+    if (info->parser->error.msg) {
+        free(info->parser->error.msg);
+    }
     info->parser->error.loc = loc;
-    info->parser->error.msg = s;
+    info->parser->error.msg = strdup(s);
+    info->parser->error.valid = 1;
     info->busy = 0;
     if (info->verbose) {
         fprintf(stderr,">>> %s:\n", s);
@@ -87,6 +93,10 @@ int parser_done(struct info *info)
     if (info->lexer) {
         yylex_destroy(info->lexer->scanner);
         free(info->lexer);
+    }
+
+    if (info->parser->error.msg) {
+        free(info->parser->error.msg);
     }
 
     if (info->parser) {
@@ -154,7 +164,7 @@ int parser_send(struct info *info, char *line, int len)
             yypstate_delete(info->parser->ps);
         }
         yy_delete_buffer(bs, scanner);
-        err = (info->parser->error.msg != NULL);
+        err = (info->parser->error.valid);
     } while (0);
 
     return err;
@@ -164,10 +174,10 @@ int parser_error_get(struct info *info, const char **msg, int *trace)
 {
     int err = 1;
 
-    if (msg != NULL && trace != NULL && info->parser->error.msg != NULL) {
+    if (msg != NULL && trace != NULL && info->parser->error.valid) {
         *msg = info->parser->error.msg;
         *trace = info->parser->trace_yyerror;
-        memset(&info->parser->error, 0, sizeof(info->parser->error));
+        info->parser->error.valid = 0;
         err = 0;
     }
 
