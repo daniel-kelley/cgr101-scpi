@@ -112,7 +112,7 @@ module CGR101Testcase
   #
   # SCPI standard *CLS
   #
-  def no_test_009
+  def test_009
     # create error with bogus command
     self.class.hdl.send("SYSTem:BOGUS")
     assert_equal(0, self.class.hdl.out_length)
