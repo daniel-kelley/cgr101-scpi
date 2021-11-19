@@ -161,7 +161,7 @@ module CGR101Testcase
   #
   # SCPI standard *IDN?
   #
-  def no_test_012
+  def test_012
     self.class.hdl.send("*idn?")
     out = self.class.hdl.recv
     assert_equal("GMP,CGR101-SCPI,1.0,01-02", out)

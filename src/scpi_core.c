@@ -52,7 +52,7 @@ void scpi_common_esrq(struct info *info)
 
 void scpi_common_idnq(struct info *info)
 {
-    scpi_output_str(&info->scpi->output, "\"GMP,CGR101-SCPI,1.0,01-02\"");
+    scpi_output_str(&info->scpi->output, "GMP,CGR101-SCPI,1.0,01-02");
 }
 
 void scpi_system_versionq(struct info *info)
