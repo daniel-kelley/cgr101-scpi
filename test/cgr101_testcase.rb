@@ -150,7 +150,7 @@ module CGR101Testcase
   #
   # SCPI standard *ESR?
   #
-  def no_test_011
+  def test_011
     self.class.hdl.send("*ESR?")
     out = self.class.hdl.recv
     assert_not_nil(out)
