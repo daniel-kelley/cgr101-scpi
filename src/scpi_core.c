@@ -153,7 +153,7 @@ int scpi_core_send(struct info *info, char *buf, int len)
 
         if (err) {
             const char *errmsg;
-            int trace;
+            int trace = 0;
             err = parser_error_get(info, &errmsg, &trace);
             err = scpi_core_parser_error(info, err, trace ? errmsg : NULL);
         } else {
