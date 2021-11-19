@@ -218,6 +218,8 @@ sys-cmd
     { scpi_system_versionq(info); }
 
     | SYST COLON CAPQ
+    { scpi_system_capabilityq(info); }
+
     | STAT COLON OPERQ
     | STAT COLON OPER COLON EVENQ
     | STAT COLON OPER COLON CONDQ

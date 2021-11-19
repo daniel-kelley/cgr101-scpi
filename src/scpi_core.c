@@ -50,6 +50,11 @@ void scpi_system_versionq(struct info *info)
     scpi_output_str(&info->scpi->output, "1999.0");
 }
 
+void scpi_system_capabilityq(struct info *info)
+{
+    scpi_output_str(&info->scpi->output, "\"DIGITIZER\"");
+}
+
 void scpi_system_error_countq(struct info *info)
 {
     int n = scpi_error_count(&info->scpi->error);

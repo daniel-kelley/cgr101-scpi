@@ -18,6 +18,7 @@ extern void scpi_common_cls(struct info *info);
 extern void scpi_system_internal_quit(struct info *info);
 extern void scpi_system_internal_setupq(struct info *info);
 extern void scpi_system_versionq(struct info *info);
+extern void scpi_system_capabilityq(struct info *info);
 extern void scpi_system_error_countq(struct info *info);
 extern void scpi_system_error_nextq(struct info *info);
 

@@ -101,10 +101,10 @@ module CGR101Testcase
   #
   # SCPI standard SYSTem:CAPability?
   #
-  def no_test_008
+  def test_008
     self.class.hdl.send("SYSTem:CAPability?")
     out = self.class.hdl.recv
-    assert_equal("\"DCVOLTMETER\"", out)
+    assert_equal("\"DIGITIZER\"", out)
     assert_equal(0, self.class.hdl.out_length)
     assert_equal(0, self.class.hdl.err_length)
   end
