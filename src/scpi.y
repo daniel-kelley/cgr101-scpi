@@ -166,7 +166,7 @@ sys-cmd
 
     /* 488.2 10.11 */
     | ESRQ
-    { /*scpi_common_esrq();*/ }
+    { scpi_common_esrq(info); }
 
     /* 488.2 10.14 */
     | IDNQ
