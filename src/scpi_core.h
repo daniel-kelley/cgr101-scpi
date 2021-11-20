@@ -22,6 +22,7 @@
 struct scpi_core {
     /* SCPI Registers */
     uint16_t            ques_event;
+    uint16_t            ques_enable;
     uint16_t            oper_event;
     uint16_t            oper_enable;
     /* 488.2 Registers */

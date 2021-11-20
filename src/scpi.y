@@ -52,6 +52,8 @@
 %token OPER
 %token OPERQ
 %token PRES
+%token QUES
+%token QUESQ
 %token QUIT
 %token READ
 %token RST
@@ -238,6 +240,15 @@ sys-cmd
 
     | STAT COLON PRES
     { scpi_status_operation_preset(info); }
+
+    | STAT COLON QUESQ
+    { scpi_status_questionableq(info); }
+
+    | STAT COLON QUES COLON ENAB NUM
+    { scpi_status_questionable_enable(info, &$6); }
+
+    | STAT COLON QUES COLON ENABQ
+    { scpi_status_questionable_enableq(info); }
 
     ;
 

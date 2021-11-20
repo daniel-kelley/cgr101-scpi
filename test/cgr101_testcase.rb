@@ -317,7 +317,7 @@ module CGR101Testcase
   #
   # SCPI standard STATus:QUEStionable?
   #
-  def no_test_019
+  def test_019
     self.class.hdl.send("STATus:QUEStionable?")
     out = self.class.hdl.recv
     assert_equal("0", out)
@@ -328,7 +328,7 @@ module CGR101Testcase
   #
   # SCPI standard STAT:QUES:ENAB?, STAT:QUES:ENAB
   #
-  def no_test_020
+  def test_020
     self.class.hdl.send("STAT:QUES:ENAB?")
     sqe = self.class.hdl.recv
     assert_not_nil(sqe)

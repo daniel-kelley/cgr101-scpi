@@ -30,7 +30,7 @@ static uint8_t scpi_core_status_update(struct info *info)
     }
 
     /* SBR.3: SCPI QUEStionable status not zero */
-    if (info->scpi->ques_event) {
+    if (info->scpi->ques_event && info->scpi->ques_enable) {
         sbr |= SCPI_SBR_QUES;
     }
 
@@ -71,6 +71,7 @@ void scpi_common_cls(struct info *info)
     struct scpi_core *scpi = info->scpi;
 
     scpi->ques_event = 0;
+    scpi->ques_enable = 0;
     scpi->oper_enable = 0;
     scpi->oper_event = 0;
     scpi->seser = 0;
@@ -223,6 +224,29 @@ void scpi_status_operation_enableq(struct info *info)
 void scpi_status_operation_preset(struct info *info)
 {
     (void)info;
+}
+
+void scpi_status_questionableq(struct info *info)
+{
+    scpi_output_int(&info->scpi->output, info->scpi->ques_event);
+}
+
+void scpi_status_questionable_enable(struct info *info,
+                                     struct scpi_type *val)
+{
+    if (val->type == SCPI_TYPE_INT &&
+        val->val.ival >= 0 &&
+        val->val.ival <= 255)
+    {
+        info->scpi->ques_enable = (uint16_t)val->val.ival;
+    } else {
+        /*scpi_error(info->scpi, SCPI_ERR_DATA_OUT_OF_RANGE, val->src);*/
+    }
+}
+
+void scpi_status_questionable_enableq(struct info *info)
+{
+    scpi_output_int(&info->scpi->output, info->scpi->ques_enable);
 }
 
 void scpi_system_internal_setupq(struct info *info)

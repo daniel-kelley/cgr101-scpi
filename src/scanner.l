@@ -60,6 +60,8 @@ NEXT\?                  { return NEXTQ; }
 (OPER|OPERation)        { return OPER; }
 (OPER|OPERation)\?      { return OPERQ; }
 (PRES|PRESet)           { return PRES; }
+(QUES|QUEStionable)     { return QUES; }
+(QUES|QUEStionable)\?   { return QUESQ; }
 QUIT                    { return QUIT; }
 READ                    { return READ; }
 (SET|SETup)\?           { return SETUQ; }
