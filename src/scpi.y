@@ -182,7 +182,7 @@ sys-cmd
 
     /* 488.2 10.32 */
     | RST
-    { /*scpi_common_rst();*/ }
+    { scpi_common_rst(info); }
 
     /* 488.2 10.34 */
     | SRE NUM

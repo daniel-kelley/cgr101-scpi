@@ -68,6 +68,11 @@ void scpi_common_opcq(struct info *info)
                     info->scpi->sesr & SCPI_SESR_OPC ? 1 : 0);
 }
 
+void scpi_common_rst(struct info *info)
+{
+    scpi_common_opc(info);
+}
+
 void scpi_system_versionq(struct info *info)
 {
     scpi_output_str(&info->scpi->output, "1999.0");

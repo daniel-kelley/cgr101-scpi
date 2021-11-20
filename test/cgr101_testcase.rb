@@ -198,7 +198,7 @@ module CGR101Testcase
   #
   # SCPI standard *RST
   #
-  def no_test_014
+  def test_014
     self.class.hdl.send("*rst")
     self.class.hdl.send("*opc?")
     out = self.class.hdl.recv
