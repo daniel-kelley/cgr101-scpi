@@ -172,7 +172,7 @@ module CGR101Testcase
   #
   # SCPI standard *OPC, *OPC?, *ESR clearing
   #
-  def no_test_013
+  def test_013
     self.class.hdl.send("*opc")
     self.class.hdl.send("*opc?")
     out = self.class.hdl.recv

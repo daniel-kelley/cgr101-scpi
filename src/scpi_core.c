@@ -21,8 +21,8 @@ void scpi_common_cls(struct info *info)
 
     scpi->ques = 0;
     scpi->oper = 0;
-    scpi->event = 0;
-    scpi->status = 0;
+    scpi->seser = 0;
+    scpi->sesr = 0;
     scpi->error.head = 0;
     scpi->error.tail = 0;
     scpi->output.len = 0;
@@ -34,7 +34,7 @@ void scpi_common_ese(struct scpi_type *val, struct info *info)
         val->val.ival >= 0 &&
         val->val.ival <= 255)
     {
-        info->scpi->event = (uint8_t)val->val.ival;
+        info->scpi->seser = (uint8_t)val->val.ival;
     } else {
         /*scpi_error(info->scpi, SCPI_ERR_DATA_OUT_OF_RANGE, val->src);*/
     }
@@ -42,17 +42,30 @@ void scpi_common_ese(struct scpi_type *val, struct info *info)
 
 void scpi_common_eseq(struct info *info)
 {
-    scpi_output_int(&info->scpi->output, info->scpi->event);
+    scpi_output_int(&info->scpi->output, info->scpi->seser);
 }
 
 void scpi_common_esrq(struct info *info)
 {
-    scpi_output_int(&info->scpi->output, info->scpi->status);
+    scpi_output_int(&info->scpi->output, info->scpi->sesr);
+    /* 488.2: Reading sesr clears it. */
+    info->scpi->sesr = 0;
 }
 
 void scpi_common_idnq(struct info *info)
 {
     scpi_output_str(&info->scpi->output, "GMP,CGR101-SCPI,1.0,01-02");
+}
+
+void scpi_common_opc(struct info *info)
+{
+     info->scpi->sesr |= SCPI_SESR_OPC;
+}
+
+void scpi_common_opcq(struct info *info)
+{
+    scpi_output_int(&info->scpi->output,
+                    info->scpi->sesr & SCPI_SESR_OPC ? 1 : 0);
 }
 
 void scpi_system_versionq(struct info *info)

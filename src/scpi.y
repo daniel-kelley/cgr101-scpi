@@ -174,11 +174,11 @@ sys-cmd
 
     /* 488.2 10.18 */
     | OPC
-    { /*scpi_common_opc();*/ }
+    { scpi_common_opc(info); }
 
     /* 488.2 10.19 */
     | OPCQ
-    { /*scpi_common_opcq();*/ }
+    { scpi_common_opcq(info); }
 
     /* 488.2 10.32 */
     | RST
