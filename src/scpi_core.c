@@ -15,6 +15,11 @@
 #include "scpi_error.h"
 #include "parser.h"
 
+static uint8_t scpi_core_status_update(struct info *info)
+{
+    return info->scpi->sbr;
+}
+
 void scpi_common_cls(struct info *info)
 {
     struct scpi_core *scpi = info->scpi;
@@ -88,6 +93,13 @@ void scpi_common_sre(struct info *info, struct scpi_type *val)
 void scpi_common_sreq(struct info *info)
 {
     scpi_output_int(&info->scpi->output, info->scpi->srer);
+}
+
+void scpi_common_stbq(struct info *info)
+{
+    uint8_t value;
+    value = scpi_core_status_update(info);
+    scpi_output_int(&info->scpi->output, value);
 }
 
 void scpi_system_versionq(struct info *info)

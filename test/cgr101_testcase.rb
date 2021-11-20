@@ -230,10 +230,10 @@ module CGR101Testcase
   #
   # SCPI standard *STB?
   #
-  def no_test_014
+  def test_014
     self.class.hdl.send("*stb?")
     out = self.class.hdl.recv
-    assert_equal("4", out)
+    assert_equal("0", out)
     assert_equal(0, self.class.hdl.out_length)
     assert_equal(0, self.class.hdl.err_length)
   end

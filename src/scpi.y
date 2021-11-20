@@ -195,7 +195,7 @@ sys-cmd
 
     /* 488.2 10.36 */
     | STBQ
-    { /*scpi_common_stbq($2);*/ }
+    { scpi_common_stbq(info); }
 
     /* 488.2 10.38 */
     | TSTQ
