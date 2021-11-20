@@ -210,7 +210,7 @@ module CGR101Testcase
   #
   # SCPI standard *SRE?, *SRE
   #
-  def no_test_015
+  def test_015
     self.class.hdl.send("*sre?")
     sre = self.class.hdl.recv
     assert_not_nil(sre)

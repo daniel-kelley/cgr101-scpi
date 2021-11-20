@@ -28,7 +28,7 @@ void scpi_common_cls(struct info *info)
     scpi->output.len = 0;
 }
 
-void scpi_common_ese(struct scpi_type *val, struct info *info)
+void scpi_common_ese(struct info *info, struct scpi_type *val)
 {
     if (val->type == SCPI_TYPE_INT &&
         val->val.ival >= 0 &&
@@ -71,6 +71,23 @@ void scpi_common_opcq(struct info *info)
 void scpi_common_rst(struct info *info)
 {
     scpi_common_opc(info);
+}
+
+void scpi_common_sre(struct info *info, struct scpi_type *val)
+{
+    if (val->type == SCPI_TYPE_INT &&
+        val->val.ival >= 0 &&
+        val->val.ival <= 255)
+    {
+        info->scpi->srer = (uint8_t)val->val.ival;
+    } else {
+        /*scpi_error(info->scpi, SCPI_ERR_DATA_OUT_OF_RANGE, val->src);*/
+    }
+}
+
+void scpi_common_sreq(struct info *info)
+{
+    scpi_output_int(&info->scpi->output, info->scpi->srer);
 }
 
 void scpi_system_versionq(struct info *info)

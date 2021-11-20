@@ -158,7 +158,7 @@ sys-cmd
 
     /* 488.2 10.10 */
     | ESE NUM
-    { scpi_common_ese(&$2, info); }
+    { scpi_common_ese(info, &$2); }
 
     /* 488.2 10.11 */
     | ESEQ
@@ -186,12 +186,12 @@ sys-cmd
 
     /* 488.2 10.34 */
     | SRE NUM
-    { /*scpi_common_sre($2);*/ }
+    { scpi_common_sre(info, &$2); }
 
 
     /* 488.2 10.35 */
     | SREQ
-    { /*scpi_common_sreq($2);*/ }
+    { scpi_common_sreq(info); }
 
     /* 488.2 10.36 */
     | STBQ
