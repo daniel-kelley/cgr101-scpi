@@ -102,6 +102,11 @@ void scpi_common_stbq(struct info *info)
     scpi_output_int(&info->scpi->output, value);
 }
 
+void scpi_common_tstq(struct info *info)
+{
+    scpi_output_int(&info->scpi->output, 0);
+}
+
 void scpi_system_versionq(struct info *info)
 {
     scpi_output_str(&info->scpi->output, "1999.0");

@@ -199,7 +199,7 @@ sys-cmd
 
     /* 488.2 10.38 */
     | TSTQ
-    { /*scpi_common_tstq($2);*/ }
+    { scpi_common_tstq(info); }
 
     /* 488.2 10.39 */
     | WAI

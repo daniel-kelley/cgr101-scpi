@@ -23,6 +23,7 @@ extern void scpi_common_rst(struct info *info);
 extern void scpi_common_sre(struct info *info, struct scpi_type *val);
 extern void scpi_common_sreq(struct info *info);
 extern void scpi_common_stbq(struct info *info);
+extern void scpi_common_tstq(struct info *info);
 
 extern void scpi_system_internal_quit(struct info *info);
 extern void scpi_system_internal_setupq(struct info *info);

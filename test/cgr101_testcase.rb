@@ -210,7 +210,7 @@ module CGR101Testcase
   #
   # SCPI standard *SRE?, *SRE
   #
-  def test_015
+  def test_015_001
     self.class.hdl.send("*sre?")
     sre = self.class.hdl.recv
     assert_not_nil(sre)
@@ -230,7 +230,7 @@ module CGR101Testcase
   #
   # SCPI standard *STB?
   #
-  def test_014
+  def test_016_001
     self.class.hdl.send("*stb?")
     out = self.class.hdl.recv
     assert_equal("0", out)
@@ -241,7 +241,7 @@ module CGR101Testcase
   #
   # SCPI standard *TST?
   #
-  def no_test_015
+  def test_016_002
     self.class.hdl.send("*tst?")
     out = self.class.hdl.recv
     assert_equal("0", out)
@@ -252,7 +252,7 @@ module CGR101Testcase
   #
   # SCPI standard *WAI
   #
-  def no_test_014
+  def no_test_016_003
     self.class.hdl.send("*WAI")
     self.class.hdl.send("*opc?")
     out = self.class.hdl.recv
@@ -264,7 +264,7 @@ module CGR101Testcase
   #
   # SCPI standard STATus:OPERation?
   #
-  def no_test_015
+  def no_test_015_002
     self.class.hdl.send("STATus:OPERation?")
     out = self.class.hdl.recv
     assert_equal("0", out)
@@ -275,7 +275,7 @@ module CGR101Testcase
   #
   # SCPI standard STATus:OPERation:EVENt?
   #
-  def no_test_016
+  def no_test_016_004
     self.class.hdl.send("STATus:OPERation:EVENt?")
     out = self.class.hdl.recv
     assert_equal("0", out)
