@@ -220,12 +220,25 @@ sys-cmd
     | SYST COLON CAPQ
     { scpi_system_capabilityq(info); }
 
+    /* SCPI Command Reference Chapter 20 */
     | STAT COLON OPERQ
+    { scpi_status_operation_eventq(info); }
+
     | STAT COLON OPER COLON EVENQ
+    { scpi_status_operation_eventq(info); }
+
     | STAT COLON OPER COLON CONDQ
-    | STAT COLON OPER COLON ENAB
+    { scpi_status_operation_conditionq(info); }
+
+    | STAT COLON OPER COLON ENAB NUM
+    { scpi_status_operation_enable(info, &$6); }
+
     | STAT COLON OPER COLON ENABQ
+    { scpi_status_operation_enableq(info); }
+
     | STAT COLON PRES
+    { scpi_status_operation_preset(info); }
+
     ;
 
 dev-cmd

@@ -264,7 +264,7 @@ module CGR101Testcase
   #
   # SCPI standard STATus:OPERation?
   #
-  def no_test_015_002
+  def test_016_004
     self.class.hdl.send("STATus:OPERation?")
     out = self.class.hdl.recv
     assert_equal("0", out)
@@ -275,7 +275,7 @@ module CGR101Testcase
   #
   # SCPI standard STATus:OPERation:EVENt?
   #
-  def no_test_016_004
+  def test_016_005
     self.class.hdl.send("STATus:OPERation:EVENt?")
     out = self.class.hdl.recv
     assert_equal("0", out)
@@ -286,7 +286,7 @@ module CGR101Testcase
   #
   # SCPI standard STATus:OPERation:CONDition?
   #
-  def no_test_017
+  def test_017
     self.class.hdl.send("STATus:OPERation:CONDition?")
     out = self.class.hdl.recv
     assert_equal("0", out)
@@ -297,7 +297,7 @@ module CGR101Testcase
   #
   # SCPI standard STAT:OPER:ENAB?, STAT:OPER:ENAB
   #
-  def no_test_018
+  def test_018
     self.class.hdl.send("STAT:OPER:ENAB?")
     soe = self.class.hdl.recv
     assert_not_nil(soe)
@@ -326,7 +326,7 @@ module CGR101Testcase
   end
 
   #
-  # SCPI standard STAT:OPER:ENAB?, STAT:OPER:ENAB
+  # SCPI standard STAT:QUES:ENAB?, STAT:QUES:ENAB
   #
   def no_test_020
     self.class.hdl.send("STAT:QUES:ENAB?")
@@ -348,7 +348,7 @@ module CGR101Testcase
   #
   # SCPI standard STATus:PRESet
   #
-  def no_test_021
+  def test_021
     self.class.hdl.send("STATus:PRESet")
     self.class.hdl.send("*opc?")
     out = self.class.hdl.recv

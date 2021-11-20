@@ -33,6 +33,14 @@ extern void scpi_system_capabilityq(struct info *info);
 extern void scpi_system_error_countq(struct info *info);
 extern void scpi_system_error_nextq(struct info *info);
 
+
+extern void scpi_status_operation_eventq(struct info *info);
+extern void scpi_status_operation_conditionq(struct info *info);
+extern void scpi_status_operation_enable(struct info *info,
+                                         struct scpi_type *val);
+extern void scpi_status_operation_enableq(struct info *info);
+extern void scpi_status_operation_preset(struct info *info);
+
 extern void scpi_core_top(struct info *info);
 extern void scpi_core_cmd_sep(struct info *info);
 

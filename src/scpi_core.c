@@ -17,15 +17,62 @@
 
 static uint8_t scpi_core_status_update(struct info *info)
 {
-    return info->scpi->sbr;
+    uint8_t sbr = 0;
+    uint8_t stbq = 0;
+
+    /* SCPI Vol.1 Section 9.2 */
+    /* SBR.0: Available to instrument */
+    /* SBR.1: Available to instrument */
+
+    /* SBR.2: SCPI error queue not empty */
+    if (scpi_error_count(&info->scpi->error)) {
+        sbr |= SCPI_SBR_ERQ;
+    }
+
+    /* SBR.3: SCPI QUEStionable status not zero */
+    if (info->scpi->ques_event) {
+        sbr |= SCPI_SBR_QUES;
+    }
+
+    /* SBR.4: 488.2 MAV */
+    /* Currently unused. */
+
+    /* SBR.5: 488.2 SESR not zero */
+    if (info->scpi->sesr & info->scpi->seser ) {
+        sbr |= SCPI_SBR_SESR;
+    }
+
+    /* SBR.6: 488.2 RQS not zero */
+    /* Currently unused. */
+
+    /* SBR.7: SCPI OPERation status not zero */
+    if (info->scpi->oper_event & info->scpi->oper_enable) {
+        sbr |= SCPI_SBR_OPER;
+    }
+
+    /*
+     * Message Summary status is reflected in the value returned by *stb?
+     * but not in the actual stb register itself, so the stb register is
+     * updated *first*, then the stb MSS bit cleared, MSS calculated and
+     * stuffed back in the stbq value.
+     */
+    info->scpi->sbr = stbq = sbr;
+
+    stbq &= (uint8_t)~SCPI_SBR_MSS;
+    if (stbq & info->scpi->srer) {
+        stbq |= SCPI_SBR_MSS;
+    }
+
+    return stbq;
 }
 
 void scpi_common_cls(struct info *info)
 {
     struct scpi_core *scpi = info->scpi;
 
-    scpi->ques = 0;
-    scpi->oper = 0;
+    scpi->ques_event = 0;
+    scpi->oper_enable = 0;
+    scpi->oper_event = 0;
     scpi->seser = 0;
     scpi->sesr = 0;
     scpi->error.head = 0;
@@ -144,6 +191,38 @@ void scpi_system_error_nextq(struct info *info)
     } else {
         scpi_output_printf(&info->scpi->output,"%d,\"%s\"", error, msg);
     }
+}
+
+void scpi_status_operation_eventq(struct info *info)
+{
+    scpi_output_int(&info->scpi->output, 0);
+}
+
+void scpi_status_operation_conditionq(struct info *info)
+{
+    scpi_output_int(&info->scpi->output, info->scpi->oper_event);
+}
+
+void scpi_status_operation_enable(struct info *info, struct scpi_type *val)
+{
+    if (val->type == SCPI_TYPE_INT &&
+        val->val.ival >= 0 &&
+        val->val.ival <= 255)
+    {
+        info->scpi->oper_enable = (uint16_t)val->val.ival;
+    } else {
+        /*scpi_error(info->scpi, SCPI_ERR_DATA_OUT_OF_RANGE, val->src);*/
+    }
+}
+
+void scpi_status_operation_enableq(struct info *info)
+{
+    scpi_output_int(&info->scpi->output, info->scpi->oper_enable);
+}
+
+void scpi_status_operation_preset(struct info *info)
+{
+    (void)info;
 }
 
 void scpi_system_internal_setupq(struct info *info)
