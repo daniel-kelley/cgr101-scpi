@@ -252,7 +252,7 @@ module CGR101Testcase
   #
   # SCPI standard *WAI
   #
-  def no_test_016_003
+  def test_016_003
     self.class.hdl.send("*WAI")
     self.class.hdl.send("*opc?")
     out = self.class.hdl.recv

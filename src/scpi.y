@@ -203,7 +203,7 @@ sys-cmd
 
     /* 488.2 10.39 */
     | WAI
-    { /*scpi_common_wai($2);*/ }
+    { scpi_common_wai(info); }
 
     | SYST COLON ERRQ
     { scpi_system_error_nextq(info); }
