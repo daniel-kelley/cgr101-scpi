@@ -49,4 +49,18 @@ extern void scpi_status_questionable_enableq(struct info *info);
 extern void scpi_core_top(struct info *info);
 extern void scpi_core_cmd_sep(struct info *info);
 
+extern void scpi_dev_abort(struct info *info);
+
+extern struct scpi_type *scpi_dev_channel_num(struct info *info,
+                                              struct scpi_type *val);
+extern struct scpi_type *scpi_dev_channel_range(struct info *info,
+                                                struct scpi_type *v1,
+                                                struct scpi_type *v2);
+extern struct scpi_type *scpi_dev_channel_range_append(struct info *info,
+                                                       struct scpi_type *v1,
+                                                       struct scpi_type *v2);
+
+extern void scpi_dev_measure_digital_dataq(struct info *info,
+                                           struct scpi_type *val);
+
 #endif /* SCPI_H_ */

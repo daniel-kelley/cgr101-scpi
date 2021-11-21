@@ -12,9 +12,11 @@ struct scpi_type {
     enum {
         SCPI_TYPE_UNKNOWN,
         SCPI_TYPE_INT,
+        SCPI_TYPE_CHAN,
     } type;
     union {
         long ival;
+        long chan;
     } val;
     const char *src;
 };

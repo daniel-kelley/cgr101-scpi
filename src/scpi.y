@@ -252,13 +252,40 @@ sys-cmd
 
     ;
 
+channel-spec
+    : NUM
+    { $$ = *scpi_dev_channel_num(info, &$1); }
+    ;
+
+channel-range
+    : channel-spec
+    | channel-spec COLON channel-spec
+    { $$ = *scpi_dev_channel_range(info, &$1, &$3); }
+    ;
+
+channel-list
+    : channel-range
+    | channel-list COMMA channel-range
+    { $$ = *scpi_dev_channel_range_append(info, &$1, &$3); }
+    ;
+
+channel
+    : LPAREN AT channel-list RPAREN
+    { $$ = $3; }
+    ;
+
+
 dev-cmd
-    : MEAS COLON DIG COLON DATQ
+    : MEAS COLON DIG COLON DATQ channel
+    { scpi_dev_measure_digital_dataq(info, &$6); }
+
     | ABOR
+    { scpi_dev_abort(info); }
+
     | CONFQ
-    | CONF COLON DIG COLON DAT
-    | READ COLON DIG COLON DATQ
-    | FETC COLON DIG COLON DATQ
+    | CONF COLON DIG COLON DAT channel
+    | READ COLON DIG COLON DATQ channel
+    | FETC COLON DIG COLON DATQ channel
     | INIT
     | SYST COLON COMM COLON TCP COLON CONTQ
 

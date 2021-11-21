@@ -46,7 +46,7 @@ COMM|COMMunicate        { return COMM; }
 (COUN|COUNt)\?          { return COUNQ; }
 (DAT|DATa)              { return DAT; }
 (DAT|DATa)\?            { return DATQ; }
-(DIG|DIGtal)            { return DIG; }
+(DIG|DIGital)           { return DIG; }
 (ENAB|ENABle)           { return ENAB; }
 (ENAB|ENABle)\?         { return ENABQ; }
 (ERR|ERRor)             { return ERR; }

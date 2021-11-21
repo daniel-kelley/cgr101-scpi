@@ -5,6 +5,7 @@
 
 */
 
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
@@ -18,6 +19,16 @@ int scpi_output_printf(struct scpi_output *output,
     size_t current = OUTPUT_SIZE - output->len - 1;
     size_t actual;
     va_list ap;
+
+    assert(format != NULL);
+    /* Append ',' after the first element if any except if newline. */
+    if (current > 1 && output->num_elem > 0 && *format != '\n') {
+        *((char *)output->buf + output->len) = ',';
+        current -= 1;
+        output->len += 1;
+    } else {
+        output->overflow = 1;
+    }
 
     va_start(ap, format);
     actual = (size_t)vsnprintf((char *)output->buf + output->len,
@@ -35,11 +46,12 @@ int scpi_output_printf(struct scpi_output *output,
         err = 0;
     }
 
+    output->num_elem += 1;
+
     va_end(ap);
 
     return err;
 }
-
 
 int scpi_output_int(struct scpi_output *output, int value)
 {
