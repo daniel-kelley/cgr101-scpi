@@ -15,6 +15,54 @@
 #include "scpi_error.h"
 #include "parser.h"
 
+static int scpi_input_int(struct info *info,
+                          struct scpi_type *in,
+                          long low,
+                          long high,
+                          long *out)
+{
+    int err = 1;
+
+    assert(in->type == SCPI_TYPE_INT);
+
+    if (in->val.ival >= low && in->val.ival <= high) {
+        err = 0;
+        *out = in->val.ival;
+    } else {
+        scpi_error(&info->scpi->error, SCPI_ERR_DATA_OUT_OF_RANGE, in->src);
+    }
+
+    return err;
+}
+
+static int scpi_input_uint8(struct info *info,
+                            struct scpi_type *in,
+                            uint8_t *out)
+{
+    long ival;
+    int err = scpi_input_int(info, in, 0, 255, &ival);
+
+    if (!err) {
+        *out = (uint8_t)ival;
+    }
+
+    return err;
+}
+
+static int scpi_input_uint16(struct info *info,
+                            struct scpi_type *in,
+                            uint16_t *out)
+{
+    long ival;
+    int err = scpi_input_int(info, in, 0, 0xffff, &ival);
+
+    if (!err) {
+        *out = (uint16_t)ival;
+    }
+
+    return err;
+}
+
 static uint8_t scpi_core_status_update(struct info *info)
 {
     uint8_t sbr = 0;
@@ -83,14 +131,7 @@ void scpi_common_cls(struct info *info)
 
 void scpi_common_ese(struct info *info, struct scpi_type *val)
 {
-    if (val->type == SCPI_TYPE_INT &&
-        val->val.ival >= 0 &&
-        val->val.ival <= 255)
-    {
-        info->scpi->seser = (uint8_t)val->val.ival;
-    } else {
-        /*scpi_error(info->scpi, SCPI_ERR_DATA_OUT_OF_RANGE, val->src);*/
-    }
+    scpi_input_uint8(info, val, &info->scpi->seser);
 }
 
 void scpi_common_eseq(struct info *info)
@@ -128,14 +169,7 @@ void scpi_common_rst(struct info *info)
 
 void scpi_common_sre(struct info *info, struct scpi_type *val)
 {
-    if (val->type == SCPI_TYPE_INT &&
-        val->val.ival >= 0 &&
-        val->val.ival <= 255)
-    {
-        info->scpi->srer = (uint8_t)val->val.ival;
-    } else {
-        /*scpi_error(info->scpi, SCPI_ERR_DATA_OUT_OF_RANGE, val->src);*/
-    }
+    scpi_input_uint8(info, val, &info->scpi->srer);
 }
 
 void scpi_common_sreq(struct info *info)
@@ -206,14 +240,7 @@ void scpi_status_operation_conditionq(struct info *info)
 
 void scpi_status_operation_enable(struct info *info, struct scpi_type *val)
 {
-    if (val->type == SCPI_TYPE_INT &&
-        val->val.ival >= 0 &&
-        val->val.ival <= 255)
-    {
-        info->scpi->oper_enable = (uint16_t)val->val.ival;
-    } else {
-        /*scpi_error(info->scpi, SCPI_ERR_DATA_OUT_OF_RANGE, val->src);*/
-    }
+    scpi_input_uint16(info, val, &info->scpi->oper_enable);
 }
 
 void scpi_status_operation_enableq(struct info *info)
@@ -234,14 +261,7 @@ void scpi_status_questionableq(struct info *info)
 void scpi_status_questionable_enable(struct info *info,
                                      struct scpi_type *val)
 {
-    if (val->type == SCPI_TYPE_INT &&
-        val->val.ival >= 0 &&
-        val->val.ival <= 255)
-    {
-        info->scpi->ques_enable = (uint16_t)val->val.ival;
-    } else {
-        /*scpi_error(info->scpi, SCPI_ERR_DATA_OUT_OF_RANGE, val->src);*/
-    }
+    scpi_input_uint16(info, val, &info->scpi->ques_enable);
 }
 
 void scpi_status_questionable_enableq(struct info *info)
