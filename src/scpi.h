@@ -62,4 +62,15 @@ extern struct scpi_type *scpi_dev_channel_range_append(struct info *info,
 
 extern void scpi_dev_measure_digital_dataq(struct info *info);
 
+extern struct scpi_type *scpi_core_format_type(struct info *info,
+                                               struct scpi_type *v1,
+                                               struct scpi_type *v2);
+
+extern struct scpi_type *scpi_core_nrf_list(struct info *info,
+                                            struct scpi_type *v);
+
+
+extern struct scpi_type *scpi_core_symbolic_value(struct info *info,
+                                                  struct scpi_type *v);
+
 #endif /* SCPI_H_ */

@@ -399,3 +399,29 @@ void scpi_core_cmd_sep(struct info *info)
 {
     scpi_output_cmd_sep(&info->scpi->output);
 }
+
+struct scpi_type *scpi_core_format_type(struct info *info,
+                                        struct scpi_type *v1,
+                                        struct scpi_type *v2)
+{
+    (void)info;
+    (void)v2;
+
+    return v1;
+}
+
+struct scpi_type *scpi_core_nrf_list(struct info *info,
+                                     struct scpi_type *v)
+{
+    (void)info;
+
+    return v;
+}
+
+struct scpi_type *scpi_core_symbolic_value(struct info *info,
+                                           struct scpi_type *v)
+{
+    (void)info;
+
+    return v;
+}

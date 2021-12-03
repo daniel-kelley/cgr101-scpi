@@ -204,16 +204,22 @@ nrf: FLOAT
    ;
 
 nrf-list
-   : nrf
-   | nrf-list COMMA nrf
-   ;
+    : nrf
+    | nrf-list COMMA nrf
+    { $$ = *scpi_core_nrf_list(info, &$3); }
+    ;
+
+symbolic_value
+    : MIN
+    | MAX
+    { $$ = *scpi_core_symbolic_value(info, &$1); }
+    ;
 
 numeric_value
-   : MIN
-   | MAX
-   | nr1
-   | nrf
-   ;
+    : symbolic_value
+    | nr1
+    | nrf
+    ;
 
 /*
  * A number of keywords have identical short forms, so the
@@ -374,15 +380,19 @@ format_type
     | PACK
     | REAL
     | UINT
+    { $$ = $1; }
     ;
 
 format_arg
     : format_type
+    { $$ = *scpi_core_format_type(info, &$1, NULL); }
     | format_type COMMA nrf
+    { $$ = *scpi_core_format_type(info, &$1, &$3); }
     ;
 
 coupling_arg
     : DC
+    { $$ = $1; }
     ;
 
 source_function
@@ -390,6 +400,7 @@ source_function
     | SIN
     | SQU
     | TRI
+    { $$ = $1; }
     ;
 
 block
