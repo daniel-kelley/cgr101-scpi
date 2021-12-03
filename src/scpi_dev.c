@@ -85,19 +85,10 @@ struct scpi_type *scpi_dev_channel_range_append(struct info *info,
     return v2;
 }
 
-#define CHAN(v,i) ((v)->val.chan & (1<<(i)))
-void scpi_dev_measure_digital_dataq(struct info *info,
-                                    struct scpi_type *val)
+void scpi_dev_measure_digital_dataq(struct info *info)
 {
-    int i;
-
-    assert(val->type == SCPI_TYPE_CHAN);
-
-    for (i=CGR101_MIN_CHAN; i<=CGR101_MAX_CHAN; i++) {
-        if (CHAN(val,i)) {
-            scpi_output_int(&info->scpi->output, 0);
-        }
-    }
+    /* STUB */
+    scpi_output_int(&info->scpi->output, 0);
 }
 
 

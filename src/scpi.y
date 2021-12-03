@@ -400,10 +400,10 @@ dev-cmd
     : ABOR
     { scpi_dev_abort(info); }
 
-    | CONF COLON DIG channel
+    | CONF COLON DIG COLON DAT
     | CONFQ
 
-    | FETC COLON DIG COLON DATQ channel
+    | FETC COLON DIG COLON DATQ
 
     | FORM format_arg
     | FORM COLON DAT format_arg
@@ -414,10 +414,10 @@ dev-cmd
 
     | INP COLON COUP coupling_arg
 
-    | MEAS COLON DIG COLON DATQ channel
-    { scpi_dev_measure_digital_dataq(info, &$6); }
+    | MEAS COLON DIG COLON DATQ
+    { scpi_dev_measure_digital_dataq(info); }
 
-    | READ COLON DIG COLON DATQ channel
+    | READ COLON DIG COLON DATQ
 
     | SENS COLON DATQ channel
     | SENS COLON FUNC COLON CONC boolean

@@ -60,7 +60,6 @@ extern struct scpi_type *scpi_dev_channel_range_append(struct info *info,
                                                        struct scpi_type *v1,
                                                        struct scpi_type *v2);
 
-extern void scpi_dev_measure_digital_dataq(struct info *info,
-                                           struct scpi_type *val);
+extern void scpi_dev_measure_digital_dataq(struct info *info);
 
 #endif /* SCPI_H_ */
