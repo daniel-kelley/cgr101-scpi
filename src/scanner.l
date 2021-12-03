@@ -40,7 +40,6 @@ AC                      { return AC; }
 ALL                     { return ALL; }
 ASC|ASCii               { return ASC; }
 BIN|BINary              { return BIN; }
-BYTE                    { return BYTE; }
 CAL|CALibrate           { return CAL; }
 (CAP|CAPability)\?      { return CAPQ; }
 COMM|COMMunicate        { return COMM; }

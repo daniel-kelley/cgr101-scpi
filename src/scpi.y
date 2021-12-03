@@ -26,7 +26,6 @@
 %token ASC
 %token ALL
 %token BIN
-%token BYTE
 %token CAL
 %token CAPQ
 %token CLS
@@ -414,7 +413,6 @@ dev-cmd
     { scpi_dev_abort(info); }
 
     | CONF COLON DIG channel
-    | CONF COLON DIG COLON BYTE channel
     | CONFQ
 
     | FETC COLON DIG COLON DATQ channel
