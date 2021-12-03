@@ -533,19 +533,42 @@ dev-cmd
     | SENS COLON VOLT COLON DC COLON UPPQ channel
     { scpi_dev_sense_voltage_upq(info, &$6); }
 
-
     | SOUR COLON DIG COLON DAT
+    { scpi_dev_source_digital_data(info); }
+
     | SOUR COLON DIG COLON DATQ
+    { scpi_dev_source_digital_dataq(info); }
+
     | SOUR COLON FREQ numeric_value
-    | SOUR COLON FREQQ numeric_value
+    { scpi_dev_source_waveform_frequency(info, &$4); }
+
+    | SOUR COLON FREQQ
+    { scpi_dev_source_waveform_frequencyq(info); }
+
     | SOUR COLON FUNC source_function
+    { scpi_dev_source_waveform_function(info, &$4); }
+
     | SOUR COLON FUNCQ
+    { scpi_dev_source_waveform_functionq(info); }
+
     | SOUR COLON FUNC COLON USER block
+    { scpi_dev_source_waveform_user(info, &$6); }
+
     | SOUR COLON FUNC COLON USERQ
+    { scpi_dev_source_waveform_userq(info); }
+
     | SOUR COLON PULS COLON DCYC numeric_value
+    { scpi_dev_source_pwm_duty_cycle(info, &$6); }
+
     | SOUR COLON PULS COLON DCYCQ
+    { scpi_dev_source_pwm_duty_cycleq(info); }
+
     | SOUR COLON PULS COLON FREQ numeric_value
+    { scpi_dev_source_pwm_frequency(info, &$6); }
+
     | SOUR COLON PULS COLON FREQQ
+    { scpi_dev_source_pwm_frequencyq(info); }
+
 
     | SYST COLON COMM COLON TCP COLON CONTQ
 

@@ -260,3 +260,78 @@ void scpi_dev_sense_voltage_upq(struct info *info,
 }
 
 
+void scpi_dev_source_digital_data(struct info *info)
+{
+    (void)info;
+}
+
+void scpi_dev_source_digital_dataq(struct info *info)
+{
+    (void)info;
+}
+
+void scpi_dev_source_frequency(struct info *info)
+{
+    (void)info;
+}
+
+void scpi_dev_source_waveform_frequency(struct info *info,
+                                        struct scpi_type *v)
+{
+    (void)info;
+    (void)v;
+}
+
+void scpi_dev_source_waveform_frequencyq(struct info *info)
+{
+    (void)info;
+}
+
+void scpi_dev_source_waveform_function(struct info *info,
+                                       struct scpi_type *v)
+{
+    (void)info;
+    (void)v;
+}
+
+void scpi_dev_source_waveform_functionq(struct info *info)
+{
+    (void)info;
+}
+
+void scpi_dev_source_waveform_user(struct info *info,
+                                   struct scpi_type *v)
+{
+    (void)info;
+    (void)v;
+}
+
+void scpi_dev_source_waveform_userq(struct info *info)
+{
+    (void)info;
+}
+
+void scpi_dev_source_pwm_duty_cycle(struct info *info,
+                                    struct scpi_type *v)
+{
+    (void)info;
+    (void)v;
+}
+
+void scpi_dev_source_pwm_duty_cycleq(struct info *info)
+{
+    (void)info;
+}
+
+void scpi_dev_source_pwm_frequency(struct info *info,
+                                   struct scpi_type *v)
+{
+    (void)info;
+    (void)v;
+}
+
+void scpi_dev_source_pwm_frequencyq(struct info *info)
+{
+    (void)info;
+}
+
