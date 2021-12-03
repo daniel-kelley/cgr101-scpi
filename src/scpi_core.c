@@ -425,3 +425,19 @@ struct scpi_type *scpi_core_symbolic_value(struct info *info,
 
     return v;
 }
+
+void scpi_core_format(struct info *info, struct scpi_type *v)
+{
+    (void)info;
+    (void)v;
+}
+
+void scpi_core_formatq(struct info *info)
+{
+    (void)info;
+}
+
+void scpi_core_initiate(struct info *info)
+{
+    (void)info;
+}

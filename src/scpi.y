@@ -412,43 +412,97 @@ dev-cmd
     { scpi_dev_abort(info); }
 
     | CONF COLON DIG COLON DAT
+    { scpi_dev_conf_digital_data(info); }
+
     | CONFQ
+    { scpi_dev_confq(info); }
 
     | FETC COLON DIG COLON DATQ
+    { scpi_dev_fetch_digital_dataq(info); }
 
     | FORM format_arg
+    { scpi_core_format(info, &$2); }
+
     | FORM COLON DAT format_arg
+    { scpi_core_format(info, &$4); }
+
     | FORMQ
+    { scpi_core_formatq(info); }
+
     | FORM COLON DATQ
+    { scpi_core_formatq(info); }
+
 
     | INIT
+    { scpi_core_initiate(info); }
+
 
     | INP COLON COUP coupling_arg
+    { scpi_dev_input_coupling(info, &$4); }
 
     | MEAS COLON DIG COLON DATQ
     { scpi_dev_measure_digital_dataq(info); }
 
     | READ COLON DIG COLON DATQ
+    { scpi_dev_read_digital_dataq(info); }
 
     | SENS COLON DATQ channel
+    { scpi_dev_sense_dataq(info, &$4); }
+
     | SENS COLON FUNC COLON CONC boolean
+    { scpi_dev_sense_function_concurrent(info, &$6); }
+
     | SENS COLON FUNC COLON OFF channel
+    { scpi_dev_sense_function_off(info, &$6); }
+
     | SENS COLON FUNC COLON stateq channel
+    { scpi_dev_sense_function_stateq(info, &$6); }
+
     | SENS COLON FUNC COLON ON channel
+    { scpi_dev_sense_function_on(info, &$6); }
+
     | SENS COLON SWE COLON POIN numeric_value
+    { scpi_dev_sense_sweep_point(info, &$6); }
+
     | SENS COLON SWE COLON TIME numeric_value
+    { scpi_dev_sense_sweep_time(info, &$6); }
+
     | SENS COLON SWE COLON TINT numeric_value
+    { scpi_dev_sense_sweep_time_interval(info, &$6); }
+
     | SENS COLON SWE COLON PRET numeric_value
+    { scpi_dev_sense_sweep_pretrigger(info, &$6); }
+
     | SENS COLON VOLT COLON LOW numeric_value channel
+    { scpi_dev_sense_voltage_low(info, &$6, &$7); }
+
     | SENS COLON VOLT COLON DC COLON LOW numeric_value channel
+    { scpi_dev_sense_voltage_low(info, &$6, &$7); }
+
     | SENS COLON VOLT COLON OFFS numeric_value channel
+    { scpi_dev_sense_voltage_offset(info, &$6, &$7); }
+
     | SENS COLON VOLT COLON DC COLON OFFS numeric_value channel
+    { scpi_dev_sense_voltage_offset(info, &$6, &$7); }
+
     | SENS COLON VOLT COLON PTP numeric_value channel
+    { scpi_dev_sense_voltage_ptp(info, &$6, &$7); }
+
     | SENS COLON VOLT COLON DC COLON PTP numeric_value channel
+    { scpi_dev_sense_voltage_ptp(info, &$6, &$7); }
+
     | SENS COLON VOLT COLON RANG numeric_value channel
+    { scpi_dev_sense_voltage_range(info, &$6, &$7); }
+
     | SENS COLON VOLT COLON DC COLON RANG numeric_value channel
+    { scpi_dev_sense_voltage_range(info, &$6, &$7); }
+
     | SENS COLON VOLT COLON UPP numeric_value channel
+    { scpi_dev_sense_voltage_up(info, &$6, &$7); }
+
     | SENS COLON VOLT COLON DC COLON UPP numeric_value channel
+    { scpi_dev_sense_voltage_up(info, &$6, &$7); }
+
 
     | SENS COLON VOLT COLON LOWQ channel
     | SENS COLON VOLT COLON DC COLON LOWQ channel
