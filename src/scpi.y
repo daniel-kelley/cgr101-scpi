@@ -19,19 +19,32 @@
 %token COLON
 %token DASH
 %token AT
+%token OTHER
 
 %token ABOR
+%token AC
+%token ASC
+%token ALL
+%token BIN
+%token BYTE
 %token CAL
 %token CAPQ
 %token CLS
 %token COMM
+%token CONC
 %token CONDQ
 %token CONF
 %token CONFQ
 %token CONTQ
 %token COUNQ
+%token COUP
+%token CW
 %token DAT
 %token DATQ
+%token DC
+%token DCYC
+%token DCYCQ
+%token DEF
 %token DIG
 %token ENAB
 %token ENABQ
@@ -42,33 +55,84 @@
 %token ESRQ
 %token EVENQ
 %token FETC
+%token FIX
+%token FLOAT
+%token FORM
+%token FORMQ
+%token FREQ
+%token FREQQ
+%token FUNC
+%token FUNCQ
+%token GND
+%token HEX
 %token IDNQ
+%token IMM
 %token INIT
+%token INP
 %token INT
+%token INTEGER
+%token INTERNAL
+%token LOW
+%token LOWQ
+%token MAX
 %token MEAS
+%token MIN
 %token NEXTQ
+%token OCT
+%token OFF
+%token OFFS
+%token OFFSQ
+%token ON
 %token OPC
 %token OPCQ
 %token OPER
 %token OPERQ
+%token PACK
+%token POIN
 %token PRES
+%token PRET
+%token PTP
+%token PTPQ
+%token PULS
 %token QUES
 %token QUESQ
 %token QUIT
+%token RAND
+%token RANG
+%token RANGQ
 %token READ
+%token REAL
 %token RST
+%token SENS
 %token SETUQ
+%token SHAP
 %token SHOWQ
+%token SIN
+%token SOUR
 %token SRE
 %token SREQ
 %token STAT
+%token STATQ
+%token STATE
+%token STATEQ
+%token STATUS
 %token STBQ
+%token SQU
+%token SWE
 %token SYST
 %token TCP
+%token TIME
+%token TINT
+%token TRI
 %token TSTQ
+%token UINT
+%token UPP
+%token UPPQ
+%token USER
+%token USERQ
 %token VERSQ
+%token VOLT
 %token WAI
-%token OTHER
 
 %start top
 
@@ -106,22 +170,8 @@ semis
     ;
 
 cmd-path
-    : cmd-first
-    | cmd-first cmd-rest
-    ;
-
-cmd-first
-    : cmd-abs
-    | cmd
-    ;
-
-cmd-rest
-    : cmd-abs
-    | cmd-rest cmd-abs
-    ;
-
-cmd-abs
-    : COLON cmd
+    : cmd
+    | COLON cmd
     ;
 
 cmd
@@ -152,6 +202,52 @@ cmd
  *    7.7.7.2 EXPRESSION (ignore for now)
  */
 
+nr1: NUM
+   ;
+
+nrf: FLOAT
+   ;
+
+nrf-list
+   : nrf
+   | nrf-list COMMA nrf
+   ;
+
+numeric_value
+   : MIN
+   | MAX
+   | nr1
+   | nrf
+   ;
+
+/*
+ * A number of keywords have identical short forms, so the
+ * long and short forms are handled here in the grammar.
+ */
+status
+    : STATUS
+    | STAT
+    ;
+
+stateq
+    : STATEQ
+    | STATQ
+    ;
+
+internal
+    : INTERNAL
+    | INT
+    ;
+
+integer
+    : INTEGER
+    | INT
+    ;
+
+boolean
+    : ON
+    | OFF
+    ;
 
 sys-cmd
     /* 488.2 10.3 */
@@ -159,7 +255,7 @@ sys-cmd
     { scpi_common_cls(info); }
 
     /* 488.2 10.10 */
-    | ESE NUM
+    | ESE nr1
     { scpi_common_ese(info, &$2); }
 
     /* 488.2 10.11 */
@@ -187,7 +283,7 @@ sys-cmd
     { scpi_common_rst(info); }
 
     /* 488.2 10.34 */
-    | SRE NUM
+    | SRE nr1
     { scpi_common_sre(info, &$2); }
 
 
@@ -223,37 +319,37 @@ sys-cmd
     { scpi_system_capabilityq(info); }
 
     /* SCPI Command Reference Chapter 20 */
-    | STAT COLON OPERQ
+    | status COLON OPERQ
     { scpi_status_operation_eventq(info); }
 
-    | STAT COLON OPER COLON EVENQ
+    | status COLON OPER COLON EVENQ
     { scpi_status_operation_eventq(info); }
 
-    | STAT COLON OPER COLON CONDQ
+    | status COLON OPER COLON CONDQ
     { scpi_status_operation_conditionq(info); }
 
-    | STAT COLON OPER COLON ENAB NUM
+    | status COLON OPER COLON ENAB nr1
     { scpi_status_operation_enable(info, &$6); }
 
-    | STAT COLON OPER COLON ENABQ
+    | status COLON OPER COLON ENABQ
     { scpi_status_operation_enableq(info); }
 
-    | STAT COLON PRES
+    | status COLON PRES
     { scpi_status_operation_preset(info); }
 
-    | STAT COLON QUESQ
+    | status COLON QUESQ
     { scpi_status_questionableq(info); }
 
-    | STAT COLON QUES COLON ENAB NUM
+    | status COLON QUES COLON ENAB nr1
     { scpi_status_questionable_enable(info, &$6); }
 
-    | STAT COLON QUES COLON ENABQ
+    | status COLON QUES COLON ENABQ
     { scpi_status_questionable_enableq(info); }
 
     ;
 
 channel-spec
-    : NUM
+    : nr1
     { $$ = *scpi_dev_channel_num(info, &$1); }
     ;
 
@@ -274,29 +370,123 @@ channel
     { $$ = $3; }
     ;
 
+format_type
+    : ASC
+    | BIN
+    | HEX
+    | integer
+    | OCT
+    | PACK
+    | REAL
+    | UINT
+    ;
+
+format_arg
+    : format_type
+    | format_type COMMA nrf
+    ;
+
+coupling_arg
+    : AC
+    | DC
+    | GND
+    ;
+
+init
+    : INIT
+    | INIT COLON IMM
+    | INIT COLON IMM COLON ALL
+    ;
+
+source_function
+    : RAND
+    | SIN
+    | SQU
+    | TRI
+    ;
+
+block
+    : nrf-list
+    ;
 
 dev-cmd
-    : MEAS COLON DIG COLON DATQ channel
-    { scpi_dev_measure_digital_dataq(info, &$6); }
-
-    | ABOR
+    : ABOR
     { scpi_dev_abort(info); }
 
+    | CONF COLON DIG channel
+    | CONF COLON DIG COLON BYTE channel
     | CONFQ
-    | CONF COLON DIG COLON DAT channel
-    | READ COLON DIG COLON DATQ channel
+
     | FETC COLON DIG COLON DATQ channel
-    | INIT
+
+    | FORM format_arg
+    | FORM COLON DAT format_arg
+    | FORMQ
+    | FORM COLON DATQ
+
+    | init
+
+    | INP COLON COUP coupling_arg
+
+    | MEAS COLON DIG COLON DATQ channel
+    { scpi_dev_measure_digital_dataq(info, &$6); }
+
+    | READ COLON DIG COLON DATQ channel
+
+    | SENS COLON DATQ channel
+    | SENS COLON FUNC COLON CONC boolean
+    | SENS COLON FUNC COLON OFF channel
+    | SENS COLON FUNC COLON stateq channel
+    | SENS COLON FUNC COLON ON channel
+    | SENS COLON SWE COLON POIN numeric_value
+    | SENS COLON SWE COLON TIME numeric_value
+    | SENS COLON SWE COLON TINT numeric_value
+    | SENS COLON SWE COLON PRET numeric_value
+    | SENS COLON VOLT COLON LOW numeric_value channel
+    | SENS COLON VOLT COLON DC COLON LOW numeric_value channel
+    | SENS COLON VOLT COLON OFFS numeric_value channel
+    | SENS COLON VOLT COLON DC COLON OFFS numeric_value channel
+    | SENS COLON VOLT COLON PTP numeric_value channel
+    | SENS COLON VOLT COLON DC COLON PTP numeric_value channel
+    | SENS COLON VOLT COLON RANG numeric_value channel
+    | SENS COLON VOLT COLON DC COLON RANG numeric_value channel
+    | SENS COLON VOLT COLON UPP numeric_value channel
+    | SENS COLON VOLT COLON DC COLON UPP numeric_value channel
+
+    | SENS COLON VOLT COLON LOWQ channel
+    | SENS COLON VOLT COLON DC COLON LOWQ channel
+    | SENS COLON VOLT COLON OFFSQ  channel
+    | SENS COLON VOLT COLON DC COLON OFFSQ channel
+    | SENS COLON VOLT COLON PTPQ channel
+    | SENS COLON VOLT COLON DC COLON PTPQ channel
+    | SENS COLON VOLT COLON RANGQ channel
+    | SENS COLON VOLT COLON DC COLON RANGQ channel
+    | SENS COLON VOLT COLON UPPQ channel
+    | SENS COLON VOLT COLON DC COLON UPPQ channel
+
+    | SOUR COLON DIG COLON DAT
+    | SOUR COLON DIG COLON DATQ
+    | SOUR COLON FREQ numeric_value
+    | SOUR COLON FREQQ numeric_value
+    | SOUR COLON FUNC source_function
+    | SOUR COLON FUNCQ
+    | SOUR COLON FUNC COLON USER block
+    | SOUR COLON FUNC COLON USERQ
+    | SOUR COLON PULS COLON DCYC numeric_value
+    | SOUR COLON PULS COLON DCYCQ
+    | SOUR COLON PULS COLON FREQ numeric_value
+    | SOUR COLON PULS COLON FREQQ
+
     | SYST COLON COMM COLON TCP COLON CONTQ
 
-    | SYST COLON INT COLON QUIT
+    | SYST COLON internal COLON QUIT
     { scpi_system_internal_quit(info); }
 
-    | SYST COLON INT COLON CAL
-    | SYST COLON INT COLON CONF
-    | SYST COLON INT COLON SHOWQ
+    | SYST COLON internal COLON CAL
+    | SYST COLON internal COLON CONF
+    | SYST COLON internal COLON SHOWQ
 
-    | SYST COLON INT COLON SETUQ
+    | SYST COLON internal COLON SETUQ
     { scpi_system_internal_setupq(info); }
     ;
 
