@@ -22,9 +22,7 @@
 %token OTHER
 
 %token ABOR
-%token AC
 %token ASC
-%token ALL
 %token BIN
 %token CAL
 %token CAPQ
@@ -62,10 +60,8 @@
 %token FREQQ
 %token FUNC
 %token FUNCQ
-%token GND
 %token HEX
 %token IDNQ
-%token IMM
 %token INIT
 %token INP
 %token INT
@@ -386,15 +382,7 @@ format_arg
     ;
 
 coupling_arg
-    : AC
-    | DC
-    | GND
-    ;
-
-init
-    : INIT
-    | INIT COLON IMM
-    | INIT COLON IMM COLON ALL
+    : DC
     ;
 
 source_function
@@ -422,7 +410,7 @@ dev-cmd
     | FORMQ
     | FORM COLON DATQ
 
-    | init
+    | INIT
 
     | INP COLON COUP coupling_arg
 

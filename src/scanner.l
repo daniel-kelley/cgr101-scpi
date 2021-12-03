@@ -36,8 +36,6 @@
 \*TST\?                 { return TSTQ; }
 \WAI*                   { return WAI; }
 ABOR|ABORt              { return ABOR; }
-AC                      { return AC; }
-ALL                     { return ALL; }
 ASC|ASCii               { return ASC; }
 BIN|BINary              { return BIN; }
 CAL|CALibrate           { return CAL; }
@@ -71,9 +69,7 @@ DEF                     { return DEF; }
 (FREQ|FREQuency)\?      { return FREQQ; }
 (FUNC|FUNCtion)         { return FUNC; }
 (FUNC|FUNCtion)\?       { return FUNCQ; }
-GND                     { return GND; }
 (HEX|HEXadecimal)       { return HEX; }
-(IMM|IMMediate)         { return IMM; }
 (INIT|INITiate)         { return INIT; }
 (INP|INPut)             { return INP; }
 INT                     { return INT; }
