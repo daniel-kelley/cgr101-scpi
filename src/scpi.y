@@ -503,17 +503,36 @@ dev-cmd
     | SENS COLON VOLT COLON DC COLON UPP numeric_value channel
     { scpi_dev_sense_voltage_up(info, &$6, &$7); }
 
-
     | SENS COLON VOLT COLON LOWQ channel
+    { scpi_dev_sense_voltage_lowq(info, &$6); }
+
     | SENS COLON VOLT COLON DC COLON LOWQ channel
+    { scpi_dev_sense_voltage_lowq(info, &$6); }
+
     | SENS COLON VOLT COLON OFFSQ  channel
+    { scpi_dev_sense_voltage_offsetq(info, &$6); }
+
     | SENS COLON VOLT COLON DC COLON OFFSQ channel
+    { scpi_dev_sense_voltage_offsetq(info, &$6); }
+
     | SENS COLON VOLT COLON PTPQ channel
+    { scpi_dev_sense_voltage_ptpq(info, &$6); }
+
     | SENS COLON VOLT COLON DC COLON PTPQ channel
+    { scpi_dev_sense_voltage_ptpq(info, &$6); }
+
     | SENS COLON VOLT COLON RANGQ channel
+    { scpi_dev_sense_voltage_rangeq(info, &$6); }
+
     | SENS COLON VOLT COLON DC COLON RANGQ channel
+    { scpi_dev_sense_voltage_rangeq(info, &$6); }
+
     | SENS COLON VOLT COLON UPPQ channel
+    { scpi_dev_sense_voltage_upq(info, &$6); }
+
     | SENS COLON VOLT COLON DC COLON UPPQ channel
+    { scpi_dev_sense_voltage_upq(info, &$6); }
+
 
     | SOUR COLON DIG COLON DAT
     | SOUR COLON DIG COLON DATQ

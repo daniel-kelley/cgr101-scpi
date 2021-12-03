@@ -92,94 +92,94 @@ void scpi_dev_measure_digital_dataq(struct info *info)
 }
 
 
-extern void scpi_dev_conf_digital_data(struct info *info)
+void scpi_dev_conf_digital_data(struct info *info)
 {
     (void)info;
 }
 
-extern void scpi_dev_confq(struct info *info)
+void scpi_dev_confq(struct info *info)
 {
     (void)info;
 }
 
-extern void scpi_dev_fetch_digital_dataq(struct info *info)
+void scpi_dev_fetch_digital_dataq(struct info *info)
 {
     (void)info;
 }
 
-extern void scpi_dev_input_coupling(struct info *info, struct scpi_type *v)
-{
-    (void)info;
-    (void)v;
-}
-
-extern void scpi_dev_read_digital_dataq(struct info *info)
-{
-    (void)info;
-}
-
-extern void scpi_dev_sense_dataq(struct info *info, struct scpi_type *v)
+void scpi_dev_input_coupling(struct info *info, struct scpi_type *v)
 {
     (void)info;
     (void)v;
 }
 
-extern void scpi_dev_sense_function_concurrent(struct info *info,
+void scpi_dev_read_digital_dataq(struct info *info)
+{
+    (void)info;
+}
+
+void scpi_dev_sense_dataq(struct info *info, struct scpi_type *v)
+{
+    (void)info;
+    (void)v;
+}
+
+void scpi_dev_sense_function_concurrent(struct info *info,
                                                struct scpi_type *v)
 {
     (void)info;
     (void)v;
 }
 
-extern void scpi_dev_sense_function_off(struct info *info,
+void scpi_dev_sense_function_off(struct info *info,
                                         struct scpi_type *v)
 {
     (void)info;
     (void)v;
 }
 
-extern void scpi_dev_sense_function_stateq(struct info *info,
+void scpi_dev_sense_function_stateq(struct info *info,
                                            struct scpi_type *v)
 {
     (void)info;
     (void)v;
 }
 
-extern void scpi_dev_sense_function_on(struct info *info,
+void scpi_dev_sense_function_on(struct info *info,
                                        struct scpi_type *v)
 {
     (void)info;
     (void)v;
 }
 
-extern void scpi_dev_sense_sweep_point(struct info *info,
+void scpi_dev_sense_sweep_point(struct info *info,
                                        struct scpi_type *v)
 {
     (void)info;
     (void)v;
 }
 
-extern void scpi_dev_sense_sweep_time(struct info *info, struct scpi_type *v)
+void scpi_dev_sense_sweep_time(struct info *info, struct scpi_type *v)
 {
     (void)info;
     (void)v;
 }
 
-extern void scpi_dev_sense_sweep_time_interval(struct info *info,
+void scpi_dev_sense_sweep_time_interval(struct info *info,
                                                struct scpi_type *v)
 {
     (void)info;
     (void)v;
 }
 
-extern void scpi_dev_sense_sweep_pretrigger(struct info *info,
+void scpi_dev_sense_sweep_pretrigger(struct info *info,
                                             struct scpi_type *v)
 {
     (void)info;
     (void)v;
 }
 
-extern void scpi_dev_sense_voltage_low(struct info *info,
+void scpi_dev_sense_voltage_low(struct info *info,
                                        struct scpi_type *v1,
                                        struct scpi_type *v2)
 {
@@ -188,7 +188,7 @@ extern void scpi_dev_sense_voltage_low(struct info *info,
     (void)v2;
 }
 
-extern void scpi_dev_sense_voltage_offset(struct info *info,
+void scpi_dev_sense_voltage_offset(struct info *info,
                                           struct scpi_type *v1,
                                           struct scpi_type *v2)
 {
@@ -197,7 +197,7 @@ extern void scpi_dev_sense_voltage_offset(struct info *info,
     (void)v2;
 }
 
-extern void scpi_dev_sense_voltage_ptp(struct info *info,
+void scpi_dev_sense_voltage_ptp(struct info *info,
                                        struct scpi_type *v1,
                                        struct scpi_type *v2)
 {
@@ -206,7 +206,7 @@ extern void scpi_dev_sense_voltage_ptp(struct info *info,
     (void)v2;
 }
 
-extern void scpi_dev_sense_voltage_range(struct info *info,
+void scpi_dev_sense_voltage_range(struct info *info,
                                          struct scpi_type *v1,
                                          struct scpi_type *v2)
 {
@@ -215,13 +215,48 @@ extern void scpi_dev_sense_voltage_range(struct info *info,
     (void)v2;
 }
 
-extern void scpi_dev_sense_voltage_up(struct info *info,
+void scpi_dev_sense_voltage_up(struct info *info,
                                       struct scpi_type *v1,
                                       struct scpi_type *v2)
 {
     (void)info;
     (void)v1;
     (void)v2;
+}
+
+void scpi_dev_sense_voltage_lowq(struct info *info,
+                                 struct scpi_type *v)
+{
+    (void)info;
+    (void)v;
+}
+
+void scpi_dev_sense_voltage_offsetq(struct info *info,
+                                    struct scpi_type *v)
+{
+    (void)info;
+    (void)v;
+}
+
+void scpi_dev_sense_voltage_ptpq(struct info *info,
+                                 struct scpi_type *v)
+{
+    (void)info;
+    (void)v;
+}
+
+void scpi_dev_sense_voltage_rangeq(struct info *info,
+                                   struct scpi_type *v)
+{
+    (void)info;
+    (void)v;
+}
+
+void scpi_dev_sense_voltage_upq(struct info *info,
+                                struct scpi_type *v)
+{
+    (void)info;
+    (void)v;
 }
 
 

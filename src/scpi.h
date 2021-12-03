@@ -114,5 +114,15 @@ extern void scpi_dev_sense_voltage_range(struct info *info,
 extern void scpi_dev_sense_voltage_up(struct info *info,
                                       struct scpi_type *v1,
                                       struct scpi_type *v2);
+extern void scpi_dev_sense_voltage_lowq(struct info *info,
+                                       struct scpi_type *v);
+extern void scpi_dev_sense_voltage_offsetq(struct info *info,
+                                          struct scpi_type *v);
+extern void scpi_dev_sense_voltage_ptpq(struct info *info,
+                                       struct scpi_type *v1);
+extern void scpi_dev_sense_voltage_rangeq(struct info *info,
+                                         struct scpi_type *v);
+extern void scpi_dev_sense_voltage_upq(struct info *info,
+                                      struct scpi_type *v);
 
 #endif /* SCPI_H_ */
