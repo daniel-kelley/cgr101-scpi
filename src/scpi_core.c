@@ -441,3 +441,24 @@ void scpi_core_initiate(struct info *info)
 {
     (void)info;
 }
+
+void scpi_system_communicate_tcp_controlq(struct info *info)
+{
+    (void)info;
+}
+
+void scpi_system_internal_calibrate(struct info *info)
+{
+    (void)info;
+}
+
+void scpi_system_internal_configure(struct info *info)
+{
+    (void)info;
+}
+
+void scpi_system_internal_showq(struct info *info)
+{
+    (void)info;
+}
+

@@ -144,5 +144,9 @@ extern void scpi_dev_source_pwm_duty_cycleq(struct info *info);
 extern void scpi_dev_source_pwm_frequency(struct info *info,
                                           struct scpi_type *v);
 extern void scpi_dev_source_pwm_frequencyq(struct info *info);
+extern void scpi_system_communicate_tcp_controlq(struct info *info);
+extern void scpi_system_internal_calibrate(struct info *info);
+extern void scpi_system_internal_configure(struct info *info);
+extern void scpi_system_internal_showq(struct info *info);
 
 #endif /* SCPI_H_ */

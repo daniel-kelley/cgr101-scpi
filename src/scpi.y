@@ -571,13 +571,19 @@ dev-cmd
 
 
     | SYST COLON COMM COLON TCP COLON CONTQ
+    { scpi_system_communicate_tcp_controlq(info); }
 
     | SYST COLON internal COLON QUIT
     { scpi_system_internal_quit(info); }
 
     | SYST COLON internal COLON CAL
+    { scpi_system_internal_calibrate(info); }
+
     | SYST COLON internal COLON CONF
+    { scpi_system_internal_configure(info); }
+
     | SYST COLON internal COLON SHOWQ
+    { scpi_system_internal_showq(info); }
 
     | SYST COLON internal COLON SETUQ
     { scpi_system_internal_setupq(info); }
