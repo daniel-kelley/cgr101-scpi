@@ -107,4 +107,3 @@ int spawn(const char *path, struct spawn *spawn)
 
     return 0;
 }
-

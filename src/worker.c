@@ -87,5 +87,3 @@ int worker_remove(struct worker *worker, int idx)
 
     return 0;
 }
-
-
