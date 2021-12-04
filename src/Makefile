@@ -69,6 +69,7 @@ SRC += scpi_output.c
 SRC += scanner.c
 SRC += parser.c
 SRC += worker.c
+SRC += spawn.c
 SRC += scpi_dev.c
 
 OBJ := $(SRC:%.c=%.o)

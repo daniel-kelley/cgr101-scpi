@@ -8,6 +8,8 @@
 #include <string.h>
 #include "cgr101.h"
 
+#define CMD "sp -b240400 -f/dev/ttyUSB0"
+
 int cgr101_open(struct info *info)
 {
     if (info->debug && strchr(info->debug,'E')) {
