@@ -88,7 +88,7 @@ struct scpi_type *scpi_dev_channel_range_append(struct info *info,
 void scpi_dev_measure_digital_dataq(struct info *info)
 {
     /* STUB */
-    scpi_output_int(&info->scpi->output, 0);
+    scpi_output_int(info->output, 0);
 }
 
 

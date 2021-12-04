@@ -7,9 +7,37 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
 #include "scpi_output.h"
+
+#define OUTPUT_SIZE 1024
+struct scpi_output {
+    int                 num_sep;
+    int                 num_elem;
+    int                 overflow;
+    size_t              len;
+    uint8_t             buf[OUTPUT_SIZE];
+};
+
+struct scpi_output *scpi_output_init(void)
+{
+    struct scpi_output *output;
+
+    output = calloc(1,sizeof(*output));
+    assert(output);
+
+    return output;
+}
+
+int scpi_output_done(struct scpi_output *output)
+{
+
+    assert(output);
+    free(output);
+    return 0;
+}
 
 int scpi_output_printf(struct scpi_output *output,
                        const char *format,
@@ -71,6 +99,11 @@ int scpi_output_cmd_sep(struct scpi_output *output)
 void scpi_output_clear(struct scpi_output *output)
 {
     memset(output, 0, sizeof(*output));
+}
+
+void scpi_output_reset(struct scpi_output *output)
+{
+    output->len = 0;
 }
 
 int scpi_output_get(struct scpi_output *output, uint8_t **buf, size_t *sz)

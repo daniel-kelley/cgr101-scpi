@@ -126,7 +126,7 @@ void scpi_common_cls(struct info *info)
     scpi->sesr = 0;
     scpi->error.head = 0;
     scpi->error.tail = 0;
-    scpi->output.len = 0;
+    scpi_output_reset(info->output);
 }
 
 void scpi_common_ese(struct info *info, struct scpi_type *val)
@@ -136,19 +136,19 @@ void scpi_common_ese(struct info *info, struct scpi_type *val)
 
 void scpi_common_eseq(struct info *info)
 {
-    scpi_output_int(&info->scpi->output, info->scpi->seser);
+    scpi_output_int(info->output, info->scpi->seser);
 }
 
 void scpi_common_esrq(struct info *info)
 {
-    scpi_output_int(&info->scpi->output, info->scpi->sesr);
+    scpi_output_int(info->output, info->scpi->sesr);
     /* 488.2: Reading sesr clears it. */
     info->scpi->sesr = 0;
 }
 
 void scpi_common_idnq(struct info *info)
 {
-    scpi_output_str(&info->scpi->output, "GMP,CGR101-SCPI,1.0,01-02");
+    scpi_output_str(info->output, "GMP,CGR101-SCPI,1.0,01-02");
 }
 
 void scpi_common_opc(struct info *info)
@@ -158,7 +158,7 @@ void scpi_common_opc(struct info *info)
 
 void scpi_common_opcq(struct info *info)
 {
-    scpi_output_int(&info->scpi->output,
+    scpi_output_int(info->output,
                     info->scpi->sesr & SCPI_SESR_OPC ? 1 : 0);
 }
 
@@ -174,19 +174,19 @@ void scpi_common_sre(struct info *info, struct scpi_type *val)
 
 void scpi_common_sreq(struct info *info)
 {
-    scpi_output_int(&info->scpi->output, info->scpi->srer);
+    scpi_output_int(info->output, info->scpi->srer);
 }
 
 void scpi_common_stbq(struct info *info)
 {
     uint8_t value;
     value = scpi_core_status_update(info);
-    scpi_output_int(&info->scpi->output, value);
+    scpi_output_int(info->output, value);
 }
 
 void scpi_common_tstq(struct info *info)
 {
-    scpi_output_int(&info->scpi->output, 0);
+    scpi_output_int(info->output, 0);
 }
 
 void scpi_common_wai(struct info *info)
@@ -196,18 +196,18 @@ void scpi_common_wai(struct info *info)
 
 void scpi_system_versionq(struct info *info)
 {
-    scpi_output_str(&info->scpi->output, "1999.0");
+    scpi_output_str(info->output, "1999.0");
 }
 
 void scpi_system_capabilityq(struct info *info)
 {
-    scpi_output_str(&info->scpi->output, "\"DIGITIZER\"");
+    scpi_output_str(info->output, "\"DIGITIZER\"");
 }
 
 void scpi_system_error_countq(struct info *info)
 {
     int n = scpi_error_count(&info->scpi->error);
-    scpi_output_int(&info->scpi->output, n);
+    scpi_output_int(info->output, n);
 }
 
 void scpi_system_error_nextq(struct info *info)
@@ -219,23 +219,23 @@ void scpi_system_error_nextq(struct info *info)
     scpi_error_get(&info->scpi->error, &error, &msg, &syndrome);
 
     if (syndrome) {
-        scpi_output_printf(&info->scpi->output,
+        scpi_output_printf(info->output,
                            "%d,\"%s;%s\"",
                            error, msg, syndrome);
         free((void *)syndrome);
     } else {
-        scpi_output_printf(&info->scpi->output,"%d,\"%s\"", error, msg);
+        scpi_output_printf(info->output,"%d,\"%s\"", error, msg);
     }
 }
 
 void scpi_status_operation_eventq(struct info *info)
 {
-    scpi_output_int(&info->scpi->output, 0);
+    scpi_output_int(info->output, 0);
 }
 
 void scpi_status_operation_conditionq(struct info *info)
 {
-    scpi_output_int(&info->scpi->output, info->scpi->oper_event);
+    scpi_output_int(info->output, info->scpi->oper_event);
 }
 
 void scpi_status_operation_enable(struct info *info, struct scpi_type *val)
@@ -245,7 +245,7 @@ void scpi_status_operation_enable(struct info *info, struct scpi_type *val)
 
 void scpi_status_operation_enableq(struct info *info)
 {
-    scpi_output_int(&info->scpi->output, info->scpi->oper_enable);
+    scpi_output_int(info->output, info->scpi->oper_enable);
 }
 
 void scpi_status_operation_preset(struct info *info)
@@ -255,7 +255,7 @@ void scpi_status_operation_preset(struct info *info)
 
 void scpi_status_questionableq(struct info *info)
 {
-    scpi_output_int(&info->scpi->output, info->scpi->ques_event);
+    scpi_output_int(info->output, info->scpi->ques_event);
 }
 
 void scpi_status_questionable_enable(struct info *info,
@@ -266,12 +266,12 @@ void scpi_status_questionable_enable(struct info *info,
 
 void scpi_status_questionable_enableq(struct info *info)
 {
-    scpi_output_int(&info->scpi->output, info->scpi->ques_enable);
+    scpi_output_int(info->output, info->scpi->ques_enable);
 }
 
 void scpi_system_internal_setupq(struct info *info)
 {
-    scpi_output_int(&info->scpi->output, 0);
+    scpi_output_int(info->output, 0);
 }
 
 void scpi_system_internal_quit(struct info *info)
@@ -329,7 +329,7 @@ int scpi_core_send(struct info *info, char *buf, int len)
     do {
 
         memset(&info->rsp, 0, sizeof(info->rsp));
-        scpi_output_clear(&info->scpi->output);
+        scpi_output_clear(info->output);
 
         err = parser_send(info, buf, len);
         if (info->busy) {
@@ -343,7 +343,7 @@ int scpi_core_send(struct info *info, char *buf, int len)
             err = scpi_core_parser_error(info, err, trace ? errmsg : NULL);
         } else {
             err = scpi_output_get(
-                &info->scpi->output, &info->rsp.buf, &info->rsp.len);
+                info->output, &info->rsp.buf, &info->rsp.len);
 
             if (err) {
                 /* handle error */
@@ -369,6 +369,13 @@ int scpi_core_init(struct info *info)
             err = -1;
             break;
         }
+
+        info->output = scpi_output_init();
+        if (!info->output) {
+            err = -1;
+            break;
+        }
+
         err = parser_init(info);
     } while (0);
 
@@ -384,6 +391,11 @@ int scpi_core_done(struct info *info)
         if (info->scpi) {
             free(info->scpi);
         }
+
+        if (info->output) {
+            scpi_output_done(info->output);
+        }
+
         err = parser_done(info);
     } while (0);
 
@@ -397,7 +409,7 @@ void scpi_core_top(struct info *info)
 
 void scpi_core_cmd_sep(struct info *info)
 {
-    scpi_output_cmd_sep(&info->scpi->output);
+    scpi_output_cmd_sep(info->output);
 }
 
 struct scpi_type *scpi_core_format_type(struct info *info,

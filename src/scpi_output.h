@@ -10,15 +10,9 @@
 
 #include <stdint.h>
 
-#define OUTPUT_SIZE 1024
-struct scpi_output {
-    int                 num_sep;
-    int                 num_elem;
-    int                 overflow;
-    size_t              len;
-    uint8_t             buf[OUTPUT_SIZE];
-};
-
+extern struct scpi_output *scpi_output_init(void);
+extern int scpi_output_done(struct scpi_output *output);
+extern void scpi_output_reset(struct scpi_output *output);
 extern int scpi_output_printf(struct scpi_output *output,
                               const char *format,
                               ...);

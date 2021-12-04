@@ -13,6 +13,8 @@
 
 #define INFO_CLI_LEN 80
 
+struct scpi_output;
+
 struct response {
     int valid;
     uint8_t *buf;
@@ -40,6 +42,7 @@ struct info {
     struct lexer *lexer;
     struct parser *parser;
     struct scpi_core *scpi;
+    struct scpi_output *output;
     /* others..., like command queue */
 };
 

@@ -32,7 +32,6 @@ struct scpi_core {
     uint8_t             srer;   /* Service Request Enable Register */
     /* Outputs */
     struct scpi_errq    error;
-    struct scpi_output  output;
 };
 
 extern int scpi_core_init(struct info *info);
