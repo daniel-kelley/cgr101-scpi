@@ -67,7 +67,7 @@ static int server_conf_get(struct info *info)
 #endif
 
     if (file) {
-        conf_in_fd = open(file, 0);
+        conf_in_fd = open(file, O_CLOEXEC);
     } else {
         conf_in_fd = STDIN_FILENO;
     }
@@ -105,7 +105,7 @@ static int server_init(struct info *info)
 
     /* Open conf_rsp */
     if (info->conf_rsp) {
-        conf_out_fd = open(info->conf_rsp, O_CREAT|O_WRONLY|O_TRUNC);
+        conf_out_fd = open(info->conf_rsp, O_CREAT|O_WRONLY|O_TRUNC|O_CLOEXEC);
         if (conf_out_fd > 0) {
             info->cli_out_fd = conf_out_fd;
         } else {
