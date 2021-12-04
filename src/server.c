@@ -190,6 +190,9 @@ int server_listen(struct info *info)
         exit(-1);
     }
 
+    /* Set close-on-exec. */
+    fcntl(fd, F_SETFD, fcntl(fd, F_GETFD) | FD_CLOEXEC);
+
     info->listen_fd = fd;
     /* Listen on socket. Does this block? */
     rc = listen(fd, 1);
