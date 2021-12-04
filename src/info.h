@@ -14,6 +14,7 @@
 #define INFO_CLI_LEN 80
 
 struct scpi_output;
+struct scpi_errq;
 
 struct response {
     int valid;
@@ -43,7 +44,7 @@ struct info {
     struct parser *parser;
     struct scpi_core *scpi;
     struct scpi_output *output;
-    /* others..., like command queue */
+    struct scpi_errq *error;
 };
 
 #endif /* INFO_H_ */

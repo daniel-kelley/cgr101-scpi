@@ -5,12 +5,26 @@
 
 */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "scpi_error.h"
 
 #define COUNT(a) (sizeof((a))/sizeof((a)[0]))
+
+struct scpi_err {
+    enum scpi_err_num error;
+    char *syndrome;
+};
+
+#define ERRQ_SIZE 32
+struct scpi_errq {
+    uint32_t            head;
+    uint32_t            tail;
+    bool                overflow;
+    struct scpi_err     q[ERRQ_SIZE];
+};
 
 static struct {
     enum scpi_err_num error;
@@ -135,6 +149,21 @@ int scpi_error_get(struct scpi_errq *errq,
     errq->q[cur].syndrome = NULL;
 
     return err;
+}
+
+struct scpi_errq *scpi_error_init(void)
+{
+    struct scpi_errq *errq;
+
+    errq = calloc(1,sizeof(*errq));
+    assert(errq);
+
+    return errq;
+}
+
+void scpi_error_reset(struct scpi_errq *errq)
+{
+    errq->head = errq->tail = 0;
 }
 
 int scpi_error_done(struct scpi_errq *errq)

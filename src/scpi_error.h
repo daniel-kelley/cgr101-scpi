@@ -21,19 +21,7 @@ enum scpi_err_num {
     SCPI_ERR_QUEUE_OVERFLOW = -350,
 };
 
-
-struct scpi_err {
-    enum scpi_err_num error;
-    char *syndrome;
-};
-
-#define ERRQ_SIZE 32
-struct scpi_errq {
-    uint32_t            head;
-    uint32_t            tail;
-    bool                overflow;
-    struct scpi_err     q[ERRQ_SIZE];
-};
+struct scpi_errq;
 
 extern int scpi_error(struct scpi_errq *errq,
                       enum scpi_err_num num,
@@ -46,6 +34,8 @@ extern int scpi_error_get(struct scpi_errq *errq,
                           const char **msg,
                           const char **syndrome);
 
+extern struct scpi_errq *scpi_error_init(void);
+extern void scpi_error_reset(struct scpi_errq *errq);
 extern int scpi_error_done(struct scpi_errq *errq);
 
 #endif /* SCPI_ERROR_H_ */

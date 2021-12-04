@@ -30,8 +30,6 @@ struct scpi_core {
     uint8_t             sesr;   /* Standard Event Status Register */
     uint8_t             sbr;    /* Status Byte Register */
     uint8_t             srer;   /* Service Request Enable Register */
-    /* Outputs */
-    struct scpi_errq    error;
 };
 
 extern int scpi_core_init(struct info *info);

@@ -29,7 +29,7 @@ static int scpi_input_int(struct info *info,
         err = 0;
         *out = in->val.ival;
     } else {
-        scpi_error(&info->scpi->error, SCPI_ERR_DATA_OUT_OF_RANGE, in->src);
+        scpi_error(info->error, SCPI_ERR_DATA_OUT_OF_RANGE, in->src);
     }
 
     return err;
@@ -73,7 +73,7 @@ static uint8_t scpi_core_status_update(struct info *info)
     /* SBR.1: Available to instrument */
 
     /* SBR.2: SCPI error queue not empty */
-    if (scpi_error_count(&info->scpi->error)) {
+    if (scpi_error_count(info->error)) {
         sbr |= SCPI_SBR_ERQ;
     }
 
@@ -124,8 +124,7 @@ void scpi_common_cls(struct info *info)
     scpi->oper_event = 0;
     scpi->seser = 0;
     scpi->sesr = 0;
-    scpi->error.head = 0;
-    scpi->error.tail = 0;
+    scpi_error_reset(info->error);
     scpi_output_reset(info->output);
 }
 
@@ -206,7 +205,7 @@ void scpi_system_capabilityq(struct info *info)
 
 void scpi_system_error_countq(struct info *info)
 {
-    int n = scpi_error_count(&info->scpi->error);
+    int n = scpi_error_count(info->error);
     scpi_output_int(info->output, n);
 }
 
@@ -216,7 +215,7 @@ void scpi_system_error_nextq(struct info *info)
     const char *msg;
     const char *syndrome;
 
-    scpi_error_get(&info->scpi->error, &error, &msg, &syndrome);
+    scpi_error_get(info->error, &error, &msg, &syndrome);
 
     if (syndrome) {
         scpi_output_printf(info->output,
@@ -287,7 +286,7 @@ static int scpi_core_parser_error(struct info *info,
     char *syndrome;
 
     if (err_in) {
-        scpi_error(&info->scpi->error,
+        scpi_error(info->error,
                    SCPI_ERR_INTERNAL_PARSER_ERROR,
                    NULL);
     } else {
@@ -310,7 +309,7 @@ static int scpi_core_parser_error(struct info *info,
             memcpy(syndrome+slen+1,msg,mlen+1);
         }
 
-        scpi_error(&info->scpi->error,
+        scpi_error(info->error,
                    SCPI_ERR_UNDEFINED_HEADER,
                    syndrome);
 
@@ -376,6 +375,12 @@ int scpi_core_init(struct info *info)
             break;
         }
 
+        info->error = scpi_error_init();
+        if (!info->error) {
+            err = -1;
+            break;
+        }
+
         err = parser_init(info);
     } while (0);
 
@@ -387,7 +392,7 @@ int scpi_core_done(struct info *info)
     int err;
 
     do {
-        scpi_error_done(&info->scpi->error);
+        scpi_error_done(info->error);
         if (info->scpi) {
             free(info->scpi);
         }
