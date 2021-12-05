@@ -35,5 +35,7 @@ struct scpi_core {
 extern int scpi_core_init(struct info *info);
 extern int scpi_core_done(struct info *info);
 extern int scpi_core_send(struct info *info, char *buf, int len);
+extern int scpi_core_recv(struct info *info);
+extern int scpi_core_recv_ready(struct info *info);
 
 #endif /* SCPI_CORE_H_ */

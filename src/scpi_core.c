@@ -340,20 +340,29 @@ int scpi_core_send(struct info *info, char *buf, int len)
             int trace = 0;
             err = parser_error_get(info, &errmsg, &trace);
             err = scpi_core_parser_error(info, err, trace ? errmsg : NULL);
-        } else {
-            err = scpi_output_get(
-                info->output, &info->rsp.buf, &info->rsp.len);
-
-            if (err) {
-                /* handle error */
-                assert(0);
-                break;
-            }
         }
 
-        info->rsp.valid = (info->rsp.len != 0);
-
     } while (0);
+
+    return err;
+}
+
+int scpi_core_recv_ready(struct info *info)
+{
+    return scpi_output_ready(info->output);
+}
+
+/* call only when ready */
+int scpi_core_recv(struct info *info)
+{
+    int err = 0;
+
+    err = scpi_output_get(
+        info->output, &info->rsp.buf, &info->rsp.len);
+
+    assert(!err);
+
+    info->rsp.valid = (info->rsp.len != 0);
 
     return err;
 }

@@ -106,11 +106,16 @@ void scpi_output_reset(struct scpi_output *output)
     output->len = 0;
 }
 
+int scpi_output_ready(struct scpi_output *output)
+{
+    return (output->len != 0);
+}
+
 int scpi_output_get(struct scpi_output *output, uint8_t **buf, size_t *sz)
 {
     int err = 0;
 
-    if (output->len != 0) {
+    if (scpi_output_ready(output)) {
         /* If there is any output, terminate output with newline. */
         err = scpi_output_printf(output, "\n");
     }

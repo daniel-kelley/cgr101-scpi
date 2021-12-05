@@ -23,5 +23,6 @@ extern void scpi_output_clear(struct scpi_output *output);
 extern int scpi_output_get(struct scpi_output *output,
                            uint8_t **buf,
                            size_t *sz);
+extern int scpi_output_ready(struct scpi_output *output);
 
 #endif /* SCPI_OUTPUT_H_ */

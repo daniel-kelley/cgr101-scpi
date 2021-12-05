@@ -289,7 +289,7 @@ static int server_rsp(struct info *info)
     return (outlen <= 0);
 }
 
-static int server_scpi_io(struct info *info)
+static int server_scpi_send(struct info *info)
 {
     int rc = 0;
     char *buf = info->cli_buf;
@@ -307,9 +307,6 @@ static int server_scpi_io(struct info *info)
 
         if (len) {
             rc = scpi_core_send(info, buf, len);
-            if (!rc && info->rsp.valid) {
-                rc = server_rsp(info);
-            }
         } else {
             break;
         }
@@ -347,7 +344,7 @@ static int server_cli(struct info *info)
             }
         }
     } else {
-        rc = server_scpi_io(info);
+        rc = server_scpi_send(info);
     }
 
     return rc;
@@ -368,7 +365,7 @@ static int server_loop(struct info *info)
             perror("  recv() failed");
             break;
         } else if (rc == 0) { /* timeout */
-            /* What goes here? Anything? */
+            /* Ignore for now. */
         } else {
             if (rc & SERVER_ACCEPT) {
                 server_accept(info);
@@ -378,6 +375,12 @@ static int server_loop(struct info *info)
                     rc = 1;
                     break;
                 }
+            }
+        }
+        if (scpi_core_recv_ready(info)) {
+            scpi_core_recv(info);
+            if (info->rsp.valid) {
+                rc = server_rsp(info);
             }
         }
     }
