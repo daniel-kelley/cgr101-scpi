@@ -27,10 +27,12 @@
 /* CGR-101 stuff here... */
 #include "scpi_core.h"
 #include "server.h"
+#include "worker.h"
 
 /* bitwise flags */
 #define SERVER_CLI (1<<0)
 #define SERVER_ACCEPT (1<<1)
+#define SERVER_WORKER (1<<2)
 
 static volatile int server_exit;
 
@@ -212,6 +214,9 @@ static int server_select(struct info *info)
     int rc;
     int max_fd;
     int srv_event = 0; /* flags: SERVER_* */
+    int idx;
+    int workers;
+    int wfd;
 
     FD_ZERO(&fds);
 
@@ -225,6 +230,15 @@ static int server_select(struct info *info)
             max_fd = info->listen_fd;
         }
         FD_SET(info->listen_fd, &fds);
+    }
+
+    workers = worker_count(info->worker);
+    for (idx = 0; idx < workers; idx++) {
+        wfd = worker_getfd(info->worker, idx);
+        if (max_fd < wfd) {
+            max_fd = wfd;
+        }
+        FD_SET(wfd, &fds);
     }
 
     memset(&timeout, 0, sizeof(timeout));
@@ -245,6 +259,14 @@ static int server_select(struct info *info)
 
     if (info->listen_fd && FD_ISSET(info->listen_fd, &fds)) {
         srv_event |= SERVER_ACCEPT;
+    }
+
+    for (idx = 0; idx < workers; idx++) {
+        wfd = worker_getfd(info->worker, idx);
+        if (FD_ISSET(wfd, &fds)) {
+            worker_ready(info->worker, idx);
+            srv_event |= SERVER_WORKER;
+        }
     }
 
     /* rc<0 error; rc==0 idle; rc>0 fd event */
@@ -355,37 +377,51 @@ static int server_quit(const struct info *info)
     return (server_exit || info->quit);
 }
 
-static int server_loop(struct info *info)
+static int server_action(struct info *info, int event)
 {
-    int rc = 1;
+    int err = 0;
 
-    while (!server_quit(info)) {
-        rc = server_select(info);
-        if (rc < 0) { /* failed */
-            perror("  recv() failed");
-            break;
-        } else if (rc == 0) { /* timeout */
-            /* Ignore for now. */
-        } else {
-            if (rc & SERVER_ACCEPT) {
-                server_accept(info);
-            }
-            if (rc & SERVER_CLI) {
-                if (server_cli(info)) {
-                    rc = 1;
-                    break;
-                }
-            }
-        }
-        if (scpi_core_recv_ready(info)) {
-            scpi_core_recv(info);
-            if (info->rsp.valid) {
-                rc = server_rsp(info);
-            }
+    if (event & SERVER_ACCEPT) {
+        server_accept(info);
+    }
+
+    if (event & SERVER_CLI) {
+        if (server_cli(info)) {
+            err = 1;
         }
     }
 
-    return (rc < 0);
+    if (event & SERVER_WORKER) {
+        if (worker_run_ready(info->worker)) {
+            err = 1;
+        }
+    }
+
+    if (scpi_core_recv_ready(info)) {
+        scpi_core_recv(info);
+        if (info->rsp.valid) {
+            err = server_rsp(info);
+        }
+    }
+
+    return err;
+}
+
+static int server_loop(struct info *info)
+{
+    int event;
+    int err;
+
+    while (!server_quit(info)) {
+        event = server_select(info);
+        assert(event >= 0);
+        err = server_action(info, event);
+        if (err) {
+            break;
+        }
+    }
+
+    return err;
 }
 
 int server_run(struct info *info)

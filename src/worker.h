@@ -20,7 +20,8 @@ extern void worker_done(struct worker *worker);
 extern int worker_add(struct worker *worker, int fd, wfunc func, void *arg);
 extern int worker_count(struct worker *worker);
 extern int worker_getfd(struct worker *worker, int idx);
-extern int worker_call(struct worker *worker, int idx);
+extern int worker_ready(struct worker *worker, int idx);
 extern int worker_remove(struct worker *worker, int idx);
+extern int worker_run_ready(struct worker *worker);
 
 #endif /* WORKER_H_ */

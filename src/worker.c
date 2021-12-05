@@ -17,6 +17,7 @@ struct worker {
         int fd;
         wfunc func;
         void *arg;
+        int ready;
     } w[MAXW];
 };
 
@@ -66,12 +67,22 @@ int worker_getfd(struct worker *worker, int idx)
     return fd;
 }
 
-int worker_call(struct worker *worker, int idx)
+static int worker_call(struct worker *worker, int idx)
 {
     assert(worker);
     assert(idx >= 0 && idx < worker->count);
     assert(worker->w[idx].fd > 0);
     return worker->w[idx].func(worker->w[idx].arg);
+}
+
+int worker_ready(struct worker *worker, int idx)
+{
+    assert(worker);
+    assert(idx >= 0 && idx < worker->count);
+    assert(worker->w[idx].fd > 0);
+    worker->w[idx].ready = 1;
+
+    return 0;
 }
 
 int worker_remove(struct worker *worker, int idx)
@@ -86,4 +97,23 @@ int worker_remove(struct worker *worker, int idx)
 
 
     return 0;
+}
+
+int worker_run_ready(struct worker *worker)
+{
+    int idx;
+    int err = 0;
+    assert(worker);
+
+    for (idx=0; idx<worker->count; idx++) {
+        if (worker->w[idx].ready) {
+            err = worker_call(worker, idx);
+            worker->w[idx].ready = 0;
+            if (err) {
+                break;
+            }
+        }
+    }
+
+    return err;
 }

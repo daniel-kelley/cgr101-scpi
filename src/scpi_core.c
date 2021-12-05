@@ -14,6 +14,7 @@
 #include "scpi_core.h"
 #include "scpi_error.h"
 #include "parser.h"
+#include "worker.h"
 
 static int scpi_input_int(struct info *info,
                           struct scpi_type *in,
@@ -390,6 +391,12 @@ int scpi_core_init(struct info *info)
             break;
         }
 
+        info->worker = worker_init();
+        if (!info->worker) {
+            err = -1;
+            break;
+        }
+
         err = parser_init(info);
     } while (0);
 
@@ -408,6 +415,10 @@ int scpi_core_done(struct info *info)
 
         if (info->output) {
             scpi_output_done(info->output);
+        }
+
+        if (info->worker) {
+            worker_done(info->worker);
         }
 
         err = parser_done(info);
