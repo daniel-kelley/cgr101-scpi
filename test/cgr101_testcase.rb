@@ -164,7 +164,8 @@ module CGR101Testcase
   def test_012
     self.class.hdl.send("*idn?")
     out = self.class.hdl.recv
-    assert_equal("GMP,CGR101-SCPI,1.0,01-02", out)
+    # Don't match against specific firmware revision
+    assert_match(/^GMP,CGR101-SCPI,1.0,.*CircuitGear/, out)
     assert_equal(0, self.class.hdl.out_length)
     assert_equal(0, self.class.hdl.err_length)
   end

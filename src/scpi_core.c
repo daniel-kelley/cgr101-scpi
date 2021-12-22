@@ -148,7 +148,9 @@ void scpi_common_esrq(struct info *info)
 
 void scpi_common_idnq(struct info *info)
 {
-    scpi_output_str(info->output, "GMP,CGR101-SCPI,1.0,01-02");
+    scpi_output_printf(info->output,
+                       "GMP,CGR101-SCPI,1.0,%s",
+                       "Syscomp CircuitGear V1.4");
 }
 
 void scpi_common_opc(struct info *info)
