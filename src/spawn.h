@@ -9,7 +9,7 @@
 #define   SPAWN_H_
 
 struct spawn {
-    pid_t child;
+    pid_t pid;
     int stdin;
     int stdout;
     int stderr;
@@ -17,5 +17,6 @@ struct spawn {
 };
 
 extern int spawn(const char *path, struct spawn *spawn);
+extern int unspawn(struct spawn *spawn);
 
 #endif /* SPAWN_H_ */

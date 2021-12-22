@@ -30,7 +30,7 @@ static void spawn_sigchld(int sig, siginfo_t *info, void *ucontext)
     (void)ucontext;
 
     wait(&spawn_sigdata->status);
-    spawn_sigdata->child = 0;
+    spawn_sigdata->pid = 0;
 }
 
 /* Simple. Needs to be more robust. */
@@ -65,7 +65,7 @@ int spawn(const char *path, struct spawn *spawn)
     assert(spawn);
 
     /* Save for signal handling */
-    assert(spawn_sigdata);
+    assert(!spawn_sigdata);
     spawn_sigdata = spawn;
 
     /* Create pipes for IO */
@@ -85,12 +85,12 @@ int spawn(const char *path, struct spawn *spawn)
     assert(!cloexec(pstdout[0]));
     assert(!cloexec(pstderr[0]));
 
-    spawn->child = fork();
-    if (spawn->child) {
+    spawn->pid = fork();
+    if (spawn->pid) {
         struct sigaction sa;
 
         sa.sa_sigaction = spawn_sigchld;
-        sa.sa_flags = SA_SIGINFO;
+        sa.sa_flags = SA_SIGINFO | SA_RESTART;
         err = sigaction(SIGCHLD, &sa, NULL);
         assert(!err);
         /* parent */
@@ -104,6 +104,17 @@ int spawn(const char *path, struct spawn *spawn)
         dup2(pstderr[1], 2);
         spawn_exec(path);
     }
+
+    return 0;
+}
+
+int unspawn(struct spawn *spawn)
+{
+    assert(spawn);
+    kill(spawn->pid, SIGTERM);
+    close(spawn->stdin);
+    close(spawn->stdout);
+    close(spawn->stderr);
 
     return 0;
 }

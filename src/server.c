@@ -249,7 +249,7 @@ static int server_select(struct info *info)
     }
 
     rc = select(max_fd + 1, &fds, NULL, NULL, &timeout);
-    if (rc < 0) {
+    if (rc < 0 && errno != EINTR) {
         return rc;
     }
 
@@ -269,8 +269,7 @@ static int server_select(struct info *info)
         }
     }
 
-    /* rc<0 error; rc==0 idle; rc>0 fd event */
-    return rc < 0 ? rc : srv_event;
+    return srv_event;
 }
 
 static int server_accept(struct info *info)
@@ -353,7 +352,11 @@ static int server_cli(struct info *info)
 
     /* Was recv(...,0), but we want to read from a file too. */
     memset(info->cli_buf, 0, sizeof(info->cli_buf));
-    rc = (int)read(info->cli_in_fd, info->cli_buf, sizeof(info->cli_buf));
+
+    do {
+        rc = (int)read(info->cli_in_fd, info->cli_buf, sizeof(info->cli_buf));
+    } while (rc < 0 && errno == EAGAIN);
+
     if (rc < 0) {
         if (errno != EWOULDBLOCK) {
             perror("read() failed");

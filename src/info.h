@@ -16,6 +16,7 @@
 struct scpi_output;
 struct scpi_errq;
 struct worker;
+struct cgr101;
 
 struct response {
     int valid;
@@ -47,6 +48,7 @@ struct info {
     struct scpi_output *output;
     struct scpi_errq *error;
     struct worker *worker;
+    struct cgr101 *device;
 };
 
 #endif /* INFO_H_ */
