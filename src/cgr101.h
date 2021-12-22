@@ -10,6 +10,7 @@
 
 #include "info.h"
 
+extern int cgr101_identify(struct info *info);
 extern int cgr101_open(struct info *);
 extern int cgr101_close(struct info *);
 

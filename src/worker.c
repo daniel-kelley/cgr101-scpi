@@ -46,7 +46,9 @@ int worker_add(struct worker *worker, int fd, wfunc func, void *arg)
         worker->w[worker->count].fd = fd;
         worker->w[worker->count].func = func;
         worker->w[worker->count].arg = arg;
+        err = 0;
     }
+
     return err;
 }
 

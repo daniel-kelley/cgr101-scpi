@@ -14,7 +14,7 @@
 #include "scpi_core.h"
 #include "scpi_error.h"
 #include "parser.h"
-#include "worker.h"
+#include "cgr101.h"
 
 static int scpi_input_int(struct info *info,
                           struct scpi_type *in,
@@ -148,9 +148,7 @@ void scpi_common_esrq(struct info *info)
 
 void scpi_common_idnq(struct info *info)
 {
-    scpi_output_printf(info->output,
-                       "GMP,CGR101-SCPI,1.0,%s",
-                       "Syscomp CircuitGear V1.4");
+    cgr101_identify(info);
 }
 
 void scpi_common_opc(struct info *info)
@@ -393,12 +391,6 @@ int scpi_core_init(struct info *info)
             break;
         }
 
-        info->worker = worker_init();
-        if (!info->worker) {
-            err = -1;
-            break;
-        }
-
         err = parser_init(info);
     } while (0);
 
@@ -417,10 +409,6 @@ int scpi_core_done(struct info *info)
 
         if (info->output) {
             scpi_output_done(info->output);
-        }
-
-        if (info->worker) {
-            worker_done(info->worker);
         }
 
         err = parser_done(info);

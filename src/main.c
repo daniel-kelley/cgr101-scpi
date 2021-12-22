@@ -14,10 +14,49 @@
 #include <unistd.h>
 #include "server.h"
 #include "cgr101.h"
-
-static struct info info;
+#include "worker.h"
 
 #define SCPI_PORT 5025
+
+static int init(struct info *info)
+{
+    int err = 0;
+
+    do {
+        info->worker = worker_init();
+        if (!info->worker) {
+            err = -1;
+            break;
+        }
+
+        err = cgr101_open(info);
+
+        if (!err) {
+            err = server_run(info);
+        } else {
+            fprintf(stderr, "CGR-101 open failed.\n");
+        }
+    } while (0);
+
+    return err;
+}
+
+static int done(struct info *info)
+{
+    int err = 0;
+
+    cgr101_close(info);
+
+    if (info->worker) {
+        worker_done(info->worker);
+    }
+
+#if 0
+    conf_done(&info.conf);
+#endif
+
+    return err;
+}
 
 static void usage(const char *prog)
 {
@@ -38,6 +77,7 @@ int main(int argc, char *argv[])
 {
     int rc = 1;
     int c;
+    static struct info info;
 
     info.port = SCPI_PORT;
     info.bus = -1;
@@ -79,19 +119,9 @@ int main(int argc, char *argv[])
         }
     }
 
-    rc = cgr101_open(&info);
+    rc = init(&info);
+    done(&info);
 
-    if (!rc) {
-        rc = server_run(&info);
-    } else {
-        fprintf(stderr, "CGR-101 open failed.\n");
-    }
-
-    cgr101_close(&info);
-
-#if 0
-    conf_done(&info.conf);
-#endif
     return rc;
 }
 
