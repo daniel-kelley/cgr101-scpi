@@ -8,6 +8,7 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <string.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
 #include <sys/wait.h>
@@ -42,7 +43,11 @@ static void spawn_exec(const char *path)
     int n = 0;
     int err;
 
-    argv[n] = s;
+    assert(s);
+
+    memset(argv, 0, sizeof(argv));
+    argv[0] = s;
+
     while ((p = strchr(s, ' ')) != NULL) {
         /* Terminate arg word. */
         *p-- = 0;
@@ -50,9 +55,10 @@ static void spawn_exec(const char *path)
         assert(n<=MAXARG);
         argv[n] = p;
     }
-    argv[n] = NULL;
+
     err = execvp(argv[0], argv);
     assert(!err);
+    free(s);
 }
 
 int spawn(const char *path, struct spawn *spawn)
@@ -62,6 +68,7 @@ int spawn(const char *path, struct spawn *spawn)
     int pstderr[2];
     int err;
 
+    assert(path);
     assert(spawn);
 
     /* Save for signal handling */
@@ -89,6 +96,7 @@ int spawn(const char *path, struct spawn *spawn)
     if (spawn->pid) {
         struct sigaction sa;
 
+        memset(&sa, 0, sizeof(sa));
         sa.sa_sigaction = spawn_sigchld;
         sa.sa_flags = SA_SIGINFO | SA_RESTART;
         err = sigaction(SIGCHLD, &sa, NULL);
@@ -111,10 +119,12 @@ int spawn(const char *path, struct spawn *spawn)
 int unspawn(struct spawn *spawn)
 {
     assert(spawn);
-    kill(spawn->pid, SIGTERM);
-    close(spawn->stdin);
-    close(spawn->stdout);
-    close(spawn->stderr);
+    if (spawn->pid) {
+        kill(spawn->pid, SIGTERM);
+        close(spawn->stdin);
+        close(spawn->stdout);
+        close(spawn->stderr);
+    }
 
     return 0;
 }

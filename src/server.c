@@ -413,7 +413,7 @@ static int server_action(struct info *info, int event)
 static int server_loop(struct info *info)
 {
     int event;
-    int err;
+    int err = 0;
 
     while (!server_quit(info)) {
         event = server_select(info);

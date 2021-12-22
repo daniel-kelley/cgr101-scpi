@@ -156,7 +156,6 @@ struct scpi_errq *scpi_error_init(void)
     struct scpi_errq *errq;
 
     errq = calloc(1,sizeof(*errq));
-    assert(errq);
 
     return errq;
 }
@@ -175,6 +174,8 @@ int scpi_error_done(struct scpi_errq *errq)
         }
         scpi_error_pop(errq);
     }
+
+    free(errq);
 
     return 0;
 }

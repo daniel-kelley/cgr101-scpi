@@ -26,7 +26,6 @@ struct worker *worker_init(void)
     struct worker *worker;
 
     worker = calloc(1,sizeof(*worker));
-    assert(worker);
 
     return worker;
 }

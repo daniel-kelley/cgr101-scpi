@@ -26,7 +26,6 @@ struct scpi_output *scpi_output_init(void)
     struct scpi_output *output;
 
     output = calloc(1,sizeof(*output));
-    assert(output);
 
     return output;
 }

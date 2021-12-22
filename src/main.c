@@ -87,9 +87,8 @@ int main(int argc, char *argv[])
         fprintf(stderr, "CGR-101 open failed.\n");
     }
 
-    if (info.hdl) {
-        cgr101_close(&info);
-    }
+    cgr101_close(&info);
+
 #if 0
     conf_done(&info.conf);
 #endif
