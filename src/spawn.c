@@ -46,14 +46,14 @@ static void spawn_exec(const char *path)
     assert(s);
 
     memset(argv, 0, sizeof(argv));
-    argv[0] = s;
-
-    while ((p = strchr(s, ' ')) != NULL) {
+    argv[n] = p = s;
+    n++;
+    while ((p = strchr(p, ' ')) != NULL) {
         /* Terminate arg word. */
-        *p-- = 0;
-        n++;
+        *p++ = 0;
         assert(n<=MAXARG);
         argv[n] = p;
+        n++;
     }
 
     err = execvp(argv[0], argv);
@@ -66,7 +66,7 @@ int spawn(const char *path, struct spawn *spawn)
     int pstdin[2];      /* 0:read 1:write */
     int pstdout[2];
     int pstderr[2];
-    int err;
+    int err = 1;
 
     assert(path);
     assert(spawn);
@@ -100,7 +100,7 @@ int spawn(const char *path, struct spawn *spawn)
         sa.sa_sigaction = spawn_sigchld;
         sa.sa_flags = SA_SIGINFO | SA_RESTART;
         err = sigaction(SIGCHLD, &sa, NULL);
-        assert(!err);
+
         /* parent */
     } else {
         /* child */
@@ -113,7 +113,7 @@ int spawn(const char *path, struct spawn *spawn)
         spawn_exec(path);
     }
 
-    return 0;
+    return err;
 }
 
 int unspawn(struct spawn *spawn)

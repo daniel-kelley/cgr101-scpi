@@ -18,6 +18,7 @@
 #define CMD "sp -b230400 -f/dev/ttyUSB0"
 #define ID_MAX 32
 #define RCV_MAX 4100 /* 4097 plus some slop */
+#define ERR_MAX 1024
 
 enum cgr101_rcv_state {
     IDLE,
@@ -32,6 +33,7 @@ struct cgr101 {
     size_t cur_rcv_parsed;
     size_t exp_rcv_len;
     char rcv_data[RCV_MAX];
+    char err_data[ERR_MAX];
 };
 
 /*
@@ -62,6 +64,7 @@ static int cgr101_rcv_start(struct info *info)
         /* Variable length: terminated by <cr><lf> */
         info->device->exp_rcv_len = sizeof(info->device->rcv_data);
         info->device->cur_rcv_parsed++;
+        err = 0;
         break;
     default:
         assert(0);
@@ -104,7 +107,9 @@ static int cgr101_rcv_ident(struct info *info)
         memcpy(
             info->device->device_id,
             info->device->rcv_data + 1,
-            info->device->cur_rcv_len - 2);
+            info->device->cur_rcv_len - 3);
+
+        err = cgr101_identify_done(info);
 
         /* Done receiving. */
         cgr101_rcv_idle(info);
@@ -157,7 +162,9 @@ static int cgr101_rcv_data(struct info *info)
             break;
         }
         /* Backstop to prevent infinite loops. */
-        assert(count++ < RCV_MAX);
+        if (count++ > RCV_MAX) {
+            break;
+        }
     }
 
     return err;
@@ -194,10 +201,16 @@ static int cgr101_err(void *arg)
 {
     struct info *info = arg;
     int err = 0;
+    ssize_t len;
 
+    len = read(
+        info->device->child.stderr,
+        info->device->err_data,
+        sizeof(info->device->err_data));
+
+    assert(len > 0);
+    assert(len <= (ssize_t)sizeof(info->device->err_data));
     (void)info;
-    /* Need to handle error outputs. */
-    assert(0);
 
     return err;
 }

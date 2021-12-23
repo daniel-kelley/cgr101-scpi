@@ -122,5 +122,8 @@ int scpi_output_get(struct scpi_output *output, uint8_t **buf, size_t *sz)
     *buf = output->buf;
     *sz  = output->len;
 
+    /* Mark as copied out. */
+    output->len = 0;
+
     return err;
 }
