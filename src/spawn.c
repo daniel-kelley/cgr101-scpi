@@ -26,12 +26,20 @@ static int cloexec(int fd)
 
 static void spawn_sigchld(int sig, siginfo_t *info, void *ucontext)
 {
+    pid_t pid;
+    int status;
+
     (void)sig;
     (void)info;
     (void)ucontext;
 
-    wait(&spawn_sigdata->status);
-    spawn_sigdata->pid = 0;
+    while((pid = waitpid(-1, &status, WNOHANG)) > 0) {
+        if (pid == spawn_sigdata->pid) {
+            spawn_sigdata->status = status;
+            spawn_sigdata->pid = 0;
+        }
+    }
+
 }
 
 /* Simple. Needs to be more robust. */
