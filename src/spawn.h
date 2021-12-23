@@ -16,7 +16,7 @@ struct spawn {
     int status;
 };
 
-extern int spawn(const char *path, struct spawn *spawn);
+extern int spawn(char *const argv[], struct spawn *spawn);
 extern int unspawn(struct spawn *spawn);
 
 #endif /* SPAWN_H_ */

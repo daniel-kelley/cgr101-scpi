@@ -15,10 +15,16 @@
 #include "scpi_output.h"
 #include "cgr101.h"
 
-#define CMD "sp -b230400 -f/dev/ttyUSB0"
 #define ID_MAX 32
 #define RCV_MAX 4100 /* 4097 plus some slop */
 #define ERR_MAX 1024
+
+static char *CMD[] = {
+    "sp",
+    "-b230400",
+    "-f/dev/ttyUSB0",
+    NULL
+};
 
 enum cgr101_rcv_state {
     IDLE,

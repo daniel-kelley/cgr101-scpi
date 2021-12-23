@@ -24,14 +24,12 @@ static int cloexec(int fd)
     return fcntl(fd, F_SETFD, fcntl(fd, F_GETFD) | FD_CLOEXEC);
 }
 
-static void spawn_sigchld(int sig, siginfo_t *info, void *ucontext)
+static void spawn_sigchld(int sig)
 {
     pid_t pid;
     int status;
 
     (void)sig;
-    (void)info;
-    (void)ucontext;
 
     while((pid = waitpid(-1, &status, WNOHANG)) > 0) {
         if (pid == spawn_sigdata->pid) {
@@ -39,44 +37,16 @@ static void spawn_sigchld(int sig, siginfo_t *info, void *ucontext)
             spawn_sigdata->pid = 0;
         }
     }
-
 }
 
-/* Simple. Needs to be more robust. */
-static void spawn_exec(const char *path)
-{
-    char *s = strdup(path);
-    char *p;
-    char *argv[MAXARG+1];
-    int n = 0;
-    int err;
-
-    assert(s);
-
-    memset(argv, 0, sizeof(argv));
-    argv[n] = p = s;
-    n++;
-    while ((p = strchr(p, ' ')) != NULL) {
-        /* Terminate arg word. */
-        *p++ = 0;
-        assert(n<=MAXARG);
-        argv[n] = p;
-        n++;
-    }
-
-    err = execvp(argv[0], argv);
-    assert(!err);
-    free(s);
-}
-
-int spawn(const char *path, struct spawn *spawn)
+int spawn(char * const argv[], struct spawn *spawn)
 {
     int pstdin[2];      /* 0:read 1:write */
     int pstdout[2];
     int pstderr[2];
     int err = 1;
 
-    assert(path);
+    assert(argv);
     assert(spawn);
 
     /* Save for signal handling */
@@ -102,14 +72,13 @@ int spawn(const char *path, struct spawn *spawn)
 
     spawn->pid = fork();
     if (spawn->pid) {
+        /* parent */
         struct sigaction sa;
 
         memset(&sa, 0, sizeof(sa));
-        sa.sa_sigaction = spawn_sigchld;
-        sa.sa_flags = SA_SIGINFO | SA_RESTART;
+        sa.sa_handler = spawn_sigchld;
+        sa.sa_flags = SA_RESTART;
         err = sigaction(SIGCHLD, &sa, NULL);
-
-        /* parent */
     } else {
         /* child */
         close(pstdin[1]);
@@ -118,7 +87,8 @@ int spawn(const char *path, struct spawn *spawn)
         dup2(pstdin[0], 0);
         dup2(pstdout[1], 1);
         dup2(pstderr[1], 2);
-        spawn_exec(path);
+        err = execvp(argv[0], argv);
+        assert(!err);
     }
 
     return err;
