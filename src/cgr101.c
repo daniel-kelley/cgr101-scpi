@@ -33,11 +33,9 @@ enum cgr101_rcv_state {
 
 struct cgr101 {
     struct spawn child;
+    int device_id_len;
     char device_id[ID_MAX];
     enum cgr101_rcv_state rcv_state;
-    size_t cur_rcv_len;
-    size_t cur_rcv_parsed;
-    size_t exp_rcv_len;
     char rcv_data[RCV_MAX];
     char err_data[ERR_MAX];
 };
@@ -46,30 +44,19 @@ struct cgr101 {
  * Receive State Machine
  */
 
-static int cgr101_rcv_idle(struct info *info)
+static void cgr101_rcv_idle(struct info *info)
 {
-    int err = 0;
-
     info->device->rcv_state = IDLE;
-    info->device->cur_rcv_len = 0;
-    info->device->cur_rcv_parsed = 0;
-    info->device->exp_rcv_len = 0;
-
-    return err;
 }
 
-static int cgr101_rcv_start(struct info *info)
+static int cgr101_rcv_start(struct info *info, char c)
 {
     int err = 1;
 
-    assert(info->device->cur_rcv_len > 0);
-
-    switch (info->device->rcv_data[0]) {
+    switch (c) {
     case '*':
         info->device->rcv_state = IDENTIFY;
         /* Variable length: terminated by <cr><lf> */
-        info->device->exp_rcv_len = sizeof(info->device->rcv_data);
-        info->device->cur_rcv_parsed++;
         err = 0;
         break;
     default:
@@ -93,33 +80,23 @@ static int cgr101_identify_start(struct info *info)
     return (len <= 0);
 }
 
-static int cgr101_identify_done(struct info *info)
+static void cgr101_identify_done(struct info *info)
 {
     scpi_output_printf(info->output,
                        "GMP,CGR101-SCPI,1.0,%s",
                        info->device->device_id);
-
-    return 0;
 }
 
-static int cgr101_rcv_ident(struct info *info)
+static int cgr101_rcv_ident(struct info *info, char c)
 {
     int err = 0;
 
-    info->device->cur_rcv_parsed = info->device->cur_rcv_len;
-
-    if (info->device->rcv_data[info->device->cur_rcv_len-1] == '\n') {
-        /* Entire ident string received. */
-        memcpy(
-            info->device->device_id,
-            info->device->rcv_data + 1,
-            info->device->cur_rcv_len - 3);
-
-        err = cgr101_identify_done(info);
-
+    if (c == '\n') {
         /* Done receiving. */
+        cgr101_identify_done(info);
         cgr101_rcv_idle(info);
-
+    } else if (c != '\r') {
+        info->device->device_id[info->device->device_id_len++] = c;
     }
 
     return err;
@@ -127,7 +104,7 @@ static int cgr101_rcv_ident(struct info *info)
 
 int cgr101_identify(struct info *info)
 {
-    if (info->device->device_id[0]) {
+    if (info->device->device_id_len > 0) {
         cgr101_identify_done(info);
     } else {
         cgr101_identify_start(info);
@@ -140,16 +117,16 @@ int cgr101_identify(struct info *info)
  * Recieve Output Channel Handling
  */
 
-static int cgr101_rcv_sm(struct info *info)
+static int cgr101_rcv_sm(struct info *info, char c)
 {
     int err = 1;
 
     switch (info->device->rcv_state) {
     case IDLE:
-        err = cgr101_rcv_start(info);
+        err = cgr101_rcv_start(info, c);
         break;
     case IDENTIFY:
-        err = cgr101_rcv_ident(info);
+        err = cgr101_rcv_ident(info, c);
         break;
     default:
         assert(0);
@@ -158,17 +135,13 @@ static int cgr101_rcv_sm(struct info *info)
     return err;
 }
 
-static int cgr101_rcv_data(struct info *info)
+static int cgr101_rcv_data(struct info *info, const char *buf, size_t len)
 {
     int err = 1;
-    int count = 0;
-    while (info->device->cur_rcv_parsed < info->device->cur_rcv_len) {
-        err = cgr101_rcv_sm(info);
+
+    while (len--) {
+        err = cgr101_rcv_sm(info, *buf++);
         if (err) {
-            break;
-        }
-        /* Backstop to prevent infinite loops. */
-        if (count++ > RCV_MAX) {
             break;
         }
     }
@@ -182,18 +155,14 @@ static int cgr101_out(void *arg)
     int err = 0;
     ssize_t len;
 
-    len = read(
-        info->device->child.stdout,
-        info->device->rcv_data + info->device->cur_rcv_len,
-        RCV_MAX - info->device->cur_rcv_len);
+    len = read(info->device->child.stdout, info->device->rcv_data, RCV_MAX);
 
     if (len < 0) {
         if (errno != EINTR && errno != EAGAIN) {
             err = 1;
         }
     } else if (len != 0) {
-        info->device->cur_rcv_len += (size_t)len;
-        err = cgr101_rcv_data(info);
+        err = cgr101_rcv_data(info, info->device->rcv_data, (size_t)len);
     }
 
     return err;
