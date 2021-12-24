@@ -276,3 +276,35 @@ int cgr101_close(struct info *info)
 
     return 0;
 }
+
+/*
+ * SCPI Interfaces
+ */
+
+int cgr101_initiate(struct info *info)
+{
+    (void)info;
+
+    return 0;
+}
+
+int cgr101_configure_digital_data(struct info *info)
+{
+    (void)info;
+
+    return 0;
+}
+
+int cgr101_digital_data_valid(struct info *info)
+{
+    (void)info;
+
+    return 0;
+}
+
+int cgr101_fetch_digital_data(struct info *info)
+{
+    (void)info;
+
+    return 0;
+}

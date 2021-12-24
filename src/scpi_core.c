@@ -464,9 +464,9 @@ void scpi_core_formatq(struct info *info)
     (void)info;
 }
 
-void scpi_core_initiate(struct info *info)
+int scpi_core_initiate(struct info *info)
 {
-    (void)info;
+    return cgr101_initiate(info);
 }
 
 void scpi_system_communicate_tcp_controlq(struct info *info)

@@ -49,7 +49,7 @@ extern void scpi_status_questionable_enableq(struct info *info);
 extern void scpi_core_top(struct info *info);
 extern void scpi_core_cmd_sep(struct info *info);
 
-extern void scpi_dev_abort(struct info *info);
+extern int scpi_dev_abort(struct info *info);
 
 extern struct scpi_type *scpi_dev_channel_num(struct info *info,
                                               struct scpi_type *val);
@@ -73,14 +73,14 @@ extern struct scpi_type *scpi_core_nrf_list(struct info *info,
 extern struct scpi_type *scpi_core_symbolic_value(struct info *info,
                                                   struct scpi_type *v);
 
-extern void scpi_dev_conf_digital_data(struct info *info);
+extern int scpi_dev_conf_digital_data(struct info *info);
 extern void scpi_dev_confq(struct info *info);
 extern void scpi_dev_fetch_digital_dataq(struct info *info);
 extern void scpi_core_format(struct info *info, struct scpi_type *v);
 extern void scpi_core_format(struct info *info, struct scpi_type *v);
 extern void scpi_core_formatq(struct info *info);
 extern void scpi_core_formatq(struct info *info);
-extern void scpi_core_initiate(struct info *info);
+extern int scpi_core_initiate(struct info *info);
 extern void scpi_dev_input_coupling(struct info *info, struct scpi_type *v);
 extern void scpi_dev_read_digital_dataq(struct info *info);
 extern void scpi_dev_sense_dataq(struct info *info, struct scpi_type *v);

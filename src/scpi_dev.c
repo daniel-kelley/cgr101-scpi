@@ -12,14 +12,13 @@
 #include <string.h>
 #include "scpi.h"
 #include "scpi_core.h"
+#include "cgr101.h"
 
-
-#define CGR101_MIN_CHAN 1
-#define CGR101_MAX_CHAN 21
-
-void scpi_dev_abort(struct info *info)
+int scpi_dev_abort(struct info *info)
 {
     (void)info;
+
+    return 0;
 }
 
 struct scpi_type *scpi_dev_channel_num(struct info *info,
@@ -85,16 +84,29 @@ struct scpi_type *scpi_dev_channel_range_append(struct info *info,
     return v2;
 }
 
-void scpi_dev_measure_digital_dataq(struct info *info)
+void scpi_dev_read_digital_dataq(struct info *info)
 {
-    /* STUB */
-    scpi_output_int(info->output, 0);
+    do {
+        if (scpi_dev_abort(info)) {
+            break;
+        }
+        if (scpi_core_initiate(info)) {
+            break;
+        }
+        scpi_dev_fetch_digital_dataq(info);
+    } while (0);
 }
 
-
-void scpi_dev_conf_digital_data(struct info *info)
+void scpi_dev_measure_digital_dataq(struct info *info)
 {
-    (void)info;
+    if (!scpi_dev_conf_digital_data(info)) {
+        scpi_dev_read_digital_dataq(info);
+    }
+}
+
+int scpi_dev_conf_digital_data(struct info *info)
+{
+    return cgr101_configure_digital_data(info);
 }
 
 void scpi_dev_confq(struct info *info)
@@ -104,18 +116,17 @@ void scpi_dev_confq(struct info *info)
 
 void scpi_dev_fetch_digital_dataq(struct info *info)
 {
-    (void)info;
+    if (cgr101_digital_data_valid(info)) {
+        scpi_output_int(info->output, cgr101_fetch_digital_data(info));
+    } else {
+        /*scpi_error(info->scpi, SCPI_ERR_UNAVAIL???, val->src);*/
+    }
 }
 
 void scpi_dev_input_coupling(struct info *info, struct scpi_type *v)
 {
     (void)info;
     (void)v;
-}
-
-void scpi_dev_read_digital_dataq(struct info *info)
-{
-    (void)info;
 }
 
 void scpi_dev_sense_dataq(struct info *info, struct scpi_type *v)
