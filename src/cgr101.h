@@ -18,7 +18,7 @@ extern int cgr101_open(struct info *info);
 extern int cgr101_close(struct info *info);
 extern int cgr101_initiate(struct info *info);
 extern int cgr101_configure_digital_data(struct info *info);
-extern int cgr101_digital_data_valid(struct info *info);
-extern int cgr101_fetch_digital_data(struct info *info);
+extern int cgr101_digital_data_configured(struct info *info);
+extern void cgr101_fetch_digital_data(struct info *info);
 
 #endif /* CGR101_H_ */

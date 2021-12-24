@@ -116,8 +116,8 @@ void scpi_dev_confq(struct info *info)
 
 void scpi_dev_fetch_digital_dataq(struct info *info)
 {
-    if (cgr101_digital_data_valid(info)) {
-        scpi_output_int(info->output, cgr101_fetch_digital_data(info));
+    if (cgr101_digital_data_configured(info)) {
+        cgr101_fetch_digital_data(info);
     } else {
         /*scpi_error(info->scpi, SCPI_ERR_UNAVAIL???, val->src);*/
     }

@@ -40,6 +40,7 @@ struct cgr101 {
     char rcv_data[RCV_MAX];
     char err_data[ERR_MAX];
     int digital_data_requested;
+    int digital_data_fetch;
     int digital_data_valid;
     int digital_data;
 };
@@ -137,6 +138,11 @@ int cgr101_identify(struct info *info)
 /*
  * Device Digital Data Read Handling
  */
+static void cgr101_output_digital_data(struct info *info)
+{
+    assert(info->device->digital_data_valid);
+    scpi_output_int(info->output, info->device->digital_data);
+}
 
 static int cgr101_digital_data_start(struct info *info)
 {
@@ -150,6 +156,10 @@ static int cgr101_rcv_digital_data(struct info *info, char c)
     /* Done receiving. */
     info->device->digital_data = c;
     info->device->digital_data_valid = 1;
+    if (info->device->digital_data_fetch) {
+        cgr101_output_digital_data(info);
+        info->device->digital_data_fetch = 0;
+    }
     cgr101_rcv_idle(info);
 
     return err;
@@ -311,12 +321,19 @@ int cgr101_configure_digital_data(struct info *info)
     return 0;
 }
 
-int cgr101_digital_data_valid(struct info *info)
+int cgr101_digital_data_configured(struct info *info)
 {
-    return info->device->digital_data_valid;
+    return info->device->digital_data_requested;
 }
 
-int cgr101_fetch_digital_data(struct info *info)
+void cgr101_fetch_digital_data(struct info *info)
 {
-    return info->device->digital_data;
+    assert(info->device->digital_data_requested);
+    if (info->device->digital_data_valid) {
+        cgr101_output_digital_data(info);
+    } else {
+        /* RACE CONDITION - data could have been received after valid
+         is checked. */
+        info->device->digital_data_fetch = 1;
+    }
 }

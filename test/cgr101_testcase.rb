@@ -361,11 +361,11 @@ module CGR101Testcase
   #
   # U3 MEASure:DIGITAL:DATA? - prescribed range and set of channel
   #
-  def no_test_029
-    self.class.hdl.send("MEAS:DIG:DATA? (@17:19)")
+  def test_029
+    self.class.hdl.send("MEAS:DIG:DATA?")
     out = self.class.hdl.recv
     v = out.split(',').map { |s| Integer(s) }
-    assert_equal(3, v.length)
+    assert_equal(1, v.length)
     assert_equal(0, self.class.hdl.out_length)
     assert_equal(0, self.class.hdl.err_length)
   end
@@ -373,19 +373,19 @@ module CGR101Testcase
   #
   # U3 READ:DIGITAL:DATA? - prescribed range and set of channel
   #
-  def no_test_030
+  def test_030
     # measure for reference
-    self.class.hdl.send("MEAS:DIG:DATA? (@17:19)")
+    self.class.hdl.send("MEAS:DIG:DATA?")
     out = self.class.hdl.recv
     v0 = out.split(',').map { |s| Integer(s) }
 
     # READ sequence
     self.class.hdl.send("ABORt")
-    self.class.hdl.send("CONFIGURE:DIG:DATA (@17:19)")
-    self.class.hdl.send("READ:DIG:DATA? (@17:19)")
+    self.class.hdl.send("CONFIGURE:DIG:DATA")
+    self.class.hdl.send("READ:DIG:DATA?")
     out = self.class.hdl.recv
     v1 = out.split(',').map { |s| Integer(s) }
-    assert_equal(3, v1.length)
+    assert_equal(1, v1.length)
     assert_equal(0, self.class.hdl.out_length)
     assert_equal(0, self.class.hdl.err_length)
 
@@ -395,20 +395,20 @@ module CGR101Testcase
   #
   # U3 FETCh:DIGITAL:DATA? - prescribed range and set of channel
   #
-  def no_test_031
+  def test_031
     # measure for reference
-    self.class.hdl.send("MEAS:DIG:DATA? (@17:19)")
+    self.class.hdl.send("MEAS:DIG:DATA?")
     out = self.class.hdl.recv
     v0 = out.split(',').map { |s| Integer(s) }
 
     # FETCH sequence
     self.class.hdl.send("ABORt")
-    self.class.hdl.send("CONFIGURE:DIG:DATA (@17:19)")
+    self.class.hdl.send("CONFIGURE:DIG:DATA")
     self.class.hdl.send("INITiate")
-    self.class.hdl.send("FETCH:DIG:DATA? (@17:19)")
+    self.class.hdl.send("FETCH:DIG:DATA?")
     out = self.class.hdl.recv
     v1 = out.split(',').map { |s| Integer(s) }
-    assert_equal(3, v1.length)
+    assert_equal(1, v1.length)
     assert_equal(0, self.class.hdl.out_length)
     assert_equal(0, self.class.hdl.err_length)
 
