@@ -29,6 +29,7 @@ static char *CMD[] = {
 enum cgr101_rcv_state {
     IDLE,
     IDENTIFY,
+    DIGITAL_DATA,
 };
 
 struct cgr101 {
@@ -38,7 +39,27 @@ struct cgr101 {
     enum cgr101_rcv_state rcv_state;
     char rcv_data[RCV_MAX];
     char err_data[ERR_MAX];
+    int digital_data_requested;
+    int digital_data_valid;
+    int digital_data;
 };
+
+/*
+ * Sender
+ */
+static int cgr101_send(struct info *info, const char *str)
+{
+    size_t len_in = strlen(str);
+    ssize_t len_out;
+    int result;
+
+    len_out = write(info->device->child.stdin, str, len_in);
+    result = (len_out > 0) ? ((size_t)len_out == len_in) : 0;
+    assert(result);
+
+    return (result != 0);
+}
+
 
 /*
  * Receive State Machine
@@ -59,6 +80,11 @@ static int cgr101_rcv_start(struct info *info, char c)
         /* Variable length: terminated by <cr><lf> */
         err = 0;
         break;
+    case 'I':
+        info->device->rcv_state = DIGITAL_DATA;
+        /* I<uint8_t> */
+        err = 0;
+        break;
     default:
         assert(0);
     }
@@ -72,12 +98,7 @@ static int cgr101_rcv_start(struct info *info, char c)
 
 static int cgr101_identify_start(struct info *info)
 {
-    ssize_t len;
-
-    len = write(info->device->child.stdin, "i\n", 2UL);
-    assert(len > 0);
-
-    return (len <= 0);
+    return cgr101_send(info, "i\n");
 }
 
 static void cgr101_identify_done(struct info *info)
@@ -114,6 +135,27 @@ int cgr101_identify(struct info *info)
 }
 
 /*
+ * Device Digital Data Read Handling
+ */
+
+static int cgr101_digital_data_start(struct info *info)
+{
+    return cgr101_send(info, "D I\n");
+}
+
+static int cgr101_rcv_digital_data(struct info *info, char c)
+{
+    int err = 0;
+
+    /* Done receiving. */
+    info->device->digital_data = c;
+    info->device->digital_data_valid = 1;
+    cgr101_rcv_idle(info);
+
+    return err;
+}
+
+/*
  * Recieve Output Channel Handling
  */
 
@@ -127,6 +169,9 @@ static int cgr101_rcv_sm(struct info *info, char c)
         break;
     case IDENTIFY:
         err = cgr101_rcv_ident(info, c);
+        break;
+    case DIGITAL_DATA:
+        err = cgr101_rcv_digital_data(info, c);
         break;
     default:
         assert(0);
@@ -252,28 +297,26 @@ int cgr101_close(struct info *info)
 
 int cgr101_initiate(struct info *info)
 {
-    (void)info;
+    if (info->device->digital_data_requested) {
+        cgr101_digital_data_start(info);
+    }
 
     return 0;
 }
 
 int cgr101_configure_digital_data(struct info *info)
 {
-    (void)info;
+    info->device->digital_data_requested = 1;
 
     return 0;
 }
 
 int cgr101_digital_data_valid(struct info *info)
 {
-    (void)info;
-
-    return 0;
+    return info->device->digital_data_valid;
 }
 
 int cgr101_fetch_digital_data(struct info *info)
 {
-    (void)info;
-
-    return 0;
+    return info->device->digital_data;
 }
