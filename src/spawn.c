@@ -6,23 +6,18 @@
 */
 
 #include <assert.h>
-#include <fcntl.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
 #include <sys/wait.h>
+#include "misc.h"
 #include "spawn.h"
 
 #define MAXARG 10
 
 /* Context needed for signal handling. One at a time, please! */
 static struct spawn *spawn_sigdata;
-
-static int cloexec(int fd)
-{
-    return fcntl(fd, F_SETFD, fcntl(fd, F_GETFD) | FD_CLOEXEC);
-}
 
 static void spawn_sigchld(int sig)
 {
