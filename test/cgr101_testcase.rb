@@ -374,11 +374,6 @@ module CGR101Testcase
   # U3 READ:DIGITAL:DATA? - prescribed range and set of channel
   #
   def test_030
-    # measure for reference
-    self.class.hdl.send("MEAS:DIG:DATA?")
-    out = self.class.hdl.recv
-    v0 = out.split(',').map { |s| Integer(s) }
-
     # READ sequence
     self.class.hdl.send("ABORt")
     self.class.hdl.send("CONFIGURE:DIG:DATA")
@@ -389,6 +384,11 @@ module CGR101Testcase
     assert_equal(0, self.class.hdl.out_length)
     assert_equal(0, self.class.hdl.err_length)
 
+    # measure for reference
+    self.class.hdl.send("MEAS:DIG:DATA?")
+    out = self.class.hdl.recv
+    v0 = out.split(',').map { |s| Integer(s) }
+
     assert_equal(v0, v1)
   end
 
@@ -396,11 +396,6 @@ module CGR101Testcase
   # U3 FETCh:DIGITAL:DATA? - prescribed range and set of channel
   #
   def test_031
-    # measure for reference
-    self.class.hdl.send("MEAS:DIG:DATA?")
-    out = self.class.hdl.recv
-    v0 = out.split(',').map { |s| Integer(s) }
-
     # FETCH sequence
     self.class.hdl.send("ABORt")
     self.class.hdl.send("CONFIGURE:DIG:DATA")
@@ -411,6 +406,11 @@ module CGR101Testcase
     assert_equal(1, v1.length)
     assert_equal(0, self.class.hdl.out_length)
     assert_equal(0, self.class.hdl.err_length)
+
+    # measure for reference
+    self.class.hdl.send("MEAS:DIG:DATA?")
+    out = self.class.hdl.recv
+    v0 = out.split(',').map { |s| Integer(s) }
 
     assert_equal(v0, v1)
   end
