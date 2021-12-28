@@ -11,6 +11,7 @@
 #include "info.h"
 #include "scpi_error.h"
 #include "scpi_output.h"
+#include "scpi_type.h"
 
 #define SCPI_SESR_OPC (1u<<0) /* SESR bit 0 Operation Complete */
 #define SCPI_SBR_ERQ  (1u<<2) /* SBR  bit 2 Error queue not empty */
@@ -37,5 +38,16 @@ extern int scpi_core_done(struct info *info);
 extern int scpi_core_send(struct info *info, char *buf, int len);
 extern int scpi_core_recv(struct info *info);
 extern int scpi_core_recv_ready(struct info *info);
+extern int scpi_input_int(struct info *info,
+                          struct scpi_type *in,
+                          long low,
+                          long high,
+                          long *out);
+extern int scpi_input_uint8(struct info *info,
+                            struct scpi_type *in,
+                            uint8_t *out);
+extern int scpi_input_uint16(struct info *info,
+                             struct scpi_type *in,
+                             uint16_t *out);
 
 #endif /* SCPI_CORE_H_ */

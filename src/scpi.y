@@ -533,8 +533,8 @@ dev-cmd
     | SENS COLON VOLT COLON DC COLON UPPQ channel
     { scpi_dev_sense_voltage_upq(info, &$6); }
 
-    | SOUR COLON DIG COLON DAT
-    { scpi_dev_source_digital_data(info); }
+    | SOUR COLON DIG COLON DAT nr1
+    { scpi_dev_source_digital_data(info, &$6); }
 
     | SOUR COLON DIG COLON DATQ
     { scpi_dev_source_digital_dataq(info); }

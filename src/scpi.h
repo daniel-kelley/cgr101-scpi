@@ -124,11 +124,10 @@ extern void scpi_dev_sense_voltage_rangeq(struct info *info,
                                          struct scpi_type *v);
 extern void scpi_dev_sense_voltage_upq(struct info *info,
                                       struct scpi_type *v);
-extern void scpi_dev_source_digital_data(struct info *info);
+extern void scpi_dev_source_digital_data(struct info *info,
+                                         struct scpi_type *v);
 extern void scpi_dev_source_digital_dataq(struct info *info);
 extern void scpi_dev_source_frequency(struct info *info);
-extern void scpi_dev_source_digital_data(struct info *info);
-extern void scpi_dev_source_digital_dataq(struct info *info);
 extern void scpi_dev_source_waveform_frequency(struct info *info,
                                                struct scpi_type *v);
 extern void scpi_dev_source_waveform_frequencyq(struct info *info);

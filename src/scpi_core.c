@@ -16,11 +16,11 @@
 #include "parser.h"
 #include "cgr101.h"
 
-static int scpi_input_int(struct info *info,
-                          struct scpi_type *in,
-                          long low,
-                          long high,
-                          long *out)
+int scpi_input_int(struct info *info,
+                   struct scpi_type *in,
+                   long low,
+                   long high,
+                   long *out)
 {
     int err = 1;
 
@@ -36,9 +36,9 @@ static int scpi_input_int(struct info *info,
     return err;
 }
 
-static int scpi_input_uint8(struct info *info,
-                            struct scpi_type *in,
-                            uint8_t *out)
+int scpi_input_uint8(struct info *info,
+                     struct scpi_type *in,
+                     uint8_t *out)
 {
     long ival;
     int err = scpi_input_int(info, in, 0, 255, &ival);
@@ -50,9 +50,9 @@ static int scpi_input_uint8(struct info *info,
     return err;
 }
 
-static int scpi_input_uint16(struct info *info,
-                            struct scpi_type *in,
-                            uint16_t *out)
+int scpi_input_uint16(struct info *info,
+                      struct scpi_type *in,
+                      uint16_t *out)
 {
     long ival;
     int err = scpi_input_int(info, in, 0, 0xffff, &ival);

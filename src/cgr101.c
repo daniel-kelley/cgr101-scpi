@@ -6,8 +6,10 @@
 */
 
 #include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include <unistd.h>
 #include <errno.h>
 #include "worker.h"
@@ -69,6 +71,9 @@ struct cgr101 {
     int digital_read_data;
     /* Event Queue */
     int eventq[2];
+    /* Digital Data Output */
+    int digital_write_data;
+
 };
 
 /*
@@ -98,6 +103,32 @@ static int cgr101_device_send(struct info *info, const char *str)
     result = (len_out > 0) ? ((size_t)len_out == len_in) : 0;
 
     return (result == 0);
+}
+
+static int cgr101_device_printf(struct info *info,
+                                const char *format,
+                                ...)
+{
+    int err = 1;
+    char buf[32];
+    size_t buf_len = sizeof(buf);
+    size_t actual;
+    va_list ap;
+
+    assert(format != NULL);
+    va_start(ap, format);
+    actual = (size_t)vsnprintf(buf, buf_len, format, ap);
+    /* 'old' GLIBC prints return -1 on overflow, not the actual length
+     * needed, but the cast should result in a very large number
+     * anyway.
+     */
+    assert(actual < buf_len);
+
+    va_end(ap);
+
+    err = cgr101_device_send(info, buf);
+
+    return err;
 }
 
 
@@ -166,7 +197,10 @@ static int cgr101_rcv_digital_read(struct info *info, char c)
 
 static void cgr101_digital_read_completion(struct info *info)
 {
-    assert(info->device->digital_read_state == STATE_DIGITAL_READ_PENDING);
+    /* By default, the device sends updates when the inputs change, so
+     * completion may happen when in the PENDING state *or* the
+     * COMPLETION state.
+     */
     info->device->digital_read_state = STATE_DIGITAL_READ_COMPLETE;
 }
 
@@ -494,3 +528,18 @@ void cgr101_fetch_digital_data(struct info *info)
 {
     cgr101_event_send(info, EVENT_DIGITAL_READ_OUTPUT);
 }
+
+void cgr101_source_digital_data(struct info *info, int value)
+{
+    int err;
+
+    info->device->digital_write_data = value;
+    err = cgr101_device_printf(info, "D O %d\n", value);
+    assert(!err);
+}
+
+void cgr101_source_digital_dataq(struct info *info)
+{
+    scpi_output_int(info->output, info->device->digital_write_data);
+}
+

@@ -415,6 +415,20 @@ module CGR101Testcase
     assert_equal(v0, v1)
   end
 
+  #
+  # U3 SOURce:DIGital:DATA
+  #
+  def test_032
+    self.class.hdl.send("SOUR:DIG:DATA 1")
+    self.class.hdl.send("SOUR:DIG:DATA?")
+    out = self.class.hdl.recv
+    v = out.split(',').map { |s| Integer(s) }
+    assert_equal(1, v.length)
+    assert_equal(1, v[0])
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+  end
+
   def no_test_outline
     self.class.hdl.send("SYSTem:CAPability?")
     sleep(5)

@@ -271,14 +271,19 @@ void scpi_dev_sense_voltage_upq(struct info *info,
 }
 
 
-void scpi_dev_source_digital_data(struct info *info)
+void scpi_dev_source_digital_data(struct info *info,
+                                  struct scpi_type *v)
 {
-    (void)info;
+    uint8_t value;
+
+    if (!scpi_input_uint8(info, v, &value)) {
+        cgr101_source_digital_data(info, value);
+    }
 }
 
 void scpi_dev_source_digital_dataq(struct info *info)
 {
-    (void)info;
+    cgr101_source_digital_dataq(info);
 }
 
 void scpi_dev_source_frequency(struct info *info)
