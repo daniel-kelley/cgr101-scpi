@@ -12,6 +12,7 @@
 #include <errno.h>
 #include "worker.h"
 #include "spawn.h"
+#include "misc.h"
 #include "scpi_output.h"
 #include "cgr101.h"
 
@@ -29,26 +30,65 @@ static char *CMD[] = {
 enum cgr101_rcv_state {
     IDLE,
     IDENTIFY,
-    DIGITAL_DATA,
+    DIGITAL_READ,
+};
+
+enum cgr101_event {
+    EVENT_IDENTIFY_COMPLETE,
+    EVENT_IDENTIFY_OUTPUT,
+    EVENT_DIGITAL_READ_COMPLETE,
+    EVENT_DIGITAL_READ_OUTPUT,
+};
+
+enum cgr101_identify_state {
+    STATE_IDENTIFY_IDLE,
+    STATE_IDENTIFY_PENDING,
+    STATE_IDENTIFY_COMPLETE,
+};
+
+enum cgr101_digital_read_state {
+    STATE_DIGITAL_READ_IDLE,
+    STATE_DIGITAL_READ_PENDING,
+    STATE_DIGITAL_READ_COMPLETE,
 };
 
 struct cgr101 {
     struct spawn child;
+    /* ID */
+    enum cgr101_identify_state identify_state;
+    int identify_output_requested;
     int device_id_len;
     char device_id[ID_MAX];
+    /* Device Receiver */
     enum cgr101_rcv_state rcv_state;
     char rcv_data[RCV_MAX];
     char err_data[ERR_MAX];
-    int digital_data_requested;
-    int digital_data_fetch;
-    int digital_data_valid;
-    int digital_data;
+    /* Digital Data Input */
+    enum cgr101_digital_read_state digital_read_state;
+    int digital_read_requested;
+    int digital_read_data;
+    /* Event Queue */
+    int eventq[2];
 };
 
 /*
- * Sender
+ * Event Queue Sender
  */
-static int cgr101_send(struct info *info, const char *str)
+
+static void cgr101_event_send(struct info *info, enum cgr101_event event)
+{
+    ssize_t len_out;
+    char cevent = (char)event;
+    assert(event == (enum cgr101_event)cevent);
+    len_out = write(info->device->eventq[1], &cevent, sizeof(cevent));
+    assert(len_out == sizeof(cevent));
+}
+
+
+/*
+ * Device Sender
+ */
+static int cgr101_device_send(struct info *info, const char *str)
 {
     size_t len_in = strlen(str);
     ssize_t len_out;
@@ -56,9 +96,8 @@ static int cgr101_send(struct info *info, const char *str)
 
     len_out = write(info->device->child.stdin, str, len_in);
     result = (len_out > 0) ? ((size_t)len_out == len_in) : 0;
-    assert(result);
 
-    return (result != 0);
+    return (result == 0);
 }
 
 
@@ -82,7 +121,7 @@ static int cgr101_rcv_start(struct info *info, char c)
         err = 0;
         break;
     case 'I':
-        info->device->rcv_state = DIGITAL_DATA;
+        info->device->rcv_state = DIGITAL_READ;
         /* I<uint8_t> */
         err = 0;
         break;
@@ -94,19 +133,86 @@ static int cgr101_rcv_start(struct info *info, char c)
 }
 
 /*
+ * Device Digital Data Read Handling
+ */
+static void cgr101_output_digital_read(struct info *info)
+{
+    assert(info->device->digital_read_state == STATE_DIGITAL_READ_COMPLETE);
+    scpi_output_int(info->output, info->device->digital_read_data);
+}
+
+static int cgr101_digital_read_start(struct info *info)
+{
+    int err = cgr101_device_send(info, "D I\n");
+
+    if (!err) {
+        info->device->digital_read_state = STATE_DIGITAL_READ_PENDING;
+    }
+
+    return err;
+}
+
+static int cgr101_rcv_digital_read(struct info *info, char c)
+{
+    int err = 0;
+
+    /* Done receiving. */
+    info->device->digital_read_data = (unsigned char)c;
+    cgr101_event_send(info, EVENT_DIGITAL_READ_COMPLETE);
+    cgr101_rcv_idle(info);
+
+    return err;
+}
+
+static void cgr101_digital_read_completion(struct info *info)
+{
+    assert(info->device->digital_read_state == STATE_DIGITAL_READ_PENDING);
+    info->device->digital_read_state = STATE_DIGITAL_READ_COMPLETE;
+}
+
+static void cgr101_digital_read_output(struct info *info)
+{
+    switch (info->device->digital_read_state) {
+    case STATE_DIGITAL_READ_IDLE:
+        /*
+         * Digital reads are started via initiate, so should never be
+         * IDLE by the time a read is requested.
+         */
+        assert(0);
+        break;
+    case STATE_DIGITAL_READ_PENDING:
+        /* Reschedule */
+        cgr101_event_send(info, EVENT_DIGITAL_READ_OUTPUT);
+        break;
+    case STATE_DIGITAL_READ_COMPLETE:
+        /* Done. */
+        cgr101_output_digital_read(info);
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+
+
+/*
  * Device Identify Handling
  */
 
 static int cgr101_identify_start(struct info *info)
 {
-    return cgr101_send(info, "i\n");
+    int err = cgr101_device_send(info, "i\n");
+
+    if (!err) {
+        info->device->identify_state = STATE_IDENTIFY_PENDING;
+    }
+
+    return err;
 }
 
 static void cgr101_identify_done(struct info *info)
 {
-    scpi_output_printf(info->output,
-                       "GMP,CGR101-SCPI,1.0,%s",
-                       info->device->device_id);
+    cgr101_event_send(info, EVENT_IDENTIFY_COMPLETE);
 }
 
 static int cgr101_rcv_ident(struct info *info, char c)
@@ -126,41 +232,80 @@ static int cgr101_rcv_ident(struct info *info, char c)
 
 int cgr101_identify(struct info *info)
 {
-    if (info->device->device_id_len > 0) {
-        cgr101_identify_done(info);
-    } else {
-        cgr101_identify_start(info);
-    }
-
+    info->device->identify_output_requested = 1;
+    cgr101_event_send(info, EVENT_IDENTIFY_OUTPUT);
     return 0;
 }
 
-/*
- * Device Digital Data Read Handling
- */
-static void cgr101_output_digital_data(struct info *info)
+static void cgr101_identify_completion(struct info *info)
 {
-    assert(info->device->digital_data_valid);
-    scpi_output_int(info->output, info->device->digital_data);
-}
-
-static int cgr101_digital_data_start(struct info *info)
-{
-    return cgr101_send(info, "D I\n");
-}
-
-static int cgr101_rcv_digital_data(struct info *info, char c)
-{
-    int err = 0;
-
-    /* Done receiving. */
-    info->device->digital_data = c;
-    info->device->digital_data_valid = 1;
-    if (info->device->digital_data_fetch) {
-        cgr101_output_digital_data(info);
-        info->device->digital_data_fetch = 0;
+    assert(info->device->identify_state == STATE_IDENTIFY_PENDING);
+    info->device->identify_state = STATE_IDENTIFY_COMPLETE;
+    if (info->device->identify_output_requested) {
+        cgr101_event_send(info, EVENT_IDENTIFY_OUTPUT);
     }
-    cgr101_rcv_idle(info);
+}
+
+static void cgr101_identify_output(struct info *info)
+{
+    switch (info->device->identify_state) {
+    case STATE_IDENTIFY_IDLE:
+    {
+        int err = cgr101_identify_start(info);
+        assert(!err);
+    }
+        break;
+    case STATE_IDENTIFY_PENDING:
+        /* Reschedule */
+        cgr101_event_send(info, EVENT_IDENTIFY_OUTPUT);
+        break;
+    case STATE_IDENTIFY_COMPLETE:
+        scpi_output_printf(info->output,
+                           "GMP,CGR101-SCPI,1.0,%s",
+                           info->device->device_id);
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+
+/*
+ * Event Handler
+ */
+
+static int cgr101_event_handler(void *arg)
+{
+    struct info *info = arg;
+    int err = 0;
+    ssize_t len;
+    char eventc;
+    enum cgr101_event event;
+
+    len = read(
+        info->device->eventq[0],
+        &eventc,
+        sizeof(eventc));
+
+    assert(len == sizeof(eventc));
+    event = (enum cgr101_event)eventc;
+    switch (event) {
+    case EVENT_IDENTIFY_COMPLETE:
+        cgr101_identify_completion(info);
+        break;
+    case EVENT_IDENTIFY_OUTPUT:
+        cgr101_identify_output(info);
+        break;
+    case EVENT_DIGITAL_READ_COMPLETE:
+        cgr101_digital_read_completion(info);
+        break;
+    case EVENT_DIGITAL_READ_OUTPUT:
+        cgr101_digital_read_output(info);
+        break;
+    default:
+        assert(0);
+        break;
+    }
 
     return err;
 }
@@ -180,8 +325,8 @@ static int cgr101_rcv_sm(struct info *info, char c)
     case IDENTIFY:
         err = cgr101_rcv_ident(info, c);
         break;
-    case DIGITAL_DATA:
-        err = cgr101_rcv_digital_data(info, c);
+    case DIGITAL_READ:
+        err = cgr101_rcv_digital_read(info, c);
         break;
     default:
         assert(0);
@@ -286,6 +431,24 @@ int cgr101_open(struct info *info)
             break;
         }
 
+        /* Event queue. */
+        err = pipe(info->device->eventq);
+        if (err) {
+            break;
+        }
+
+        cloexec(info->device->eventq[0]);
+        cloexec(info->device->eventq[1]);
+
+        err = worker_add(
+            info->worker,
+            info->device->eventq[0],
+            cgr101_event_handler,
+            info);
+        if (err) {
+            break;
+        }
+
     } while (0);
 
     return err;
@@ -307,8 +470,9 @@ int cgr101_close(struct info *info)
 
 int cgr101_initiate(struct info *info)
 {
-    if (info->device->digital_data_requested) {
-        cgr101_digital_data_start(info);
+    if (info->device->digital_read_requested) {
+        int err = cgr101_digital_read_start(info);
+        assert(!err);
     }
 
     return 0;
@@ -316,24 +480,17 @@ int cgr101_initiate(struct info *info)
 
 int cgr101_configure_digital_data(struct info *info)
 {
-    info->device->digital_data_requested = 1;
+    info->device->digital_read_requested = 1;
 
     return 0;
 }
 
 int cgr101_digital_data_configured(struct info *info)
 {
-    return info->device->digital_data_requested;
+    return info->device->digital_read_requested;
 }
 
 void cgr101_fetch_digital_data(struct info *info)
 {
-    assert(info->device->digital_data_requested);
-    if (info->device->digital_data_valid) {
-        cgr101_output_digital_data(info);
-    } else {
-        /* RACE CONDITION - data could have been received after valid
-         is checked. */
-        info->device->digital_data_fetch = 1;
-    }
+    cgr101_event_send(info, EVENT_DIGITAL_READ_OUTPUT);
 }
