@@ -600,3 +600,135 @@ void cgr101_source_pwm_frequencyq(struct info *info)
     (void)info;
 }
 
+extern void cgr101_digitizer_coupling(struct info *info, const char *value)
+{
+    (void)info;
+    (void)value;
+}
+
+extern void cgr101_digitizer_dataq(struct info *info, long chan_mask)
+{
+    (void)info;
+    (void)chan_mask;
+}
+
+extern void cgr101_digitizer_concurrent(struct info *info, int value)
+{
+    (void)info;
+    (void)value;
+}
+
+extern void cgr101_digitizer_channel_state(struct info *info,
+                                           long chan_mask,
+                                           int value)
+{
+    (void)info;
+    (void)chan_mask;
+    (void)value;
+}
+
+extern void cgr101_digitizer_channel_stateq(struct info *info, long chan_mask)
+{
+    (void)info;
+    (void)chan_mask;
+}
+
+extern void cgr101_digitizer_sweep_point(struct info *info, float value)
+{
+    (void)info;
+    (void)value;
+}
+
+extern void cgr101_digitizer_sweep_time(struct info *info, float value)
+{
+    (void)info;
+    (void)value;
+}
+
+extern void cgr101_digitizer_sweep_interval(struct info *info, float value)
+{
+    (void)info;
+    (void)value;
+}
+
+extern void cgr101_digitizer_sweep_pretrigger(struct info *info, float value)
+{
+    (void)info;
+    (void)value;
+}
+
+extern void cgr101_digitizer_voltage_low(struct info *info,
+                                         long chan_mask,
+                                         float value)
+{
+    (void)info;
+    (void)chan_mask;
+    (void)value;
+}
+
+extern void cgr101_digitizer_voltage_offset(struct info *info,
+                                            long chan_mask,
+                                            float value)
+{
+    (void)info;
+    (void)chan_mask;
+    (void)value;
+}
+
+extern void cgr101_digitizer_voltage_ptp(struct info *info,
+                                         long chan_mask,
+                                         float value)
+{
+    (void)info;
+    (void)chan_mask;
+    (void)value;
+}
+
+extern void cgr101_digitizer_voltage_range(struct info *info,
+                                           long chan_mask,
+                                           float value)
+{
+    (void)info;
+    (void)chan_mask;
+    (void)value;
+}
+
+extern void cgr101_digitizer_voltage_up(struct info *info,
+                                        long chan_mask,
+                                        float value)
+{
+    (void)info;
+    (void)chan_mask;
+    (void)value;
+}
+
+extern void cgr101_digitizer_lowq(struct info *info, long chan_mask)
+{
+    (void)info;
+    (void)chan_mask;
+}
+
+extern void cgr101_digitizer_offsetq(struct info *info, long chan_mask)
+{
+    (void)info;
+    (void)chan_mask;
+}
+
+extern void cgr101_digitizer_ptpq(struct info *info, long chan_mask)
+{
+    (void)info;
+    (void)chan_mask;
+}
+
+extern void cgr101_digitizer_rangeq(struct info *info, long chan_mask)
+{
+    (void)info;
+    (void)chan_mask;
+}
+
+extern void cgr101_digitizer_upq(struct info *info, long chan_mask)
+{
+    (void)info;
+    (void)chan_mask;
+}
+

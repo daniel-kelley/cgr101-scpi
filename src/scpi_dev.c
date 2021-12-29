@@ -84,6 +84,15 @@ struct scpi_type *scpi_dev_channel_range_append(struct info *info,
     return v2;
 }
 
+static int scpi_dev_chan(struct scpi_type *v, long *chan_mask)
+{
+    assert(v->type == SCPI_TYPE_CHAN);
+
+    *chan_mask = v->val.chan;
+
+    return 0;
+}
+
 void scpi_dev_read_digital_dataq(struct info *info)
 {
     do {
@@ -125,151 +134,230 @@ void scpi_dev_fetch_digital_dataq(struct info *info)
 
 void scpi_dev_input_coupling(struct info *info, struct scpi_type *v)
 {
-    (void)info;
-    (void)v;
+    char *value;
+
+    if (!scpi_input_str(info, v, &value)) {
+        cgr101_digitizer_coupling(info, value);
+    }
 }
 
 void scpi_dev_sense_dataq(struct info *info, struct scpi_type *v)
 {
-    (void)info;
-    (void)v;
+    long chan_mask;
+
+    if (!scpi_dev_chan(v, &chan_mask)) {
+        cgr101_digitizer_dataq(info, chan_mask);
+    }
 }
 
 void scpi_dev_sense_function_concurrent(struct info *info,
-                                               struct scpi_type *v)
+                                        struct scpi_type *v)
 {
-    (void)info;
-    (void)v;
+    int value;
+
+    if (!scpi_input_boolean(info, v, &value)) {
+        cgr101_digitizer_concurrent(info, value);
+    }
 }
 
 void scpi_dev_sense_function_off(struct info *info,
-                                        struct scpi_type *v)
+                                 struct scpi_type *v)
 {
-    (void)info;
-    (void)v;
+    long chan_mask;
+
+    if (!scpi_dev_chan(v, &chan_mask)) {
+        cgr101_digitizer_channel_state(info, chan_mask, 0);
+    }
 }
 
 void scpi_dev_sense_function_stateq(struct info *info,
-                                           struct scpi_type *v)
+                                    struct scpi_type *v)
 {
-    (void)info;
-    (void)v;
+    long chan_mask;
+
+    if (!scpi_dev_chan(v, &chan_mask)) {
+        cgr101_digitizer_channel_stateq(info, chan_mask);
+    }
 }
 
 void scpi_dev_sense_function_on(struct info *info,
-                                       struct scpi_type *v)
+                                struct scpi_type *v)
 {
-    (void)info;
-    (void)v;
+    long chan_mask;
+
+    if (!scpi_dev_chan(v, &chan_mask)) {
+        cgr101_digitizer_channel_state(info, chan_mask, 1);
+    }
 }
 
 void scpi_dev_sense_sweep_point(struct info *info,
-                                       struct scpi_type *v)
+                                struct scpi_type *v)
 {
-    (void)info;
-    (void)v;
+    float value;
+
+    if (!scpi_input_float(info, v, &value)) {
+        cgr101_digitizer_sweep_point(info, value);
+    }
 }
 
 void scpi_dev_sense_sweep_time(struct info *info, struct scpi_type *v)
 {
-    (void)info;
-    (void)v;
+    float value;
+
+    if (!scpi_input_float(info, v, &value)) {
+        cgr101_digitizer_sweep_time(info, value);
+    }
 }
 
 void scpi_dev_sense_sweep_time_interval(struct info *info,
                                                struct scpi_type *v)
 {
-    (void)info;
-    (void)v;
+    float value;
+
+    if (!scpi_input_float(info, v, &value)) {
+        cgr101_digitizer_sweep_interval(info, value);
+    }
 }
 
 void scpi_dev_sense_sweep_pretrigger(struct info *info,
                                             struct scpi_type *v)
 {
-    (void)info;
-    (void)v;
+    float value;
+
+    if (!scpi_input_float(info, v, &value)) {
+        cgr101_digitizer_sweep_pretrigger(info, value);
+    }
 }
 
 void scpi_dev_sense_voltage_low(struct info *info,
-                                       struct scpi_type *v1,
-                                       struct scpi_type *v2)
+                                       struct scpi_type *v,
+                                       struct scpi_type *chan)
 {
-    (void)info;
-    (void)v1;
-    (void)v2;
+    float value;
+    long chan_mask;
+    int err_v;
+    int err_c;
+
+    err_v = scpi_input_float(info, v, &value);
+    err_c = scpi_dev_chan(chan, &chan_mask);
+    if (!err_v && !err_c) {
+        cgr101_digitizer_voltage_low(info, chan_mask, value);
+    }
 }
 
 void scpi_dev_sense_voltage_offset(struct info *info,
-                                          struct scpi_type *v1,
-                                          struct scpi_type *v2)
+                                          struct scpi_type *v,
+                                          struct scpi_type *chan)
 {
-    (void)info;
-    (void)v1;
-    (void)v2;
+    float value;
+    long chan_mask;
+    int err_v;
+    int err_c;
+
+    err_v = scpi_input_float(info, v, &value);
+    err_c = scpi_dev_chan(chan, &chan_mask);
+    if (!err_v && !err_c) {
+        cgr101_digitizer_voltage_offset(info, chan_mask, value);
+    }
 }
 
 void scpi_dev_sense_voltage_ptp(struct info *info,
-                                       struct scpi_type *v1,
-                                       struct scpi_type *v2)
+                                       struct scpi_type *v,
+                                       struct scpi_type *chan)
 {
-    (void)info;
-    (void)v1;
-    (void)v2;
+    float value;
+    long chan_mask;
+    int err_v;
+    int err_c;
+
+    err_v = scpi_input_float(info, v, &value);
+    err_c = scpi_dev_chan(chan, &chan_mask);
+    if (!err_v && !err_c) {
+        cgr101_digitizer_voltage_ptp(info, chan_mask, value);
+    }
 }
 
 void scpi_dev_sense_voltage_range(struct info *info,
-                                         struct scpi_type *v1,
-                                         struct scpi_type *v2)
+                                         struct scpi_type *v,
+                                         struct scpi_type *chan)
 {
-    (void)info;
-    (void)v1;
-    (void)v2;
+    float value;
+    long chan_mask;
+    int err_v;
+    int err_c;
+
+    err_v = scpi_input_float(info, v, &value);
+    err_c = scpi_dev_chan(chan, &chan_mask);
+    if (!err_v && !err_c) {
+        cgr101_digitizer_voltage_range(info, chan_mask, value);
+    }
 }
 
 void scpi_dev_sense_voltage_up(struct info *info,
-                                      struct scpi_type *v1,
-                                      struct scpi_type *v2)
+                                      struct scpi_type *v,
+                                      struct scpi_type *chan)
 {
-    (void)info;
-    (void)v1;
-    (void)v2;
+    float value;
+    long chan_mask;
+    int err_v;
+    int err_c;
+
+    err_v = scpi_input_float(info, v, &value);
+    err_c = scpi_dev_chan(chan, &chan_mask);
+    if (!err_v && !err_c) {
+        cgr101_digitizer_voltage_up(info, chan_mask, value);
+    }
 }
 
 void scpi_dev_sense_voltage_lowq(struct info *info,
-                                 struct scpi_type *v)
+                                 struct scpi_type *chan)
 {
-    (void)info;
-    (void)v;
+    long chan_mask;
+
+    if (!scpi_dev_chan(chan, &chan_mask)) {
+        cgr101_digitizer_lowq(info, chan_mask);
+    }
 }
 
 void scpi_dev_sense_voltage_offsetq(struct info *info,
-                                    struct scpi_type *v)
+                                    struct scpi_type *chan)
 {
-    (void)info;
-    (void)v;
+    long chan_mask;
+
+    if (!scpi_dev_chan(chan, &chan_mask)) {
+        cgr101_digitizer_offsetq(info, chan_mask);
+    }
 }
 
 void scpi_dev_sense_voltage_ptpq(struct info *info,
-                                 struct scpi_type *v)
+                                 struct scpi_type *chan)
 {
-    (void)info;
-    (void)v;
+    long chan_mask;
+
+    if (!scpi_dev_chan(chan, &chan_mask)) {
+        cgr101_digitizer_ptpq(info, chan_mask);
+    }
 }
 
 void scpi_dev_sense_voltage_rangeq(struct info *info,
-                                   struct scpi_type *v)
+                                   struct scpi_type *chan)
 {
-    (void)info;
-    (void)v;
+    long chan_mask;
+
+    if (!scpi_dev_chan(chan, &chan_mask)) {
+        cgr101_digitizer_rangeq(info, chan_mask);
+    }
 }
 
 void scpi_dev_sense_voltage_upq(struct info *info,
-                                struct scpi_type *v)
+                                struct scpi_type *chan)
 {
-    (void)info;
-    (void)v;
-}
+    long chan_mask;
 
+    if (!scpi_dev_chan(chan, &chan_mask)) {
+        cgr101_digitizer_upq(info, chan_mask);
+    }
+}
 
 void scpi_dev_source_digital_data(struct info *info,
                                   struct scpi_type *v)

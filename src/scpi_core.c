@@ -36,6 +36,20 @@ int scpi_input_int(struct info *info,
     return err;
 }
 
+int scpi_input_boolean(struct info *info,
+                       struct scpi_type *in,
+                       int *out)
+{
+    long ival;
+    int err = scpi_input_int(info, in, 0, 1, &ival);
+
+    if (!err) {
+        *out = (int)ival;
+    }
+
+    return err;
+}
+
 int scpi_input_uint8(struct info *info,
                      struct scpi_type *in,
                      uint8_t *out)

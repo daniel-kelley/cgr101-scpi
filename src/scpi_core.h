@@ -43,6 +43,9 @@ extern int scpi_input_int(struct info *info,
                           long low,
                           long high,
                           long *out);
+extern int scpi_input_boolean(struct info *info,
+                              struct scpi_type *in,
+                              int *out);
 extern int scpi_input_uint8(struct info *info,
                             struct scpi_type *in,
                             uint8_t *out);
