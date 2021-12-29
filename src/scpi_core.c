@@ -78,7 +78,7 @@ int scpi_input_uint16(struct info *info,
     return err;
 }
 
-int scpi_input_float(struct info *info, struct scpi_type *in, float *out)
+int scpi_input_fp(struct info *info, struct scpi_type *in, double *out)
 {
     (void)info;
     (void)in;
@@ -88,10 +88,10 @@ int scpi_input_float(struct info *info, struct scpi_type *in, float *out)
     return 0;
 }
 
-int scpi_input_float_block(struct info *info,
-                           struct scpi_type *in,
-                           size_t *out_len,
-                           float **out_block)
+int scpi_input_fp_block(struct info *info,
+                        struct scpi_type *in,
+                        size_t *out_len,
+                        double **out_block)
 {
     (void)info;
     (void)in;

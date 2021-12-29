@@ -85,7 +85,7 @@ int scpi_output_int(struct scpi_output *output, int value)
     return scpi_output_printf(output, "%d", value);
 }
 
-int scpi_output_float(struct scpi_output *output, float value)
+int scpi_output_fp(struct scpi_output *output, double value)
 {
     return scpi_output_printf(output, "%g", value);
 }

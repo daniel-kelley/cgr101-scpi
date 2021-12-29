@@ -12,6 +12,7 @@
 #include <stdarg.h>
 #include <unistd.h>
 #include <errno.h>
+#include <math.h>
 #include "worker.h"
 #include "spawn.h"
 #include "misc.h"
@@ -70,7 +71,6 @@ struct cgr101_waveform_map_s {
     enum cgr101_waveform_shape shape;
 };
 
-#if 0
 static struct cgr101_waveform_map_s cgr101_waveform_map[] = {
     { "RAND", WAV_RAND},
     { "SIN", WAV_SIN},
@@ -79,7 +79,6 @@ static struct cgr101_waveform_map_s cgr101_waveform_map[] = {
     { "USER", WAV_USER},
     { NULL, WAV_NONE},
 };
-#endif
 
 struct cgr101 {
     struct spawn child;
@@ -104,8 +103,8 @@ struct cgr101 {
     struct {
         const char *name;
         enum cgr101_waveform_shape shape;
-        float user[WAVEFORM_USER_MAX];
-        float frequency;
+        double user[WAVEFORM_USER_MAX];
+        double frequency;
     } waveform;
 };
 
@@ -464,15 +463,82 @@ static int cgr101_err(void *arg)
 static void cgr101_waveform_lookup(const char *value,
                                    enum cgr101_waveform_shape *shape)
 {
-    (void)value;
-    (void)shape;
+    struct cgr101_waveform_map_s *p;
+
+    assert(value);
+    assert(shape);
+    for (p = cgr101_waveform_map; p != NULL; p++) {
+        if (!strcmp(value, p->name)) {
+            *shape = p->shape;
+            break;
+        }
+    }
+    assert(p != NULL);
+}
+
+/*
+ * Waveform functions:
+ *  phase: 0.0 .. 1.0
+ *  amplitude: -1.0 .. 1.0
+ */
+
+static double cgr101_fn_sin(double phase)
+{
+    double angle = 2.0 * M_PI * phase;
+    return ((double)sin(angle));
+}
+
+
+static double cgr101_fn_squ(double phase)
+{
+    return (double)((phase < 0.5) ? 1.0 : -1.0);
+}
+
+static double cgr101_fn_tri(double phase)
+{
+    double amp = phase * 2.0;
+    return (double)((phase < 0.5) ? (amp - 1.0) : (1.0 - amp));
+}
+
+typedef double (*wff_t)(double phase);
+
+static void cgr101_waveform_create_fn(double *data, size_t points, wff_t wfn)
+{
+    size_t i;
+    double phase = 0.0;
+    double phase_incr = 1.0/((double)points);
+    for (i=0; i<points; i++) {
+        data[i] = (double)wfn(phase);
+        phase += phase_incr;
+    }
 }
 
 static void cgr101_waveform_create(struct info *info,
                                    enum cgr101_waveform_shape shape)
 {
-    (void)info;
-    (void)shape;
+    switch (shape) {
+    case WAV_RAND:
+        /* Handled by device programming. */
+        break;
+    case WAV_SIN:
+        cgr101_waveform_create_fn(info->device->waveform.user,
+                                  sizeof(info->device->waveform.user),
+                                  cgr101_fn_sin);
+        break;
+    case WAV_SQU:
+        cgr101_waveform_create_fn(info->device->waveform.user,
+                                  sizeof(info->device->waveform.user),
+                                  cgr101_fn_squ);
+        break;
+    case WAV_TRI:
+        cgr101_waveform_create_fn(info->device->waveform.user,
+                                  sizeof(info->device->waveform.user),
+                                  cgr101_fn_tri);
+        break;
+    default:
+        assert(0);
+        break;
+    }
 }
 
 static void cgr101_waveform_program(struct info *info)
@@ -482,7 +548,7 @@ static void cgr101_waveform_program(struct info *info)
 
 static void cgr101_waveform_user(struct info *info,
                                  size_t len,
-                                 float *data)
+                                 double *data)
 {
     (void)info;
     (void)len;
@@ -615,14 +681,14 @@ void cgr101_source_digital_dataq(struct info *info)
     scpi_output_int(info->output, info->device->digital_write_data);
 }
 
-void cgr101_source_waveform_frequency(struct info *info, float value)
+void cgr101_source_waveform_frequency(struct info *info, double value)
 {
     info->device->waveform.frequency = value;
 }
 
 void cgr101_source_waveform_frequencyq(struct info *info)
 {
-    scpi_output_float(info->output, info->device->waveform.frequency);
+    scpi_output_fp(info->output, info->device->waveform.frequency);
 }
 
 void cgr101_source_waveform_function(struct info *info,
@@ -641,7 +707,7 @@ void cgr101_source_waveform_functionq(struct info *info)
     scpi_output_str(info->output, info->device->waveform.name);
 }
 
-void cgr101_source_waveform_user(struct info *info, size_t len, float *data)
+void cgr101_source_waveform_user(struct info *info, size_t len, double *data)
 {
     info->device->waveform.name = "USER";
     info->device->waveform.shape = WAV_USER;
@@ -654,7 +720,7 @@ void cgr101_source_waveform_userq(struct info *info)
     cgr101_waveform_userq(info);
 }
 
-void cgr101_source_pwm_duty_cycle(struct info *info, float value)
+void cgr101_source_pwm_duty_cycle(struct info *info, double value)
 {
     (void)info;
     (void)value;
@@ -665,7 +731,7 @@ void cgr101_source_pwm_duty_cycleq(struct info *info)
     (void)info;
 }
 
-void cgr101_source_pwm_frequency(struct info *info, float value)
+void cgr101_source_pwm_frequency(struct info *info, double value)
 {
     (void)info;
     (void)value;
@@ -709,25 +775,25 @@ extern void cgr101_digitizer_channel_stateq(struct info *info, long chan_mask)
     (void)chan_mask;
 }
 
-extern void cgr101_digitizer_sweep_point(struct info *info, float value)
+extern void cgr101_digitizer_sweep_point(struct info *info, double value)
 {
     (void)info;
     (void)value;
 }
 
-extern void cgr101_digitizer_sweep_time(struct info *info, float value)
+extern void cgr101_digitizer_sweep_time(struct info *info, double value)
 {
     (void)info;
     (void)value;
 }
 
-extern void cgr101_digitizer_sweep_interval(struct info *info, float value)
+extern void cgr101_digitizer_sweep_interval(struct info *info, double value)
 {
     (void)info;
     (void)value;
 }
 
-extern void cgr101_digitizer_sweep_pretrigger(struct info *info, float value)
+extern void cgr101_digitizer_sweep_pretrigger(struct info *info, double value)
 {
     (void)info;
     (void)value;
@@ -735,7 +801,7 @@ extern void cgr101_digitizer_sweep_pretrigger(struct info *info, float value)
 
 extern void cgr101_digitizer_voltage_low(struct info *info,
                                          long chan_mask,
-                                         float value)
+                                         double value)
 {
     (void)info;
     (void)chan_mask;
@@ -744,7 +810,7 @@ extern void cgr101_digitizer_voltage_low(struct info *info,
 
 extern void cgr101_digitizer_voltage_offset(struct info *info,
                                             long chan_mask,
-                                            float value)
+                                            double value)
 {
     (void)info;
     (void)chan_mask;
@@ -753,7 +819,7 @@ extern void cgr101_digitizer_voltage_offset(struct info *info,
 
 extern void cgr101_digitizer_voltage_ptp(struct info *info,
                                          long chan_mask,
-                                         float value)
+                                         double value)
 {
     (void)info;
     (void)chan_mask;
@@ -762,7 +828,7 @@ extern void cgr101_digitizer_voltage_ptp(struct info *info,
 
 extern void cgr101_digitizer_voltage_range(struct info *info,
                                            long chan_mask,
-                                           float value)
+                                           double value)
 {
     (void)info;
     (void)chan_mask;
@@ -771,7 +837,7 @@ extern void cgr101_digitizer_voltage_range(struct info *info,
 
 extern void cgr101_digitizer_voltage_up(struct info *info,
                                         long chan_mask,
-                                        float value)
+                                        double value)
 {
     (void)info;
     (void)chan_mask;

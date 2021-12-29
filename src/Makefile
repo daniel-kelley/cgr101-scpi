@@ -5,7 +5,6 @@
 #
 # Dependencies:
 #   flex/bison
-#   libusb
 
 NAME := cgr101-scpi
 
@@ -58,6 +57,7 @@ CFLAGS := $(WARN) $(DEBUG)
 
 LDFLAGS := $(DEBUG)
 LDLIBS := -lpthread
+LDLIBS := -lm
 
 SRC := main.c
 SRC += server.c
