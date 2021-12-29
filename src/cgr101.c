@@ -543,3 +543,60 @@ void cgr101_source_digital_dataq(struct info *info)
     scpi_output_int(info->output, info->device->digital_write_data);
 }
 
+void cgr101_source_waveform_frequency(struct info *info, float value)
+{
+    (void)info;
+    (void)value;
+}
+
+void cgr101_source_waveform_frequencyq(struct info *info)
+{
+    (void)info;
+}
+
+void cgr101_source_waveform_function(struct info *info,
+                                     const char *value)
+{
+    (void)info;
+    (void)value;
+}
+
+void cgr101_source_waveform_functionq(struct info *info)
+{
+    (void)info;
+}
+
+void cgr101_source_waveform_user(struct info *info, size_t len, float *data)
+{
+    (void)info;
+    (void)len;
+    (void)data;
+}
+
+void cgr101_source_waveform_userq(struct info *info)
+{
+    (void)info;
+}
+
+void cgr101_source_pwm_duty_cycle(struct info *info, float value)
+{
+    (void)info;
+    (void)value;
+}
+
+void cgr101_source_pwm_duty_cycleq(struct info *info)
+{
+    (void)info;
+}
+
+void cgr101_source_pwm_frequency(struct info *info, float value)
+{
+    (void)info;
+    (void)value;
+}
+
+void cgr101_source_pwm_frequencyq(struct info *info)
+{
+    (void)info;
+}
+

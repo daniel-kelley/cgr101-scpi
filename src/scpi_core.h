@@ -49,5 +49,15 @@ extern int scpi_input_uint8(struct info *info,
 extern int scpi_input_uint16(struct info *info,
                              struct scpi_type *in,
                              uint16_t *out);
+extern int scpi_input_float(struct info *info,
+                            struct scpi_type *in,
+                            float *out);
+extern int scpi_input_float_block(struct info *info,
+                                  struct scpi_type *in,
+                                  size_t *out_len,
+                                  float **out_block);
+extern int scpi_input_str(struct info *info,
+                          struct scpi_type *in,
+                          char **out);
 
 #endif /* SCPI_CORE_H_ */

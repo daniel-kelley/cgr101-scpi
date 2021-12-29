@@ -64,6 +64,41 @@ int scpi_input_uint16(struct info *info,
     return err;
 }
 
+int scpi_input_float(struct info *info, struct scpi_type *in, float *out)
+{
+    (void)info;
+    (void)in;
+
+    *out = 0.0;
+
+    return 0;
+}
+
+int scpi_input_float_block(struct info *info,
+                           struct scpi_type *in,
+                           size_t *out_len,
+                           float **out_block)
+{
+    (void)info;
+    (void)in;
+
+    *out_len = 0;
+    *out_block = NULL;
+
+    return 0;
+}
+
+
+int scpi_input_str(struct info *info, struct scpi_type *in, char **out)
+{
+    (void)info;
+    (void)in;
+
+    *out = NULL;
+
+    return 0;
+}
+
 static uint8_t scpi_core_status_update(struct info *info)
 {
     uint8_t sbr = 0;

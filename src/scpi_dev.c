@@ -286,68 +286,79 @@ void scpi_dev_source_digital_dataq(struct info *info)
     cgr101_source_digital_dataq(info);
 }
 
-void scpi_dev_source_frequency(struct info *info)
-{
-    (void)info;
-}
-
 void scpi_dev_source_waveform_frequency(struct info *info,
                                         struct scpi_type *v)
 {
-    (void)info;
-    (void)v;
+    float value;
+
+    if (!scpi_input_float(info, v, &value)) {
+        cgr101_source_waveform_frequency(info, value);
+    }
 }
 
 void scpi_dev_source_waveform_frequencyq(struct info *info)
 {
-    (void)info;
+    cgr101_source_waveform_frequencyq(info);
 }
 
 void scpi_dev_source_waveform_function(struct info *info,
                                        struct scpi_type *v)
 {
-    (void)info;
-    (void)v;
+    char *value;
+
+    if (!scpi_input_str(info, v, &value)) {
+        cgr101_source_waveform_function(info, value);
+    }
 }
 
 void scpi_dev_source_waveform_functionq(struct info *info)
 {
-    (void)info;
+    cgr101_source_waveform_functionq(info);
 }
 
 void scpi_dev_source_waveform_user(struct info *info,
                                    struct scpi_type *v)
 {
-    (void)info;
-    (void)v;
+    size_t len;
+    float *value;
+
+    if (!scpi_input_float_block(info, v, &len, &value)) {
+        cgr101_source_waveform_user(info, len, value);
+    }
 }
 
 void scpi_dev_source_waveform_userq(struct info *info)
 {
-    (void)info;
+    cgr101_source_waveform_userq(info);
 }
 
 void scpi_dev_source_pwm_duty_cycle(struct info *info,
                                     struct scpi_type *v)
 {
-    (void)info;
-    (void)v;
+    float value;
+
+    if (!scpi_input_float(info, v, &value)) {
+        cgr101_source_pwm_duty_cycle(info, value);
+    }
 }
 
 void scpi_dev_source_pwm_duty_cycleq(struct info *info)
 {
-    (void)info;
+    cgr101_source_pwm_duty_cycleq(info);
 }
 
 void scpi_dev_source_pwm_frequency(struct info *info,
                                    struct scpi_type *v)
 {
-    (void)info;
-    (void)v;
+    float value;
+
+    if (!scpi_input_float(info, v, &value)) {
+        cgr101_source_pwm_frequency(info, value);
+    }
 }
 
 void scpi_dev_source_pwm_frequencyq(struct info *info)
 {
-    (void)info;
+    cgr101_source_pwm_frequencyq(info);
 }
 
