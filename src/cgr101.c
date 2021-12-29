@@ -54,6 +54,33 @@ enum cgr101_digital_read_state {
     STATE_DIGITAL_READ_COMPLETE,
 };
 
+enum cgr101_waveform_shape {
+    WAV_NONE,
+    WAV_RAND,
+    WAV_SIN,
+    WAV_SQU,
+    WAV_TRI,
+    WAV_USER,
+};
+
+#define WAVEFORM_USER_MAX 256
+
+struct cgr101_waveform_map_s {
+    const char *name;
+    enum cgr101_waveform_shape shape;
+};
+
+#if 0
+static struct cgr101_waveform_map_s cgr101_waveform_map[] = {
+    { "RAND", WAV_RAND},
+    { "SIN", WAV_SIN},
+    { "SQU", WAV_SQU},
+    { "TRI", WAV_TRI},
+    { "USER", WAV_USER},
+    { NULL, WAV_NONE},
+};
+#endif
+
 struct cgr101 {
     struct spawn child;
     /* ID */
@@ -73,7 +100,13 @@ struct cgr101 {
     int eventq[2];
     /* Digital Data Output */
     int digital_write_data;
-
+    /* Waveform */
+    struct {
+        const char *name;
+        enum cgr101_waveform_shape shape;
+        float user[WAVEFORM_USER_MAX];
+        float frequency;
+    } waveform;
 };
 
 /*
@@ -425,6 +458,45 @@ static int cgr101_err(void *arg)
 }
 
 /*
+ * Waveform programming
+ */
+
+static void cgr101_waveform_lookup(const char *value,
+                                   enum cgr101_waveform_shape *shape)
+{
+    (void)value;
+    (void)shape;
+}
+
+static void cgr101_waveform_create(struct info *info,
+                                   enum cgr101_waveform_shape shape)
+{
+    (void)info;
+    (void)shape;
+}
+
+static void cgr101_waveform_program(struct info *info)
+{
+    (void)info;
+}
+
+static void cgr101_waveform_user(struct info *info,
+                                 size_t len,
+                                 float *data)
+{
+    (void)info;
+    (void)len;
+    (void)data;
+}
+
+static void cgr101_waveform_userq(struct info *info)
+{
+    (void)info;
+}
+
+
+
+/*
  * Device Open/Close
  */
 
@@ -545,37 +617,41 @@ void cgr101_source_digital_dataq(struct info *info)
 
 void cgr101_source_waveform_frequency(struct info *info, float value)
 {
-    (void)info;
-    (void)value;
+    info->device->waveform.frequency = value;
 }
 
 void cgr101_source_waveform_frequencyq(struct info *info)
 {
-    (void)info;
+    scpi_output_float(info->output, info->device->waveform.frequency);
 }
 
 void cgr101_source_waveform_function(struct info *info,
                                      const char *value)
 {
-    (void)info;
-    (void)value;
+    enum cgr101_waveform_shape shape;
+
+    info->device->waveform.name = value;
+    cgr101_waveform_lookup(value, &shape);
+    cgr101_waveform_create(info, shape);
+    cgr101_waveform_program(info);
 }
 
 void cgr101_source_waveform_functionq(struct info *info)
 {
-    (void)info;
+    scpi_output_str(info->output, info->device->waveform.name);
 }
 
 void cgr101_source_waveform_user(struct info *info, size_t len, float *data)
 {
-    (void)info;
-    (void)len;
-    (void)data;
+    info->device->waveform.name = "USER";
+    info->device->waveform.shape = WAV_USER;
+    cgr101_waveform_user(info, len, data);
+    cgr101_waveform_program(info);
 }
 
 void cgr101_source_waveform_userq(struct info *info)
 {
-    (void)info;
+    cgr101_waveform_userq(info);
 }
 
 void cgr101_source_pwm_duty_cycle(struct info *info, float value)
