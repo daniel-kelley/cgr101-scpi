@@ -35,6 +35,7 @@ enum cgr101_rcv_state {
     IDLE,
     IDENTIFY,
     DIGITAL_READ,
+    SCOPE_OFFSET,
 };
 
 enum cgr101_event {
@@ -54,6 +55,15 @@ enum cgr101_digital_read_state {
     STATE_DIGITAL_READ_IDLE,
     STATE_DIGITAL_READ_PENDING,
     STATE_DIGITAL_READ_COMPLETE,
+};
+
+enum cgr101_scope_offset_state {
+    STATE_SCOPE_OFFSET_IDLE,
+    STATE_SCOPE_OFFSET_EXPECT_A_HIGH,
+    STATE_SCOPE_OFFSET_EXPECT_B_HIGH,
+    STATE_SCOPE_OFFSET_EXPECT_A_LOW,
+    STATE_SCOPE_OFFSET_EXPECT_B_LOW,
+    STATE_SCOPE_OFFSET_COMPLETE,
 };
 
 enum cgr101_waveform_shape {
@@ -81,6 +91,13 @@ static struct cgr101_waveform_map_s cgr101_waveform_map[] = {
     { NULL, WAV_NONE},
 };
 
+#define SCOPE_NUM_CHAN 2
+#define SCOPE_NUM_SAMPLE 4096
+#define SCOPE_DEFAULT_LOW -25.0
+#define SCOPE_DEFAULT_HIGH 25.0
+#define SCOPE_DEFAULT_MIDPOINT 0.0
+#define SCOPE_DEFAULT_PTP 50.0
+
 struct cgr101 {
     struct spawn child;
     /* ID */
@@ -107,6 +124,16 @@ struct cgr101 {
         double user[WAVEFORM_USER_MAX];
         double frequency;
     } waveform;
+    enum cgr101_scope_offset_state so_state;
+    struct {
+        double input_low;
+        double input_high;
+        double input_midpoint;
+        double input_ptp;
+        int input_range; /* derived from above */
+        int offset_low;
+        int offset_high;
+    } scope[SCOPE_NUM_CHAN];
 };
 
 /*
@@ -166,6 +193,27 @@ static int cgr101_device_printf(struct info *info,
 
 
 /*
+ * Initialization
+ */
+
+static void cgr101_device_init(struct info *info)
+{
+    size_t i;
+    int err;
+
+    for (i=0; i<COUNT_OF(info->device->scope); i++) {
+        info->device->scope[i].input_low = SCOPE_DEFAULT_LOW;
+        info->device->scope[i].input_high = SCOPE_DEFAULT_HIGH;
+        info->device->scope[i].input_midpoint = SCOPE_DEFAULT_MIDPOINT;
+        info->device->scope[i].input_ptp = SCOPE_DEFAULT_PTP;
+    }
+    info->device->so_state = STATE_SCOPE_OFFSET_EXPECT_A_HIGH;
+    err = cgr101_device_send(info, "S O\n"); /* Get offsets. */
+    assert(!err);
+
+}
+
+/*
  * Receive State Machine
  */
 
@@ -187,6 +235,11 @@ static int cgr101_rcv_start(struct info *info, char c)
     case 'I':
         info->device->rcv_state = DIGITAL_READ;
         /* I<uint8_t> */
+        err = 0;
+        break;
+    case 'O':
+        info->device->rcv_state = SCOPE_OFFSET;
+        /* O<int8_t>*4 */
         err = 0;
         break;
     default:
@@ -224,6 +277,37 @@ static int cgr101_rcv_digital_read(struct info *info, char c)
     info->device->digital_read_data = (unsigned char)c;
     cgr101_event_send(info, EVENT_DIGITAL_READ_COMPLETE);
     cgr101_rcv_idle(info);
+
+    return err;
+}
+
+static int cgr101_rcv_scope_offset(struct info *info, char c)
+{
+    int err = 0;
+
+    switch (info->device->so_state) {
+    case STATE_SCOPE_OFFSET_EXPECT_A_HIGH:
+        info->device->scope[0].offset_high = c; /* signed */
+        info->device->so_state = STATE_SCOPE_OFFSET_EXPECT_B_HIGH;
+        break;
+    case STATE_SCOPE_OFFSET_EXPECT_B_HIGH:
+        info->device->scope[1].offset_high = c; /* signed */
+        info->device->so_state = STATE_SCOPE_OFFSET_EXPECT_A_LOW;
+        break;
+    case STATE_SCOPE_OFFSET_EXPECT_A_LOW:
+        info->device->scope[0].offset_low = c; /* signed */
+        info->device->so_state = STATE_SCOPE_OFFSET_EXPECT_B_LOW;
+        break;
+    case STATE_SCOPE_OFFSET_EXPECT_B_LOW:
+        info->device->scope[1].offset_low = c; /* signed */
+        info->device->so_state = STATE_SCOPE_OFFSET_COMPLETE;
+        /* Done receiving. */
+        cgr101_rcv_idle(info);
+        break;
+    default:
+        assert(0);
+        break;
+    }
 
     return err;
 }
@@ -394,6 +478,9 @@ static int cgr101_rcv_sm(struct info *info, char c)
         break;
     case DIGITAL_READ:
         err = cgr101_rcv_digital_read(info, c);
+        break;
+    case SCOPE_OFFSET:
+        err = cgr101_rcv_scope_offset(info, c);
         break;
     default:
         assert(0);
@@ -637,6 +724,8 @@ int cgr101_open(struct info *info)
             break;
         }
 
+        /* Initialize device. */
+        cgr101_device_init(info);
     } while (0);
 
     return err;
@@ -825,6 +914,7 @@ extern void cgr101_digitizer_sweep_pretrigger(struct info *info, double value)
     (void)value;
 }
 
+/* Lowest expected voltage. */
 extern void cgr101_digitizer_voltage_low(struct info *info,
                                          long chan_mask,
                                          double value)
@@ -834,6 +924,7 @@ extern void cgr101_digitizer_voltage_low(struct info *info,
     (void)value;
 }
 
+/* Midpoint expected voltage. */
 extern void cgr101_digitizer_voltage_offset(struct info *info,
                                             long chan_mask,
                                             double value)
@@ -852,6 +943,7 @@ extern void cgr101_digitizer_voltage_ptp(struct info *info,
     (void)value;
 }
 
+/* Set range based on inputs. */
 extern void cgr101_digitizer_voltage_range(struct info *info,
                                            long chan_mask,
                                            double value)
@@ -861,6 +953,7 @@ extern void cgr101_digitizer_voltage_range(struct info *info,
     (void)value;
 }
 
+/* Highest expected voltage. */
 extern void cgr101_digitizer_voltage_up(struct info *info,
                                         long chan_mask,
                                         double value)
