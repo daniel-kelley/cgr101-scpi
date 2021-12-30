@@ -92,11 +92,17 @@ static struct cgr101_waveform_map_s cgr101_waveform_map[] = {
 };
 
 #define SCOPE_NUM_CHAN 2
+#define SCOPE_NUM_RANGE 2
 #define SCOPE_NUM_SAMPLE 4096
 #define SCOPE_DEFAULT_LOW -25.0
 #define SCOPE_DEFAULT_HIGH 25.0
 #define SCOPE_DEFAULT_MIDPOINT 0.0
 #define SCOPE_DEFAULT_PTP 50.0
+
+static char cgr101_range_cmd[SCOPE_NUM_CHAN][SCOPE_NUM_RANGE] = {
+    {'A','a'},
+    {'B','b'}
+};
 
 struct cgr101 {
     struct spawn child;
@@ -124,16 +130,23 @@ struct cgr101 {
         double user[WAVEFORM_USER_MAX];
         double frequency;
     } waveform;
-    enum cgr101_scope_offset_state so_state;
     struct {
-        double input_low;
-        double input_high;
-        double input_midpoint;
-        double input_ptp;
-        int input_range; /* derived from above */
-        int offset_low;
-        int offset_high;
-    } scope[SCOPE_NUM_CHAN];
+        enum cgr101_scope_offset_state offset_state;
+        int sweep_point;
+        int sweep_time;
+        int pretrigger;
+        struct {
+            double input_low;
+            double input_high;
+            double input_midpoint;
+            double input_ptp;
+            int input_low_range; /* derived from above */
+            int offset_low;
+            int offset_high;
+            int enable;
+            double data[SCOPE_NUM_SAMPLE];
+        } channel[SCOPE_NUM_CHAN];
+    } scope;
 };
 
 /*
@@ -191,27 +204,6 @@ static int cgr101_device_printf(struct info *info,
     return err;
 }
 
-
-/*
- * Initialization
- */
-
-static void cgr101_device_init(struct info *info)
-{
-    size_t i;
-    int err;
-
-    for (i=0; i<COUNT_OF(info->device->scope); i++) {
-        info->device->scope[i].input_low = SCOPE_DEFAULT_LOW;
-        info->device->scope[i].input_high = SCOPE_DEFAULT_HIGH;
-        info->device->scope[i].input_midpoint = SCOPE_DEFAULT_MIDPOINT;
-        info->device->scope[i].input_ptp = SCOPE_DEFAULT_PTP;
-    }
-    info->device->so_state = STATE_SCOPE_OFFSET_EXPECT_A_HIGH;
-    err = cgr101_device_send(info, "S O\n"); /* Get offsets. */
-    assert(!err);
-
-}
 
 /*
  * Receive State Machine
@@ -285,22 +277,22 @@ static int cgr101_rcv_scope_offset(struct info *info, char c)
 {
     int err = 0;
 
-    switch (info->device->so_state) {
+    switch (info->device->scope.offset_state) {
     case STATE_SCOPE_OFFSET_EXPECT_A_HIGH:
-        info->device->scope[0].offset_high = c; /* signed */
-        info->device->so_state = STATE_SCOPE_OFFSET_EXPECT_B_HIGH;
+        info->device->scope.channel[0].offset_high = c; /* signed */
+        info->device->scope.offset_state = STATE_SCOPE_OFFSET_EXPECT_B_HIGH;
         break;
     case STATE_SCOPE_OFFSET_EXPECT_B_HIGH:
-        info->device->scope[1].offset_high = c; /* signed */
-        info->device->so_state = STATE_SCOPE_OFFSET_EXPECT_A_LOW;
+        info->device->scope.channel[1].offset_high = c; /* signed */
+        info->device->scope.offset_state = STATE_SCOPE_OFFSET_EXPECT_A_LOW;
         break;
     case STATE_SCOPE_OFFSET_EXPECT_A_LOW:
-        info->device->scope[0].offset_low = c; /* signed */
-        info->device->so_state = STATE_SCOPE_OFFSET_EXPECT_B_LOW;
+        info->device->scope.channel[0].offset_low = c; /* signed */
+        info->device->scope.offset_state = STATE_SCOPE_OFFSET_EXPECT_B_LOW;
         break;
     case STATE_SCOPE_OFFSET_EXPECT_B_LOW:
-        info->device->scope[1].offset_low = c; /* signed */
-        info->device->so_state = STATE_SCOPE_OFFSET_COMPLETE;
+        info->device->scope.channel[1].offset_low = c; /* signed */
+        info->device->scope.offset_state = STATE_SCOPE_OFFSET_COMPLETE;
         /* Done receiving. */
         cgr101_rcv_idle(info);
         break;
@@ -663,6 +655,70 @@ static void cgr101_waveform_userq(struct info *info)
     (void)info;
 }
 
+/*
+ * Oscilloscope Handling
+ */
+
+static void cgr101_set_midpoint_ptp(struct info *info, int chan)
+{
+    double low = info->device->scope.channel[chan].input_low;
+    double high = info->device->scope.channel[chan].input_high;
+    double ptp = high - low;
+    double midpoint = low + (ptp/2.0);
+    info->device->scope.channel[chan].input_ptp = ptp;
+    info->device->scope.channel[chan].input_midpoint = midpoint;
+}
+
+static void cgr101_set_high_low(struct info *info, int chan)
+{
+    double ptp = info->device->scope.channel[chan].input_ptp;
+    double midpoint = info->device->scope.channel[chan].input_midpoint;
+    double low = midpoint - (ptp/2.0);
+    double high = midpoint + (ptp/2.0);
+    info->device->scope.channel[chan].input_low = low;
+    info->device->scope.channel[chan].input_high = high;
+}
+
+static void cgr101_set_range(struct info *info,int chan)
+{
+    int err;
+    int low_range = (info->device->scope.channel[chan].input_low >= -2.5 &&
+                     info->device->scope.channel[chan].input_high <= 2.5);
+    assert(chan >= 0 && chan < SCOPE_NUM_CHAN);
+    assert(low_range >= 0 && low_range < SCOPE_NUM_RANGE);
+    /* Only set preamp when changing */
+    if (info->device->scope.channel[chan].input_low_range != low_range) {
+        info->device->scope.channel[chan].input_low_range = low_range;
+        err = cgr101_device_printf(info, "S P %c\n",
+                                   cgr101_range_cmd[chan][low_range]);
+    }
+    assert(!err);
+}
+
+/*
+ * Initialization
+ */
+
+static void cgr101_device_init(struct info *info)
+{
+    int chan;
+    int err;
+
+    /*Consistency check*/
+    assert(COUNT_OF(info->device->scope.channel) == SCOPE_NUM_CHAN);
+    for (chan=0; chan<SCOPE_NUM_CHAN; chan++) {
+        info->device->scope.channel[chan].input_low = SCOPE_DEFAULT_LOW;
+        info->device->scope.channel[chan].input_high = SCOPE_DEFAULT_HIGH;
+        info->device->scope.channel[chan].input_midpoint = SCOPE_DEFAULT_MIDPOINT;
+        info->device->scope.channel[chan].input_ptp = SCOPE_DEFAULT_PTP;
+        /* Force */
+        info->device->scope.channel[chan].input_low_range = -1;
+        cgr101_set_range(info, chan);
+    }
+    info->device->scope.offset_state = STATE_SCOPE_OFFSET_EXPECT_A_HIGH;
+    err = cgr101_device_send(info, "S O\n"); /* Get offsets. */
+    assert(!err);
+}
 
 
 /*
@@ -865,8 +921,18 @@ extern void cgr101_digitizer_coupling(struct info *info, const char *value)
 
 extern void cgr101_digitizer_dataq(struct info *info, long chan_mask)
 {
-    (void)info;
-    (void)chan_mask;
+    int chan;
+    int j;
+
+    for (chan=0; chan<SCOPE_NUM_CHAN; chan++) {
+        if (!(chan_mask & 1<<chan)) {
+            continue;
+        }
+        for (j=0; j<SCOPE_NUM_SAMPLE; j++) {
+            scpi_output_fp(info->output,
+                           info->device->scope.channel[chan].data[j]);
+        }
+    }
 }
 
 extern void cgr101_digitizer_concurrent(struct info *info, int value)
@@ -879,49 +945,86 @@ extern void cgr101_digitizer_channel_state(struct info *info,
                                            long chan_mask,
                                            int value)
 {
-    (void)info;
-    (void)chan_mask;
-    (void)value;
+    int chan;
+
+    for (chan=0; chan<SCOPE_NUM_CHAN; chan++) {
+        if (!(chan_mask & 1<<chan)) {
+            continue;
+        }
+        info->device->scope.channel[chan].enable = value;
+    }
 }
 
 extern void cgr101_digitizer_channel_stateq(struct info *info, long chan_mask)
 {
-    (void)info;
-    (void)chan_mask;
+    int chan;
+
+    for (chan=0; chan<SCOPE_NUM_CHAN; chan++) {
+        if (!(chan_mask & 1<<chan)) {
+            continue;
+        }
+        scpi_output_int(info->output, info->device->scope.channel[chan].enable);
+    }
 }
 
 extern void cgr101_digitizer_sweep_point(struct info *info, double value)
 {
-    (void)info;
-    (void)value;
+    info->device->scope.sweep_point = (int)floor(value);
 }
 
 extern void cgr101_digitizer_sweep_time(struct info *info, double value)
 {
-    (void)info;
-    (void)value;
+    info->device->scope.sweep_time = (int)floor(value);
 }
 
 extern void cgr101_digitizer_sweep_interval(struct info *info, double value)
 {
-    (void)info;
-    (void)value;
+    info->device->scope.sweep_time = (int)floor(1.0/value);
 }
 
 extern void cgr101_digitizer_sweep_pretrigger(struct info *info, double value)
 {
-    (void)info;
-    (void)value;
+    info->device->scope.pretrigger = (int)floor(value);
 }
+
+/*
+ * Range setting:
+ *   low:
+ *     high:        unchanged
+ *     ptp:         high - low
+ *     midpoint:    low + (ptp / 2)
+ *   high:
+ *     low:         unchanged
+ *     ptp:         high - low
+ *     midpoint:    low + (ptp / 2)
+ *   ptp:
+ *     low:         midpoint - ptp/2
+ *     high:        midpoint + ptp/2
+ *     midpoint:    unchanged
+ *   midpoint:
+ *     low:         midpoint - ptp/2
+ *     high:        midpoint + ptp/2
+ *     ptp:         unchanged
+ *
+ * preamp: (low >= -2.5 && high <= 2.5) ? low_setting : high_setting
+ *
+ */
 
 /* Lowest expected voltage. */
 extern void cgr101_digitizer_voltage_low(struct info *info,
                                          long chan_mask,
                                          double value)
 {
-    (void)info;
-    (void)chan_mask;
-    (void)value;
+    int chan;
+
+    for (chan=0; chan<SCOPE_NUM_CHAN; chan++) {
+        if (!(chan_mask & 1<<chan)) {
+            continue;
+        }
+        info->device->scope.channel[chan].input_low = value;
+        cgr101_set_midpoint_ptp(info, chan);
+        cgr101_set_range(info, chan);
+    }
 }
 
 /* Midpoint expected voltage. */
@@ -929,28 +1032,32 @@ extern void cgr101_digitizer_voltage_offset(struct info *info,
                                             long chan_mask,
                                             double value)
 {
-    (void)info;
-    (void)chan_mask;
-    (void)value;
+    int chan;
+
+    for (chan=0; chan<SCOPE_NUM_CHAN; chan++) {
+        if (!(chan_mask & 1<<chan)) {
+            continue;
+        }
+        info->device->scope.channel[chan].input_midpoint = value;
+        cgr101_set_high_low(info, chan);
+        cgr101_set_range(info, chan);
+    }
 }
 
 extern void cgr101_digitizer_voltage_ptp(struct info *info,
                                          long chan_mask,
                                          double value)
 {
-    (void)info;
-    (void)chan_mask;
-    (void)value;
-}
+    int chan;
 
-/* Set range based on inputs. */
-extern void cgr101_digitizer_voltage_range(struct info *info,
-                                           long chan_mask,
-                                           double value)
-{
-    (void)info;
-    (void)chan_mask;
-    (void)value;
+    for (chan=0; chan<SCOPE_NUM_CHAN; chan++) {
+        if (!(chan_mask & 1<<chan)) {
+            continue;
+        }
+        info->device->scope.channel[chan].input_ptp = value;
+        cgr101_set_high_low(info, chan);
+        cgr101_set_range(info, chan);
+    }
 }
 
 /* Highest expected voltage. */
@@ -958,38 +1065,67 @@ extern void cgr101_digitizer_voltage_up(struct info *info,
                                         long chan_mask,
                                         double value)
 {
-    (void)info;
-    (void)chan_mask;
-    (void)value;
+    int chan;
+
+    for (chan=0; chan<SCOPE_NUM_CHAN; chan++) {
+        if (!(chan_mask & 1<<chan)) {
+            continue;
+        }
+        info->device->scope.channel[chan].input_high = value;
+        cgr101_set_midpoint_ptp(info, chan);
+        cgr101_set_range(info, chan);
+    }
 }
 
 extern void cgr101_digitizer_lowq(struct info *info, long chan_mask)
 {
-    (void)info;
-    (void)chan_mask;
+    int chan;
+
+    for (chan=0; chan<SCOPE_NUM_CHAN; chan++) {
+        if (!(chan_mask & 1<<chan)) {
+            continue;
+        }
+        scpi_output_fp(info->output,
+                       info->device->scope.channel[chan].input_low);
+    }
 }
 
 extern void cgr101_digitizer_offsetq(struct info *info, long chan_mask)
 {
-    (void)info;
-    (void)chan_mask;
+    int chan;
+
+    for (chan=0; chan<SCOPE_NUM_CHAN; chan++) {
+        if (!(chan_mask & 1<<chan)) {
+            continue;
+        }
+        scpi_output_fp(info->output,
+                       info->device->scope.channel[chan].input_midpoint);
+    }
 }
 
 extern void cgr101_digitizer_ptpq(struct info *info, long chan_mask)
 {
-    (void)info;
-    (void)chan_mask;
-}
+    int chan;
 
-extern void cgr101_digitizer_rangeq(struct info *info, long chan_mask)
-{
-    (void)info;
-    (void)chan_mask;
+    for (chan=0; chan<SCOPE_NUM_CHAN; chan++) {
+        if (!(chan_mask & 1<<chan)) {
+            continue;
+        }
+        scpi_output_fp(info->output,
+                       info->device->scope.channel[chan].input_ptp);
+    }
 }
 
 extern void cgr101_digitizer_upq(struct info *info, long chan_mask)
 {
-    (void)info;
-    (void)chan_mask;
+    int chan;
+
+    for (chan=0; chan<SCOPE_NUM_CHAN; chan++) {
+        if (!(chan_mask & 1<<chan)) {
+            continue;
+        }
+        scpi_output_fp(info->output,
+                       info->device->scope.channel[chan].input_high);
+    }
 }
 

@@ -277,22 +277,6 @@ void scpi_dev_sense_voltage_ptp(struct info *info,
     }
 }
 
-void scpi_dev_sense_voltage_range(struct info *info,
-                                         struct scpi_type *v,
-                                         struct scpi_type *chan)
-{
-    double value;
-    long chan_mask;
-    int err_v;
-    int err_c;
-
-    err_v = scpi_input_fp(info, v, &value);
-    err_c = scpi_dev_chan(chan, &chan_mask);
-    if (!err_v && !err_c) {
-        cgr101_digitizer_voltage_range(info, chan_mask, value);
-    }
-}
-
 void scpi_dev_sense_voltage_up(struct info *info,
                                       struct scpi_type *v,
                                       struct scpi_type *chan)
@@ -336,16 +320,6 @@ void scpi_dev_sense_voltage_ptpq(struct info *info,
 
     if (!scpi_dev_chan(chan, &chan_mask)) {
         cgr101_digitizer_ptpq(info, chan_mask);
-    }
-}
-
-void scpi_dev_sense_voltage_rangeq(struct info *info,
-                                   struct scpi_type *chan)
-{
-    long chan_mask;
-
-    if (!scpi_dev_chan(chan, &chan_mask)) {
-        cgr101_digitizer_rangeq(info, chan_mask);
     }
 }
 

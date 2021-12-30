@@ -492,10 +492,10 @@ dev-cmd
     { scpi_dev_sense_voltage_ptp(info, &$6, &$7); }
 
     | SENS COLON VOLT COLON RANG numeric_value channel
-    { scpi_dev_sense_voltage_range(info, &$6, &$7); }
+    { scpi_dev_sense_voltage_up(info, &$6, &$7); }
 
     | SENS COLON VOLT COLON DC COLON RANG numeric_value channel
-    { scpi_dev_sense_voltage_range(info, &$6, &$7); }
+    { scpi_dev_sense_voltage_up(info, &$6, &$7); }
 
     | SENS COLON VOLT COLON UPP numeric_value channel
     { scpi_dev_sense_voltage_up(info, &$6, &$7); }
@@ -522,10 +522,10 @@ dev-cmd
     { scpi_dev_sense_voltage_ptpq(info, &$6); }
 
     | SENS COLON VOLT COLON RANGQ channel
-    { scpi_dev_sense_voltage_rangeq(info, &$6); }
+    { scpi_dev_sense_voltage_upq(info, &$6); }
 
     | SENS COLON VOLT COLON DC COLON RANGQ channel
-    { scpi_dev_sense_voltage_rangeq(info, &$6); }
+    { scpi_dev_sense_voltage_upq(info, &$6); }
 
     | SENS COLON VOLT COLON UPPQ channel
     { scpi_dev_sense_voltage_upq(info, &$6); }
