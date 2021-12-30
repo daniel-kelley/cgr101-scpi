@@ -22,6 +22,7 @@
 #define ID_MAX 32
 #define RCV_MAX 4100 /* 4097 plus some slop */
 #define ERR_MAX 1024
+#define COUNT_OF(a) (sizeof((a))/sizeof((a)[0]))
 
 static char *CMD[] = {
     "sp",
@@ -543,7 +544,22 @@ static void cgr101_waveform_create(struct info *info,
 
 static void cgr101_waveform_program(struct info *info)
 {
-    (void)info;
+    int err;
+
+    if (info->device->waveform.shape == WAV_RAND) {
+        err = cgr101_device_printf(info, "W N\n");
+        assert(!err);
+    } else {
+        size_t i;
+        for (i=0; i<COUNT_OF(info->device->waveform.user); i++) {
+            int val = (int)info->device->waveform.user[i]*255;
+            err = cgr101_device_printf(info, "W S %d %d\n", i, val);
+        }
+        err = cgr101_device_printf(info, "W P\n");
+        assert(!err);
+        err = cgr101_device_printf(info, "W A 255\n"); /*FIXME*/
+        assert(!err);
+    }
 }
 
 static void cgr101_waveform_user(struct info *info,
@@ -681,8 +697,18 @@ void cgr101_source_digital_dataq(struct info *info)
     scpi_output_int(info->output, info->device->digital_write_data);
 }
 
+#define K 0.09313225746
 void cgr101_source_waveform_frequency(struct info *info, double value)
 {
+    int phase_incr = (int)floor(value/K);
+    int f0 = (phase_incr >> 24) & 0xff;
+    int f1 = (phase_incr >> 16) & 0xff;
+    int f2 = (phase_incr >>  8) & 0xff;
+    int f3 = (phase_incr)       & 0xff;
+    int err;
+
+    err = cgr101_device_printf(info, "W F %d %d %d %d\n", f0, f1, f2, f3);
+    assert(!err);
     info->device->waveform.frequency = value;
 }
 
