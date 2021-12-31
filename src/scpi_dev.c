@@ -424,3 +424,83 @@ void scpi_dev_source_pwm_frequencyq(struct info *info)
     cgr101_source_pwm_frequencyq(info);
 }
 
+void scpi_dev_sense_sample(struct info *info,
+                           struct scpi_type *v)
+{
+    double value;
+
+    if (!scpi_input_fp(info, v, &value)) {
+        cgr101_digitizer_sample(info, value);
+    }
+}
+
+void scpi_dev_sense_status(struct info *info)
+{
+    cgr101_digitizer_status(info);
+}
+
+void scpi_dev_sense_reset(struct info *info)
+{
+    cgr101_digitizer_reset(info);
+}
+
+void scpi_dev_sense_immediate(struct info *info)
+{
+    cgr101_digitizer_immediate(info);
+}
+
+void scpi_dev_trigger_coupling(struct info *info,
+                               struct scpi_type *v)
+{
+    char *value;
+
+    if (!scpi_input_str(info, v, &value)) {
+        cgr101_trigger_coupling(info, value);
+    }
+}
+
+void scpi_dev_trigger_level(struct info *info,
+                            struct scpi_type *v)
+{
+    double value;
+
+    if (!scpi_input_fp(info, v, &value)) {
+        cgr101_trigger_level(info, value);
+    }
+}
+
+void scpi_dev_trigger_levelq(struct info *info)
+{
+        cgr101_trigger_levelq(info);
+}
+
+void scpi_dev_trigger_slope(struct info *info,
+                            struct scpi_type *v)
+{
+    char *value;
+
+    if (!scpi_input_str(info, v, &value)) {
+        cgr101_trigger_slope(info, value);
+    }
+}
+
+void scpi_dev_trigger_slopeq(struct info *info)
+{
+    cgr101_trigger_slopeq(info);
+}
+
+void scpi_dev_trigger_source(struct info *info,
+                             struct scpi_type *v)
+{
+    char *value;
+
+    if (!scpi_input_str(info, v, &value)) {
+        cgr101_trigger_source(info, value);
+    }
+}
+
+void scpi_dev_trigger_sourceq(struct info *info)
+{
+    cgr101_trigger_sourceq(info);
+}
+

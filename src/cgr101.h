@@ -17,6 +17,7 @@ extern int cgr101_identify(struct info *info);
 extern int cgr101_open(struct info *info);
 extern int cgr101_close(struct info *info);
 extern int cgr101_initiate(struct info *info);
+extern int cgr101_initiate_immediate(struct info *info);
 extern int cgr101_configure_digital_data(struct info *info);
 extern int cgr101_digital_data_configured(struct info *info);
 extern void cgr101_fetch_digital_data(struct info *info);
@@ -66,5 +67,16 @@ extern void cgr101_digitizer_offsetq(struct info *info, long chan_mask);
 extern void cgr101_digitizer_ptpq(struct info *info, long chan_mask);
 extern void cgr101_digitizer_rangeq(struct info *info, long chan_mask);
 extern void cgr101_digitizer_upq(struct info *info, long chan_mask);
+extern void cgr101_digitizer_sample(struct info *info, double value);
+extern void cgr101_digitizer_status(struct info *info);
+extern void cgr101_digitizer_reset(struct info *info);
+extern void cgr101_digitizer_immediate(struct info *info);
+extern void cgr101_trigger_coupling(struct info *info,const char *value);
+extern void cgr101_trigger_level(struct info *info, double value);
+extern void cgr101_trigger_levelq(struct info *info);
+extern void cgr101_trigger_slope(struct info *info, const char *value);
+extern void cgr101_trigger_slopeq(struct info *info);
+extern void cgr101_trigger_source(struct info *info, const char *value);
+extern void cgr101_trigger_sourceq(struct info *info);
 
 #endif /* CGR101_H_ */

@@ -137,6 +137,23 @@ extern void scpi_dev_source_pwm_duty_cycleq(struct info *info);
 extern void scpi_dev_source_pwm_frequency(struct info *info,
                                           struct scpi_type *v);
 extern void scpi_dev_source_pwm_frequencyq(struct info *info);
+extern void scpi_core_initiate_immediate(struct info *info);
+extern void scpi_dev_sense_sample(struct info *info,
+                                  struct scpi_type *v);
+extern void scpi_dev_sense_status(struct info *info);
+extern void scpi_dev_sense_reset(struct info *info);
+extern void scpi_dev_sense_immediate(struct info *info);
+extern void scpi_dev_trigger_coupling(struct info *info,
+                                      struct scpi_type *v);
+extern void scpi_dev_trigger_level(struct info *info,
+                                   struct scpi_type *v);
+extern void scpi_dev_trigger_levelq(struct info *info);
+extern void scpi_dev_trigger_slope(struct info *info,
+                                   struct scpi_type *v);
+extern void scpi_dev_trigger_slopeq(struct info *info);
+extern void scpi_dev_trigger_source(struct info *info,
+                                    struct scpi_type *v);
+extern void scpi_dev_trigger_sourceq(struct info *info);
 extern void scpi_system_communicate_tcp_controlq(struct info *info);
 extern void scpi_system_internal_calibrate(struct info *info);
 extern void scpi_system_internal_configure(struct info *info);

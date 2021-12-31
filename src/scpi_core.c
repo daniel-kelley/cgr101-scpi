@@ -518,6 +518,11 @@ int scpi_core_initiate(struct info *info)
     return cgr101_initiate(info);
 }
 
+void scpi_core_initiate_immediate(struct info *info)
+{
+    cgr101_initiate_immediate(info);
+}
+
 void scpi_system_communicate_tcp_controlq(struct info *info)
 {
     (void)info;

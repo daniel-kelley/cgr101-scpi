@@ -811,6 +811,17 @@ int cgr101_initiate(struct info *info)
     return 0;
 }
 
+int cgr101_initiate_immediate(struct info *info)
+{
+    /*FIXME*/
+    if (info->device->digital_read_requested) {
+        int err = cgr101_digital_read_start(info);
+        assert(!err);
+    }
+
+    return 0;
+}
+
 int cgr101_configure_digital_data(struct info *info)
 {
     info->device->digital_read_requested = 1;
@@ -1127,5 +1138,65 @@ extern void cgr101_digitizer_upq(struct info *info, long chan_mask)
         scpi_output_fp(info->output,
                        info->device->scope.channel[chan].input_high);
     }
+}
+
+void cgr101_digitizer_sample(struct info *info, double value)
+{
+    (void)info;
+    (void)value;
+}
+
+void cgr101_digitizer_status(struct info *info)
+{
+    (void)info;
+}
+
+void cgr101_digitizer_reset(struct info *info)
+{
+    (void)info;
+}
+
+void cgr101_digitizer_immediate(struct info *info)
+{
+    (void)info;
+}
+
+void cgr101_trigger_coupling(struct info *info,const char *value)
+{
+    (void)info;
+    (void)value;
+}
+
+void cgr101_trigger_level(struct info *info, double value)
+{
+    (void)info;
+    (void)value;
+}
+
+void cgr101_trigger_levelq(struct info *info)
+{
+    (void)info;
+}
+
+void cgr101_trigger_slope(struct info *info, const char *value)
+{
+    (void)info;
+    (void)value;
+}
+
+void cgr101_trigger_slopeq(struct info *info)
+{
+    (void)info;
+}
+
+void cgr101_trigger_source(struct info *info, const char *value)
+{
+    (void)info;
+    (void)value;
+}
+
+void cgr101_trigger_sourceq(struct info *info)
+{
+    (void)info;
 }
 

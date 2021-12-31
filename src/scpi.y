@@ -460,12 +460,11 @@ dev-cmd
     | INIT
     { scpi_core_initiate(info); }
 
-
     | INIT COLON IMM
-    { /*scpi_core_initiate_immediate(info);*/ }
+    { scpi_core_initiate_immediate(info); }
 
     | INIT COLON IMM COLON ALL
-    { /*scpi_core_initiate_immediate(info);*/ }
+    { scpi_core_initiate_immediate(info); }
 
 
     | INP COLON COUP coupling_arg
@@ -493,13 +492,16 @@ dev-cmd
     { scpi_dev_sense_function_on(info, &$6); }
 
     | SENS COLON SAMP numeric_value
-    { /*scpi_dev_sense_sample(info, &$4);*/ }
+    { scpi_dev_sense_sample(info, &$4); }
+
+    | SENS COLON STAT
+    { scpi_dev_sense_status(info); }
 
     | SENS COLON RES
-    { /*scpi_dev_sense_reset(info);*/ }
+    { scpi_dev_sense_reset(info); }
 
     | SENS COLON IMM
-    { /*scpi_dev_sense_immediate(info);*/ }
+    { scpi_dev_sense_immediate(info); }
 
     | SENS COLON SWE COLON POIN numeric_value
     { scpi_dev_sense_sweep_point(info, &$6); }
@@ -610,26 +612,25 @@ dev-cmd
     { scpi_dev_source_pwm_frequencyq(info); }
 
     | TRIG COLON COUP coupling_arg
-    { /*scpi_dev_trigger_coupling(info, &$4);*/ }
+    { scpi_dev_trigger_coupling(info, &$4); }
 
     | TRIG COLON LEV numeric_value
-    { /*scpi_dev_trigger_level(info, &$4);*/ }
+    { scpi_dev_trigger_level(info, &$4); }
 
     | TRIG COLON LEVQ
-    { /*scpi_dev_trigger_levelq(info);*/ }
+    { scpi_dev_trigger_levelq(info); }
 
     | TRIG COLON SLOP trigger_slope
-    { /*scpi_dev_trigger_slope(info, &$4);*/ }
+    { scpi_dev_trigger_slope(info, &$4); }
 
     | TRIG COLON SLOPQ
-    { /*scpi_dev_trigger_slopeq(info);*/ }
-
+    { scpi_dev_trigger_slopeq(info); }
 
     | TRIG COLON SOUR trigger_source
-    { /*scpi_dev_trigger_source(info, &$4);*/ }
+    { scpi_dev_trigger_source(info, &$4); }
 
     | TRIG COLON SOURQ
-    { /*scpi_dev_trigger_sourceq(info);*/ }
+    { scpi_dev_trigger_sourceq(info); }
 
     | SYST COLON COMM COLON TCP COLON CONTQ
     { scpi_system_communicate_tcp_controlq(info); }
