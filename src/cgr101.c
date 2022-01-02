@@ -124,6 +124,22 @@ static char cgr101_range_cmd[SCOPE_NUM_CHAN][SCOPE_NUM_RANGE] = {
     {'B','b'}
 };
 
+#if 0
+/*
+ * By experiment and code inspection of the CGR-101 TCL code, a manual
+ * trigger must be delayed from an "S G" command by the following
+ * times in milliseconds indexed by the sample rate code. The TCL code
+ * did not use a sample rate code of '13' or '3', so those delays are
+ * estimated.
+ */
+static int cgr101_manual_trigger_delay[] = {
+     500,   500,   500,   500,
+     500,   500,   500,   500,
+     500,   500,   500,   500,
+    1000,  2000,  2000,  2000
+ };
+#endif
+
 struct cgr101 {
     struct spawn child;
     /* ID */
@@ -159,6 +175,7 @@ struct cgr101 {
         int internal_trigger_source;
         int trigger_polarity;
         int trigger_external;
+        int trigger_filter_disable;
         enum cgr101_scope_status_state status_state;
         int status;
         double trigger_level;
@@ -818,11 +835,16 @@ static void cgr101_digitizer_update_control(struct info *info)
     assert(info->device->scope.trigger_polarity <= 1);
     assert(info->device->scope.trigger_external >= 0);
     assert(info->device->scope.trigger_external <= 1);
+    assert(info->device->scope.trigger_filter_disable >= 0);
+    assert(info->device->scope.trigger_filter_disable <= 1);
 
     ctl = info->device->scope.sample_rate_divisor;
     ctl |= (info->device->scope.internal_trigger_source << 4);
     ctl |= (info->device->scope.trigger_polarity << 5);
     ctl |= (info->device->scope.trigger_external << 6);
+    /* (scope.tcl)scope::updateScopeControlReg twiddles with bit 7
+     * which is not documented in circuit-gear-manual.pdf */
+    ctl |= (info->device->scope.trigger_filter_disable << 7);
 
     err = cgr101_device_printf(info, "S R %d\n", ctl);
     assert(!err);
