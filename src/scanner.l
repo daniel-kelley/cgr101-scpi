@@ -98,7 +98,6 @@ PACK                    { return PACK; }
 (POIN|POINts)           { return POIN; }
 (POS|POSitive)          { return POS; }
 (PRES|PRESet)           { return PRES; }
-(PRET|PRETrigger)       { return PRET; }
 (PTP|PTPeak)            { return PTP; }
 (PTP|PTPeak)\?          { return PTPQ; }
 (PULS|PULSe)            { return PULS; }
@@ -111,7 +110,6 @@ QUIT                    { return QUIT; }
 READ                    { return READ; }
 REAL                    { return REAL; }
 (RES|RESet)             { return RES; }
-(SAMP|SAMPle)           { return SAMP; }
 (SENS|SENSe)            { return SENS; }
 (SET|SETup)\?           { return SETUQ; }
 (SHAP|SHAPe)            { return SHAP; }

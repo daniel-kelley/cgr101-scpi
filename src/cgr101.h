@@ -46,7 +46,6 @@ extern void cgr101_digitizer_channel_stateq(struct info *info, long chan_mask);
 extern void cgr101_digitizer_sweep_point(struct info *info, double value);
 extern void cgr101_digitizer_sweep_time(struct info *info, double value);
 extern void cgr101_digitizer_sweep_interval(struct info *info, double value);
-extern void cgr101_digitizer_sweep_pretrigger(struct info *info, double value);
 extern void cgr101_digitizer_voltage_low(struct info *info,
                                          long chan_mask,
                                          double value);
@@ -67,7 +66,6 @@ extern void cgr101_digitizer_offsetq(struct info *info, long chan_mask);
 extern void cgr101_digitizer_ptpq(struct info *info, long chan_mask);
 extern void cgr101_digitizer_rangeq(struct info *info, long chan_mask);
 extern void cgr101_digitizer_upq(struct info *info, long chan_mask);
-extern void cgr101_digitizer_sample(struct info *info, double value);
 extern void cgr101_digitizer_status(struct info *info);
 extern void cgr101_digitizer_reset(struct info *info);
 extern void cgr101_digitizer_immediate(struct info *info);

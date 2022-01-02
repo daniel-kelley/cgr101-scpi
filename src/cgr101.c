@@ -1148,11 +1148,6 @@ extern void cgr101_digitizer_sweep_interval(struct info *info, double value)
     info->device->scope.sweep_time = (int)floor(1.0/value);
 }
 
-extern void cgr101_digitizer_sweep_pretrigger(struct info *info, double value)
-{
-    info->device->scope.pretrigger = (int)floor(value);
-}
-
 /*
  * Range setting:
  *   low:
@@ -1295,17 +1290,6 @@ extern void cgr101_digitizer_upq(struct info *info, long chan_mask)
     }
 }
 
-void cgr101_digitizer_sample(struct info *info, double value)
-{
-    int srd = (int)floor(value);
-
-    /* FIXME: need to be proper error */
-    assert(srd >= 0);
-    assert(srd <= SCOPE_SR_DIV_MAX);
-    info->device->scope.sample_rate_divisor = srd;
-    cgr101_digitizer_update_control(info);
-}
-
 void cgr101_digitizer_status(struct info *info)
 {
     cgr101_event_send(info, EVENT_SCOPE_STATUS_OUTPUT);
@@ -1320,6 +1304,7 @@ void cgr101_digitizer_reset(struct info *info)
     assert(!err);
 }
 
+/* FIXME: needs cgr101_manual_trigger_delay and infrastructure. */
 void cgr101_digitizer_immediate(struct info *info)
 {
     int cur_ext_trig = info->device->scope.trigger_external;

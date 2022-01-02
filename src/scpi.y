@@ -92,7 +92,6 @@
 %token POIN
 %token POS
 %token PRES
-%token PRET
 %token PTP
 %token PTPQ
 %token PULS
@@ -106,7 +105,6 @@
 %token REAL
 %token RES
 %token RST
-%token SAMP
 %token SENS
 %token SETUQ
 %token SHAP
@@ -491,17 +489,11 @@ dev-cmd
     | SENS COLON FUNC COLON ON channel
     { scpi_dev_sense_function_on(info, &$6); }
 
-    | SENS COLON SAMP numeric_value
-    { scpi_dev_sense_sample(info, &$4); }
-
     | SENS COLON STAT
     { scpi_dev_sense_status(info); }
 
     | SENS COLON RES
     { scpi_dev_sense_reset(info); }
-
-    | SENS COLON IMM
-    { scpi_dev_sense_immediate(info); }
 
     | SENS COLON SWE COLON POIN numeric_value
     { scpi_dev_sense_sweep_point(info, &$6); }
@@ -511,9 +503,6 @@ dev-cmd
 
     | SENS COLON SWE COLON TINT numeric_value
     { scpi_dev_sense_sweep_time_interval(info, &$6); }
-
-    | SENS COLON SWE COLON PRET numeric_value
-    { scpi_dev_sense_sweep_pretrigger(info, &$6); }
 
     | SENS COLON VOLT COLON LOW numeric_value channel
     { scpi_dev_sense_voltage_low(info, &$6, &$7); }

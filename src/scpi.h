@@ -97,8 +97,6 @@ extern void scpi_dev_sense_sweep_point(struct info *info,
 extern void scpi_dev_sense_sweep_time(struct info *info, struct scpi_type *v);
 extern void scpi_dev_sense_sweep_time_interval(struct info *info,
                                                struct scpi_type *v);
-extern void scpi_dev_sense_sweep_pretrigger(struct info *info,
-                                            struct scpi_type *v);
 extern void scpi_dev_sense_voltage_low(struct info *info,
                                        struct scpi_type *v1,
                                        struct scpi_type *v2);
@@ -138,8 +136,6 @@ extern void scpi_dev_source_pwm_frequency(struct info *info,
                                           struct scpi_type *v);
 extern void scpi_dev_source_pwm_frequencyq(struct info *info);
 extern void scpi_core_initiate_immediate(struct info *info);
-extern void scpi_dev_sense_sample(struct info *info,
-                                  struct scpi_type *v);
 extern void scpi_dev_sense_status(struct info *info);
 extern void scpi_dev_sense_reset(struct info *info);
 extern void scpi_dev_sense_immediate(struct info *info);

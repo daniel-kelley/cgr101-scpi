@@ -219,16 +219,6 @@ void scpi_dev_sense_sweep_time_interval(struct info *info,
     }
 }
 
-void scpi_dev_sense_sweep_pretrigger(struct info *info,
-                                            struct scpi_type *v)
-{
-    double value;
-
-    if (!scpi_input_fp(info, v, &value)) {
-        cgr101_digitizer_sweep_pretrigger(info, value);
-    }
-}
-
 void scpi_dev_sense_voltage_low(struct info *info,
                                        struct scpi_type *v,
                                        struct scpi_type *chan)
@@ -424,16 +414,6 @@ void scpi_dev_source_pwm_frequencyq(struct info *info)
     cgr101_source_pwm_frequencyq(info);
 }
 
-void scpi_dev_sense_sample(struct info *info,
-                           struct scpi_type *v)
-{
-    double value;
-
-    if (!scpi_input_fp(info, v, &value)) {
-        cgr101_digitizer_sample(info, value);
-    }
-}
-
 void scpi_dev_sense_status(struct info *info)
 {
     cgr101_digitizer_status(info);
@@ -442,11 +422,6 @@ void scpi_dev_sense_status(struct info *info)
 void scpi_dev_sense_reset(struct info *info)
 {
     cgr101_digitizer_reset(info);
-}
-
-void scpi_dev_sense_immediate(struct info *info)
-{
-    cgr101_digitizer_immediate(info);
 }
 
 void scpi_dev_trigger_coupling(struct info *info,
