@@ -168,7 +168,6 @@ struct cgr101 {
     } waveform;
     struct {
         enum cgr101_scope_offset_state offset_state;
-        int sweep_point;
         int sweep_time;
         int pretrigger;
         int sample_rate_divisor;
@@ -1133,9 +1132,9 @@ extern void cgr101_digitizer_channel_stateq(struct info *info, long chan_mask)
     }
 }
 
-extern void cgr101_digitizer_sweep_point(struct info *info, double value)
+extern void cgr101_digitizer_sweep_pointq(struct info *info)
 {
-    info->device->scope.sweep_point = (int)floor(value);
+    scpi_output_int(info->output, SCOPE_NUM_SAMPLE);
 }
 
 extern void cgr101_digitizer_sweep_time(struct info *info, double value)

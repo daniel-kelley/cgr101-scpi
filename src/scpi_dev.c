@@ -190,14 +190,57 @@ void scpi_dev_sense_function_on(struct info *info,
     }
 }
 
-void scpi_dev_sense_sweep_point(struct info *info,
-                                struct scpi_type *v)
+void scpi_dev_sense_sweep_pointq(struct info *info)
 {
-    double value;
+    cgr101_digitizer_sweep_pointq(info);
+}
 
-    if (!scpi_input_fp(info, v, &value)) {
-        cgr101_digitizer_sweep_point(info, value);
-    }
+void scpi_dev_sense_sweep_offset_point(struct info *info,
+                                       struct scpi_type *v)
+{
+    (void)info;
+    (void)v;
+}
+
+void scpi_dev_sense_sweep_offset_pointq(struct info *info)
+{
+    (void)info;
+}
+
+void scpi_dev_sense_sweep_offset_time(struct info *info,
+                                      struct scpi_type *v)
+{
+    (void)info;
+    (void)v;
+}
+
+void scpi_dev_sense_sweep_offset_timeq(struct info *info)
+{
+    (void)info;
+}
+
+void scpi_dev_sense_sweep_oref_loc(struct info *info,
+                                   struct scpi_type *v)
+{
+    (void)info;
+    (void)v;
+}
+
+void scpi_dev_sense_sweep_oref_locq(struct info *info)
+{
+    (void)info;
+}
+
+void scpi_dev_sense_sweep_oref_point(struct info *info,
+                                     struct scpi_type *v)
+{
+    (void)info;
+    (void)v;
+}
+
+void scpi_dev_sense_sweep_oref_pointq(struct info *info)
+{
+    (void)info;
 }
 
 void scpi_dev_sense_sweep_time(struct info *info, struct scpi_type *v)

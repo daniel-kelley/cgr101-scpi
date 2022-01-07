@@ -501,31 +501,31 @@ dev-cmd
     { scpi_dev_sense_reset(info); }
 
     | SENS COLON SWE COLON POINQ
-    { /*scpi_dev_sense_sweep_pointq(info);*/ }
+    { scpi_dev_sense_sweep_pointq(info); }
 
     | SENS COLON SWE COLON OFFS COLON POIN numeric_value
-    { /*scpi_dev_sense_sweep_offset_point(info, &$8);*/ }
+    { scpi_dev_sense_sweep_offset_point(info, &$8); }
 
     | SENS COLON SWE COLON OFFS COLON POINQ
-    { /*scpi_dev_sense_sweep_offset_pointq(info);*/ }
+    { scpi_dev_sense_sweep_offset_pointq(info); }
 
     | SENS COLON SWE COLON OFFS COLON TIME numeric_value
-    { /*scpi_dev_sense_sweep_offset_time(info, &$7);*/ }
+    { scpi_dev_sense_sweep_offset_time(info, &$8); }
 
     | SENS COLON SWE COLON OFFS COLON TIMEQ
-    { /*scpi_dev_sense_sweep_offset_pointq(info);*/ }
+    { scpi_dev_sense_sweep_offset_timeq(info); }
 
     | SENS COLON SWE COLON OREF COLON LOC numeric_value
-    { /*scpi_dev_sense_sweep_oref_loc(info, &$8);*/ }
+    { scpi_dev_sense_sweep_oref_loc(info, &$8); }
 
     | SENS COLON SWE COLON OREF COLON LOCQ
-    { /*scpi_dev_sense_sweep_oref_locq(info);*/ }
+    { scpi_dev_sense_sweep_oref_locq(info); }
 
     | SENS COLON SWE COLON OREF COLON POIN numeric_value
-    { /*scpi_dev_sense_sweep_oref_point(info, &$8);*/ }
+    { scpi_dev_sense_sweep_oref_point(info, &$8); }
 
     | SENS COLON SWE COLON OREF COLON POINQ
-    { /*scpi_dev_sense_sweep_oref_pointq(info);*/ }
+    { scpi_dev_sense_sweep_oref_pointq(info); }
 
     | SENS COLON SWE COLON TIME numeric_value
     { scpi_dev_sense_sweep_time(info, &$6); }
