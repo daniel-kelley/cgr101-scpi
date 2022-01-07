@@ -10,7 +10,7 @@
 module CGR101Meas
 
   #
-  # U3 MEASure:DIGITAL:DATA? - prescribed range and set of channel
+  # MEASure:DIGITAL:DATA? - prescribed range and set of channel
   #
   def test_meas_001
     self.class.hdl.send("MEAS:DIG:DATA?")
@@ -22,7 +22,7 @@ module CGR101Meas
   end
 
   #
-  # U3 READ:DIGITAL:DATA? - prescribed range and set of channel
+  # READ:DIGITAL:DATA? - prescribed range and set of channel
   #
   def test_meas_002
     # READ sequence
@@ -44,7 +44,7 @@ module CGR101Meas
   end
 
   #
-  # U3 FETCh:DIGITAL:DATA? - prescribed range and set of channel
+  # FETCh:DIGITAL:DATA? - prescribed range and set of channel
   #
   def test_meas_003
     # FETCH sequence
@@ -67,7 +67,7 @@ module CGR101Meas
   end
 
   #
-  # U3 SOURce:DIGital:DATA
+  # SOURce:DIGital:DATA
   #
   def test_meas_004
     self.class.hdl.send("SOUR:DIG:DATA 1")
