@@ -72,6 +72,8 @@
 %token INTERNAL
 %token LEV
 %token LEVQ
+%token LOC
+%token LOCQ
 %token LOW
 %token LOWQ
 %token MAX
@@ -88,8 +90,10 @@
 %token OPCQ
 %token OPER
 %token OPERQ
+%token OREF
 %token PACK
 %token POIN
+%token POINQ
 %token POS
 %token PRES
 %token PTP
@@ -127,6 +131,7 @@
 %token SYST
 %token TCP
 %token TIME
+%token TIMEQ
 %token TINT
 %token TRI
 %token TRIG
@@ -495,8 +500,32 @@ dev-cmd
     | SENS COLON RES
     { scpi_dev_sense_reset(info); }
 
-    | SENS COLON SWE COLON POIN numeric_value
-    { scpi_dev_sense_sweep_point(info, &$6); }
+    | SENS COLON SWE COLON POINQ
+    { /*scpi_dev_sense_sweep_pointq(info);*/ }
+
+    | SENS COLON SWE COLON OFFS COLON POIN numeric_value
+    { /*scpi_dev_sense_sweep_offset_point(info, &$8);*/ }
+
+    | SENS COLON SWE COLON OFFS COLON POINQ
+    { /*scpi_dev_sense_sweep_offset_pointq(info);*/ }
+
+    | SENS COLON SWE COLON OFFS COLON TIME numeric_value
+    { /*scpi_dev_sense_sweep_offset_time(info, &$7);*/ }
+
+    | SENS COLON SWE COLON OFFS COLON TIMEQ
+    { /*scpi_dev_sense_sweep_offset_pointq(info);*/ }
+
+    | SENS COLON SWE COLON OREF COLON LOC numeric_value
+    { /*scpi_dev_sense_sweep_oref_loc(info, &$8);*/ }
+
+    | SENS COLON SWE COLON OREF COLON LOCQ
+    { /*scpi_dev_sense_sweep_oref_locq(info);*/ }
+
+    | SENS COLON SWE COLON OREF COLON POIN numeric_value
+    { /*scpi_dev_sense_sweep_oref_point(info, &$8);*/ }
+
+    | SENS COLON SWE COLON OREF COLON POINQ
+    { /*scpi_dev_sense_sweep_oref_pointq(info);*/ }
 
     | SENS COLON SWE COLON TIME numeric_value
     { scpi_dev_sense_sweep_time(info, &$6); }

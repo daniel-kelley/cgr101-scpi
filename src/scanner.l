@@ -80,6 +80,8 @@ INTeger                 { return INTEGER; }
 INTernal                { return INTERNAL; }
 (LEV|LEVel)             { return LEV; }
 (LEV|LEVel)\?           { return LEVQ; }
+(LOC|LOCation)          { return LOC; }
+(LOC|LOCation)\?        { return LOCQ; }
 (LOW|LOWer)             { return LOW; }
 (LOW|LOWer)\?           { return LOWQ; }
 MAX                     { return MAX; }
@@ -94,8 +96,10 @@ OFF                     { return OFF; }
 ON                      { return ON; }
 (OPER|OPERation)        { return OPER; }
 (OPER|OPERation)\?      { return OPERQ; }
+(OREF|OREFERENCE)       { return OREF; }
 PACK                    { return PACK; }
 (POIN|POINts)           { return POIN; }
+(POIN|POINts)\?         { return POINQ; }
 (POS|POSitive)          { return POS; }
 (PRES|PRESet)           { return PRES; }
 (PTP|PTPeak)            { return PTP; }
@@ -129,6 +133,7 @@ STATUS                  { return STATUS; }
 (SYST|SYSTem)           { return SYST; }
 (TCP|TCPip)             { return TCP; }
 TIME                    { return TIME; }
+TIMEQ                   { return TIMEQ; }
 (TINT|TINTerval)        { return TINT; }
 (TRI|TRIangle)          { return TRI; }
 (TRIG|TRIGger)          { return TRIG; }
