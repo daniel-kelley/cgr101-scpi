@@ -198,49 +198,61 @@ void scpi_dev_sense_sweep_pointq(struct info *info)
 void scpi_dev_sense_sweep_offset_point(struct info *info,
                                        struct scpi_type *v)
 {
-    (void)info;
-    (void)v;
+    double value;
+
+    if (!scpi_input_fp(info, v, &value)) {
+        cgr101_digitizer_offset_point(info, value);
+    }
 }
 
 void scpi_dev_sense_sweep_offset_pointq(struct info *info)
 {
-    (void)info;
+    cgr101_digitizer_offset_pointq(info);
 }
 
 void scpi_dev_sense_sweep_offset_time(struct info *info,
                                       struct scpi_type *v)
 {
-    (void)info;
-    (void)v;
+    double value;
+
+    if (!scpi_input_fp(info, v, &value)) {
+        cgr101_digitizer_offset_time(info, value);
+    }
 }
 
 void scpi_dev_sense_sweep_offset_timeq(struct info *info)
 {
-    (void)info;
+    cgr101_digitizer_offset_timeq(info);
 }
 
 void scpi_dev_sense_sweep_oref_loc(struct info *info,
                                    struct scpi_type *v)
 {
-    (void)info;
-    (void)v;
+    double value;
+
+    if (!scpi_input_fp(info, v, &value)) {
+        cgr101_digitizer_oref_loc(info, value);
+    }
 }
 
 void scpi_dev_sense_sweep_oref_locq(struct info *info)
 {
-    (void)info;
+    cgr101_digitizer_oref_locq(info);
 }
 
 void scpi_dev_sense_sweep_oref_point(struct info *info,
                                      struct scpi_type *v)
 {
-    (void)info;
-    (void)v;
+    double value;
+
+    if (!scpi_input_fp(info, v, &value)) {
+        cgr101_digitizer_oref_point(info, value);
+    }
 }
 
 void scpi_dev_sense_sweep_oref_pointq(struct info *info)
 {
-    (void)info;
+    cgr101_digitizer_oref_pointq(info);
 }
 
 void scpi_dev_sense_sweep_time(struct info *info, struct scpi_type *v)

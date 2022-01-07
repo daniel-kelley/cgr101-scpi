@@ -1078,13 +1078,13 @@ void cgr101_source_pwm_frequencyq(struct info *info)
     (void)info;
 }
 
-extern void cgr101_digitizer_coupling(struct info *info, const char *value)
+void cgr101_digitizer_coupling(struct info *info, const char *value)
 {
     (void)info;
     (void)value;
 }
 
-extern void cgr101_digitizer_dataq(struct info *info, long chan_mask)
+void cgr101_digitizer_dataq(struct info *info, long chan_mask)
 {
     int chan;
     int j;
@@ -1100,15 +1100,15 @@ extern void cgr101_digitizer_dataq(struct info *info, long chan_mask)
     }
 }
 
-extern void cgr101_digitizer_concurrent(struct info *info, int value)
+void cgr101_digitizer_concurrent(struct info *info, int value)
 {
     (void)info;
     (void)value;
 }
 
-extern void cgr101_digitizer_channel_state(struct info *info,
-                                           long chan_mask,
-                                           int value)
+void cgr101_digitizer_channel_state(struct info *info,
+                                    long chan_mask,
+                                    int value)
 {
     int chan;
 
@@ -1120,7 +1120,7 @@ extern void cgr101_digitizer_channel_state(struct info *info,
     }
 }
 
-extern void cgr101_digitizer_channel_stateq(struct info *info, long chan_mask)
+void cgr101_digitizer_channel_stateq(struct info *info, long chan_mask)
 {
     int chan;
 
@@ -1132,17 +1132,61 @@ extern void cgr101_digitizer_channel_stateq(struct info *info, long chan_mask)
     }
 }
 
-extern void cgr101_digitizer_sweep_pointq(struct info *info)
+void cgr101_digitizer_offset_point(struct info *info, double value)
+{
+    (void)info;
+    (void)value;
+}
+
+void cgr101_digitizer_offset_pointq(struct info *info)
+{
+    (void)info;
+}
+
+void cgr101_digitizer_offset_time(struct info *info, double value)
+{
+    (void)info;
+    (void)value;
+}
+
+void cgr101_digitizer_offset_timeq(struct info *info)
+{
+    (void)info;
+}
+
+void cgr101_digitizer_oref_loc(struct info *info, double value)
+{
+    (void)info;
+    (void)value;
+}
+
+void cgr101_digitizer_oref_locq(struct info *info)
+{
+    (void)info;
+}
+
+void cgr101_digitizer_oref_point(struct info *info, double value)
+{
+    (void)info;
+    (void)value;
+}
+
+void cgr101_digitizer_oref_pointq(struct info *info)
+{
+    (void)info;
+}
+
+void cgr101_digitizer_sweep_pointq(struct info *info)
 {
     scpi_output_int(info->output, SCOPE_NUM_SAMPLE);
 }
 
-extern void cgr101_digitizer_sweep_time(struct info *info, double value)
+void cgr101_digitizer_sweep_time(struct info *info, double value)
 {
     info->device->scope.sweep_time = (int)floor(value);
 }
 
-extern void cgr101_digitizer_sweep_interval(struct info *info, double value)
+void cgr101_digitizer_sweep_interval(struct info *info, double value)
 {
     info->device->scope.sweep_time = (int)floor(1.0/value);
 }
@@ -1171,9 +1215,9 @@ extern void cgr101_digitizer_sweep_interval(struct info *info, double value)
  */
 
 /* Lowest expected voltage. */
-extern void cgr101_digitizer_voltage_low(struct info *info,
-                                         long chan_mask,
-                                         double value)
+void cgr101_digitizer_voltage_low(struct info *info,
+                                  long chan_mask,
+                                  double value)
 {
     int chan;
 
@@ -1188,9 +1232,9 @@ extern void cgr101_digitizer_voltage_low(struct info *info,
 }
 
 /* Midpoint expected voltage. */
-extern void cgr101_digitizer_voltage_offset(struct info *info,
-                                            long chan_mask,
-                                            double value)
+void cgr101_digitizer_voltage_offset(struct info *info,
+                                     long chan_mask,
+                                     double value)
 {
     int chan;
 
@@ -1204,9 +1248,9 @@ extern void cgr101_digitizer_voltage_offset(struct info *info,
     }
 }
 
-extern void cgr101_digitizer_voltage_ptp(struct info *info,
-                                         long chan_mask,
-                                         double value)
+void cgr101_digitizer_voltage_ptp(struct info *info,
+                                  long chan_mask,
+                                  double value)
 {
     int chan;
 
@@ -1221,9 +1265,9 @@ extern void cgr101_digitizer_voltage_ptp(struct info *info,
 }
 
 /* Highest expected voltage. */
-extern void cgr101_digitizer_voltage_up(struct info *info,
-                                        long chan_mask,
-                                        double value)
+void cgr101_digitizer_voltage_up(struct info *info,
+                                 long chan_mask,
+                                 double value)
 {
     int chan;
 
@@ -1237,7 +1281,7 @@ extern void cgr101_digitizer_voltage_up(struct info *info,
     }
 }
 
-extern void cgr101_digitizer_lowq(struct info *info, long chan_mask)
+void cgr101_digitizer_lowq(struct info *info, long chan_mask)
 {
     int chan;
 
@@ -1250,7 +1294,7 @@ extern void cgr101_digitizer_lowq(struct info *info, long chan_mask)
     }
 }
 
-extern void cgr101_digitizer_offsetq(struct info *info, long chan_mask)
+void cgr101_digitizer_offsetq(struct info *info, long chan_mask)
 {
     int chan;
 
@@ -1263,7 +1307,7 @@ extern void cgr101_digitizer_offsetq(struct info *info, long chan_mask)
     }
 }
 
-extern void cgr101_digitizer_ptpq(struct info *info, long chan_mask)
+void cgr101_digitizer_ptpq(struct info *info, long chan_mask)
 {
     int chan;
 
@@ -1276,7 +1320,7 @@ extern void cgr101_digitizer_ptpq(struct info *info, long chan_mask)
     }
 }
 
-extern void cgr101_digitizer_upq(struct info *info, long chan_mask)
+void cgr101_digitizer_upq(struct info *info, long chan_mask)
 {
     int chan;
 
