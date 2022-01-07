@@ -1548,7 +1548,7 @@ void cgr101_digitizer_upq(struct info *info, long chan_mask)
     }
 }
 
-void cgr101_digitizer_status(struct info *info)
+void cgr101_digitizer_statq(struct info *info)
 {
     cgr101_event_send(info, EVENT_SCOPE_STATUS_OUTPUT);
 }

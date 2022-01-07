@@ -494,8 +494,8 @@ dev-cmd
     | SENS COLON FUNC COLON ON channel
     { scpi_dev_sense_function_on(info, &$6); }
 
-    | SENS COLON STAT
-    { scpi_dev_sense_status(info); }
+    | SENS COLON STATQ
+    { scpi_dev_sense_statq(info); }
 
     | SENS COLON RES
     { scpi_dev_sense_reset(info); }

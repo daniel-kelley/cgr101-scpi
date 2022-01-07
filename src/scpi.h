@@ -147,7 +147,7 @@ extern void scpi_dev_source_pwm_frequency(struct info *info,
                                           struct scpi_type *v);
 extern void scpi_dev_source_pwm_frequencyq(struct info *info);
 extern void scpi_core_initiate_immediate(struct info *info);
-extern void scpi_dev_sense_status(struct info *info);
+extern void scpi_dev_sense_statq(struct info *info);
 extern void scpi_dev_sense_reset(struct info *info);
 extern void scpi_dev_sense_immediate(struct info *info);
 extern void scpi_dev_trigger_coupling(struct info *info,

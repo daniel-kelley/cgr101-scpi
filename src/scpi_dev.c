@@ -469,9 +469,9 @@ void scpi_dev_source_pwm_frequencyq(struct info *info)
     cgr101_source_pwm_frequencyq(info);
 }
 
-void scpi_dev_sense_status(struct info *info)
+void scpi_dev_sense_statq(struct info *info)
 {
-    cgr101_digitizer_status(info);
+    cgr101_digitizer_statq(info);
 }
 
 void scpi_dev_sense_reset(struct info *info)
