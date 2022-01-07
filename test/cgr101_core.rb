@@ -1,7 +1,7 @@
 #
-#  cgr101_testcase.rb
+#  cgr101_core.rb
 #
-#  Copyright (c) 2021 by Daniel Kelley
+#  Copyright (c) 2022 by Daniel Kelley
 #
 
 require 'pp'
@@ -9,12 +9,12 @@ require 'pp'
 #
 # Command test cases
 #
-module CGR101Testcase
+module CGR101Core
 
   #
   # Interface handle check
   #
-  def test_001
+  def test_core_001
     hdl = self.class.hdl
     assert_not_nil hdl
     assert hdl.wthr.alive?
@@ -23,7 +23,7 @@ module CGR101Testcase
   #
   # Device Setup completed correctly
   #
-  def test_002
+  def test_core_002
     self.class.hdl.send("SYSTem:INTernal:SETUP?")
     out = self.class.hdl.recv
     assert_equal("0", out)
@@ -34,7 +34,7 @@ module CGR101Testcase
   #
   # SCPI standard SYST:VERS?
   #
-  def test_003
+  def test_core_003
     self.class.hdl.send("SYST:VERS?")
     out = self.class.hdl.recv
     assert_equal("1999.0", out)
@@ -45,7 +45,7 @@ module CGR101Testcase
   #
   # SCPI standard SYSTem:ERRor:COUNt?
   #
-  def test_004
+  def test_core_004
     self.class.hdl.send("SYSTem:ERRor:COUNt?")
     out = self.class.hdl.recv
     assert_equal("0", out)
@@ -56,7 +56,7 @@ module CGR101Testcase
   #
   # SCPI standard SYSTem:ERRor?
   #
-  def test_005
+  def test_core_005
     self.class.hdl.send("SYSTem:ERRor?")
     out = self.class.hdl.recv
     assert_equal("0,\"No error\"", out)
@@ -67,7 +67,7 @@ module CGR101Testcase
   #
   # "No error" command behavior
   #
-  def test_006
+  def test_core_006
     self.class.hdl.send("SYSTem:ERRor:NEXT?")
     out = self.class.hdl.recv
     assert_equal("0,\"No error\"", out)
@@ -78,7 +78,7 @@ module CGR101Testcase
   #
   # "Has error" command behavior
   #
-  def test_007
+  def test_core_007
     # bogus command
     self.class.hdl.send("SYSTem:BOGUS")
     assert_equal(0, self.class.hdl.out_length)
@@ -101,7 +101,7 @@ module CGR101Testcase
   #
   # SCPI standard SYSTem:CAPability?
   #
-  def test_008
+  def test_core_008
     self.class.hdl.send("SYSTem:CAPability?")
     out = self.class.hdl.recv
     assert_equal("\"DIGITIZER\"", out)
@@ -112,7 +112,7 @@ module CGR101Testcase
   #
   # SCPI standard *CLS
   #
-  def test_009
+  def test_core_009
     # create error with bogus command
     self.class.hdl.send("SYSTem:BOGUS")
     assert_equal(0, self.class.hdl.out_length)
@@ -130,7 +130,7 @@ module CGR101Testcase
   #
   # SCPI standard *ESE?, *ESE
   #
-  def test_010
+  def test_core_010
     self.class.hdl.send("*ese?")
     ese = self.class.hdl.recv
     assert_not_nil(ese)
@@ -150,7 +150,7 @@ module CGR101Testcase
   #
   # SCPI standard *ESR?
   #
-  def test_011
+  def test_core_011
     self.class.hdl.send("*ESR?")
     out = self.class.hdl.recv
     assert_not_nil(out)
@@ -161,7 +161,7 @@ module CGR101Testcase
   #
   # SCPI standard *IDN?
   #
-  def test_012
+  def test_core_012
     self.class.hdl.send("*idn?")
     out = self.class.hdl.recv
     # Don't match against specific firmware revision
@@ -173,7 +173,7 @@ module CGR101Testcase
   #
   # SCPI standard *OPC, *OPC?, *ESR clearing
   #
-  def test_013
+  def test_core_013
     self.class.hdl.send("*opc")
     self.class.hdl.send("*opc?")
     out = self.class.hdl.recv
@@ -199,7 +199,7 @@ module CGR101Testcase
   #
   # SCPI standard *RST
   #
-  def test_014
+  def test_core_014
     self.class.hdl.send("*rst")
     self.class.hdl.send("*opc?")
     out = self.class.hdl.recv
@@ -211,7 +211,7 @@ module CGR101Testcase
   #
   # SCPI standard *SRE?, *SRE
   #
-  def test_015_001
+  def test_core_015_001
     self.class.hdl.send("*sre?")
     sre = self.class.hdl.recv
     assert_not_nil(sre)
@@ -231,7 +231,7 @@ module CGR101Testcase
   #
   # SCPI standard *STB?
   #
-  def test_016_001
+  def test_core_016_001
     self.class.hdl.send("*stb?")
     out = self.class.hdl.recv
     assert_equal("0", out)
@@ -242,7 +242,7 @@ module CGR101Testcase
   #
   # SCPI standard *TST?
   #
-  def test_016_002
+  def test_core_016_002
     self.class.hdl.send("*tst?")
     out = self.class.hdl.recv
     assert_equal("0", out)
@@ -253,7 +253,7 @@ module CGR101Testcase
   #
   # SCPI standard *WAI
   #
-  def test_016_003
+  def test_core_016_003
     self.class.hdl.send("*WAI")
     self.class.hdl.send("*opc?")
     out = self.class.hdl.recv
@@ -265,7 +265,7 @@ module CGR101Testcase
   #
   # SCPI standard STATus:OPERation?
   #
-  def test_016_004
+  def test_core_016_004
     self.class.hdl.send("STATus:OPERation?")
     out = self.class.hdl.recv
     assert_equal("0", out)
@@ -276,7 +276,7 @@ module CGR101Testcase
   #
   # SCPI standard STATus:OPERation:EVENt?
   #
-  def test_016_005
+  def test_core_016_005
     self.class.hdl.send("STATus:OPERation:EVENt?")
     out = self.class.hdl.recv
     assert_equal("0", out)
@@ -287,7 +287,7 @@ module CGR101Testcase
   #
   # SCPI standard STATus:OPERation:CONDition?
   #
-  def test_017
+  def test_core_017
     self.class.hdl.send("STATus:OPERation:CONDition?")
     out = self.class.hdl.recv
     assert_equal("0", out)
@@ -298,7 +298,7 @@ module CGR101Testcase
   #
   # SCPI standard STAT:OPER:ENAB?, STAT:OPER:ENAB
   #
-  def test_018
+  def test_core_018
     self.class.hdl.send("STAT:OPER:ENAB?")
     soe = self.class.hdl.recv
     assert_not_nil(soe)
@@ -318,7 +318,7 @@ module CGR101Testcase
   #
   # SCPI standard STATus:QUEStionable?
   #
-  def test_019
+  def test_core_019
     self.class.hdl.send("STATus:QUEStionable?")
     out = self.class.hdl.recv
     assert_equal("0", out)
@@ -329,7 +329,7 @@ module CGR101Testcase
   #
   # SCPI standard STAT:QUES:ENAB?, STAT:QUES:ENAB
   #
-  def test_020
+  def test_core_020
     self.class.hdl.send("STAT:QUES:ENAB?")
     sqe = self.class.hdl.recv
     assert_not_nil(sqe)
@@ -349,7 +349,7 @@ module CGR101Testcase
   #
   # SCPI standard STATus:PRESet
   #
-  def test_021
+  def test_core_021
     self.class.hdl.send("STATus:PRESet")
     self.class.hdl.send("*opc?")
     out = self.class.hdl.recv
@@ -358,78 +358,7 @@ module CGR101Testcase
     assert_equal(0, self.class.hdl.err_length)
   end
 
-  #
-  # U3 MEASure:DIGITAL:DATA? - prescribed range and set of channel
-  #
-  def test_029
-    self.class.hdl.send("MEAS:DIG:DATA?")
-    out = self.class.hdl.recv
-    v = out.split(',').map { |s| Integer(s) }
-    assert_equal(1, v.length)
-    assert_equal(0, self.class.hdl.out_length)
-    assert_equal(0, self.class.hdl.err_length)
-  end
-
-  #
-  # U3 READ:DIGITAL:DATA? - prescribed range and set of channel
-  #
-  def test_030
-    # READ sequence
-    self.class.hdl.send("ABORt")
-    self.class.hdl.send("CONFIGURE:DIG:DATA")
-    self.class.hdl.send("READ:DIG:DATA?")
-    out = self.class.hdl.recv
-    v1 = out.split(',').map { |s| Integer(s) }
-    assert_equal(1, v1.length)
-    assert_equal(0, self.class.hdl.out_length)
-    assert_equal(0, self.class.hdl.err_length)
-
-    # measure for reference
-    self.class.hdl.send("MEAS:DIG:DATA?")
-    out = self.class.hdl.recv
-    v0 = out.split(',').map { |s| Integer(s) }
-
-    assert_equal(v0, v1)
-  end
-
-  #
-  # U3 FETCh:DIGITAL:DATA? - prescribed range and set of channel
-  #
-  def test_031
-    # FETCH sequence
-    self.class.hdl.send("ABORt")
-    self.class.hdl.send("CONFIGURE:DIG:DATA")
-    self.class.hdl.send("INITiate")
-    self.class.hdl.send("FETCH:DIG:DATA?")
-    out = self.class.hdl.recv
-    v1 = out.split(',').map { |s| Integer(s) }
-    assert_equal(1, v1.length)
-    assert_equal(0, self.class.hdl.out_length)
-    assert_equal(0, self.class.hdl.err_length)
-
-    # measure for reference
-    self.class.hdl.send("MEAS:DIG:DATA?")
-    out = self.class.hdl.recv
-    v0 = out.split(',').map { |s| Integer(s) }
-
-    assert_equal(v0, v1)
-  end
-
-  #
-  # U3 SOURce:DIGital:DATA
-  #
-  def test_032
-    self.class.hdl.send("SOUR:DIG:DATA 1")
-    self.class.hdl.send("SOUR:DIG:DATA?")
-    out = self.class.hdl.recv
-    v = out.split(',').map { |s| Integer(s) }
-    assert_equal(1, v.length)
-    assert_equal(1, v[0])
-    assert_equal(0, self.class.hdl.out_length)
-    assert_equal(0, self.class.hdl.err_length)
-  end
-
-  def no_test_outline
+  def no_test_core_outline
     self.class.hdl.send("SYSTem:CAPability?")
     sleep(5)
     puts self.class.hdl.get_out

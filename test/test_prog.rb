@@ -8,14 +8,16 @@
 require 'test/unit'
 
 require_relative 'cgr101'
-require_relative 'cgr101_testcase'
+require_relative 'cgr101_core'
+require_relative 'cgr101_meas'
 
 #
 # CGR101 test cases using stdio command interface
 #
 class TestProg < Test::Unit::TestCase
 
-  include CGR101Testcase
+  include CGR101Core
+  include CGR101Meas
 
   class << self
     attr_reader :hdl
