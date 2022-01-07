@@ -40,6 +40,8 @@ enum cgr101_rcv_state {
     DIGITAL_READ,
     SCOPE_OFFSET,
     SCOPE_STATUS,
+    SCOPE_READ,
+    SCOPE_DATA,
 };
 
 enum cgr101_event {
@@ -78,6 +80,15 @@ enum cgr101_scope_status_state {
     STATE_SCOPE_STATUS_COMPLETE,
 };
 
+enum cgr101_scope_data_state {
+    STATE_SCOPE_DATA_IDLE,
+    STATE_SCOPE_DATA_EXPECT_A_HIGH,
+    STATE_SCOPE_DATA_EXPECT_B_HIGH,
+    STATE_SCOPE_DATA_EXPECT_A_LOW,
+    STATE_SCOPE_DATA_EXPECT_B_LOW,
+    STATE_SCOPE_DATA_COMPLETE,
+};
+
 enum cgr101_scope_trigger_source {
     SCOPE_TRIGGER_SOURCE_INT,
     SCOPE_TRIGGER_SOURCE_EXT,
@@ -111,20 +122,19 @@ static struct cgr101_waveform_map_s cgr101_waveform_map[] = {
 
 #define SCOPE_NUM_CHAN 2
 #define SCOPE_NUM_RANGE 2
-#define SCOPE_NUM_SAMPLE 4096
+#define SCOPE_NUM_SAMPLE 1024
 #define SCOPE_DEFAULT_LOW -25.0
 #define SCOPE_DEFAULT_HIGH 25.0
 #define SCOPE_DEFAULT_MIDPOINT 0.0
 #define SCOPE_DEFAULT_PTP 50.0
 #define SCOPE_SR_DIV_MAX 15
 #define SCOPE_SR_MAX 20.0e6 /* 20MHz */
-
+#define SCOPE_NUM_DATA = SCOPE_NUM_SAMPLE*SCOPE_NUM_CHAN*2
 static char cgr101_range_cmd[SCOPE_NUM_CHAN][SCOPE_NUM_RANGE] = {
     {'A','a'},
     {'B','b'}
 };
 
-#if 0
 /*
  * By experiment and code inspection of the CGR-101 TCL code, a manual
  * trigger must be delayed from an "S G" command by the following
@@ -132,13 +142,13 @@ static char cgr101_range_cmd[SCOPE_NUM_CHAN][SCOPE_NUM_RANGE] = {
  * did not use a sample rate code of '13' or '3', so those delays are
  * estimated.
  */
-static int cgr101_manual_trigger_delay[] = {
+static unsigned int cgr101_manual_trigger_delay_ms[] = {
      500,   500,   500,   500,
      500,   500,   500,   500,
      500,   500,   500,   500,
     1000,  2000,  2000,  2000
- };
-#endif
+};
+
 
 struct cgr101 {
     struct spawn child;
@@ -168,9 +178,8 @@ struct cgr101 {
     } waveform;
     struct {
         enum cgr101_scope_offset_state offset_state;
-        int sweep_time;
-        int pretrigger;
-        int sample_rate_divisor;
+        double sweep_time;
+        int sample_rate_divisor;        /* derived from sweep_time */
         int internal_trigger_source;
         int trigger_polarity;
         int trigger_external;
@@ -179,6 +188,10 @@ struct cgr101 {
         int status;
         double trigger_level;
         enum cgr101_scope_trigger_source trigger_source;
+        double trigger_offset;     /* SCPI SENSe:SWEep:OFFSet:POINts */
+        double trigger_ref;        /* SCPI SENSe:SWEep:OREFerence:POINts */
+        enum cgr101_scope_data_state data_state;
+        int data_count;
         struct {
             double input_low;
             double input_high;
@@ -282,6 +295,11 @@ static int cgr101_rcv_start(struct info *info, char c)
     case 'S':
         info->device->rcv_state = SCOPE_STATUS;
         /* 'Status N' */
+        err = 0;
+        break;
+    case 'D':
+        info->device->rcv_state = SCOPE_DATA;
+        /* 'DA1a1B1b2A2a2B2b2...' */
         err = 0;
         break;
     default:
@@ -456,6 +474,169 @@ static void cgr101_scope_status_completion(struct info *info)
 }
 
 /*
+ * Oscilloscope Data Handling
+ */
+
+static void cgr101_digitizer_update_control(struct info *info)
+{
+    int ctl;
+    int err;
+
+    assert(info->device->scope.sample_rate_divisor >= 0);
+    assert(info->device->scope.sample_rate_divisor <= SCOPE_SR_DIV_MAX);
+    assert(info->device->scope.internal_trigger_source >= 0);
+    assert(info->device->scope.internal_trigger_source <= 1);
+    assert(info->device->scope.trigger_polarity >= 0);
+    assert(info->device->scope.trigger_polarity <= 1);
+    assert(info->device->scope.trigger_external >= 0);
+    assert(info->device->scope.trigger_external <= 1);
+    assert(info->device->scope.trigger_filter_disable >= 0);
+    assert(info->device->scope.trigger_filter_disable <= 1);
+
+    ctl = info->device->scope.sample_rate_divisor;
+    ctl |= (info->device->scope.internal_trigger_source << 4);
+    ctl |= (info->device->scope.trigger_polarity << 5);
+    ctl |= (info->device->scope.trigger_external << 6);
+    /* (scope.tcl)scope::updateScopeControlReg twiddles with bit 7
+     * which is not documented in circuit-gear-manual.pdf */
+    ctl |= (info->device->scope.trigger_filter_disable << 7);
+
+    err = cgr101_device_printf(info, "S R %d\n", ctl);
+    assert(!err);
+}
+
+static void cgr101_digitizer_manual_trigger(struct info *info)
+{
+    int cur_ext_trig = info->device->scope.trigger_external;
+    int err;
+
+    if (cur_ext_trig == 0) {
+        info->device->scope.trigger_external = 1;
+        cgr101_digitizer_update_control(info);
+    }
+
+    /* Blocking Delay. */
+    assert(info->device->scope.sample_rate_divisor >= 0);
+    assert(info->device->scope.sample_rate_divisor <= SCOPE_SR_DIV_MAX);
+    assert(COUNT_OF(cgr101_manual_trigger_delay_ms) == SCOPE_SR_DIV_MAX+1);
+    usleep(cgr101_manual_trigger_delay_ms[
+               info->device->scope.sample_rate_divisor
+               ]*1000);
+
+    /* Manual Trigger; needs ext trigger */
+    err = cgr101_device_send(info, "S D 5\n");
+    assert(!err);
+    err = cgr101_device_send(info, "S D 4\n");
+    assert(!err);
+
+    /* Restore internal trigger */
+    if (cur_ext_trig == 0) {
+        info->device->scope.trigger_external = 0;
+        cgr101_digitizer_update_control(info);
+    }
+}
+
+static int cgr101_digitizer_start(struct info *info, int manual)
+{
+    int err;
+    int low;
+    int high;
+    int post_trigger;
+
+    /* Data return state initialization */
+
+    info->device->scope.data_state = STATE_SCOPE_DATA_EXPECT_A_HIGH;
+    info->device->scope.data_count = 0;
+
+    do {
+        /* Trigger Level - assume done */
+
+        /* Post Trigger Sample Count */
+        post_trigger = SCOPE_NUM_SAMPLE;
+        post_trigger =- (int)info->device->scope.trigger_ref;
+        post_trigger =- (int)info->device->scope.trigger_offset;
+
+
+        if (post_trigger < 0 || post_trigger >= SCOPE_NUM_SAMPLE) {
+            /* Error: post_trigger out of bounds. */
+            break;
+        }
+        low = post_trigger & 0xff;
+        high = (post_trigger >> 8) & 0x03;
+        err = cgr101_device_printf(info, "S C %d %d\n", high, low);
+        if (err) {
+            break;
+        }
+
+        /* GO */
+
+        err = cgr101_device_send(info, "S G\n");
+        if (err) {
+            break;
+        }
+
+        /* Manual Trigger handling */
+        if (info->device->scope.trigger_source != SCOPE_TRIGGER_SOURCE_IMM ||
+            manual) {
+            break; /* Done with this. */
+        }
+
+        cgr101_digitizer_manual_trigger(info);
+
+    } while (0);
+
+    return err;
+}
+
+static void cgr101_rcv_scope_data_chan(struct info *info,
+                                       int chan,
+                                       int byte,
+                                       char c)
+{
+    int idx = info->device->scope.data_count;
+
+    assert(idx >= 0);
+    assert((size_t)idx < COUNT_OF(info->device->scope.channel[chan].data));
+    if (byte) {
+        info->device->scope.channel[chan].data[idx] = (double)(c<<8);
+    } else {
+        info->device->scope.channel[chan].data[idx] += (double)c;
+    }
+    /*FIXME: Handle offsets */
+}
+
+static int cgr101_rcv_scope_data(struct info *info, char c)
+{
+    int err = 0;
+
+    switch (info->device->scope.data_state) {
+    case STATE_SCOPE_DATA_EXPECT_A_HIGH:
+        cgr101_rcv_scope_data_chan(info, 0, 1, c);
+        break;
+    case STATE_SCOPE_DATA_EXPECT_A_LOW:
+        cgr101_rcv_scope_data_chan(info, 0, 0, c);
+        break;
+    case STATE_SCOPE_DATA_EXPECT_B_HIGH:
+        cgr101_rcv_scope_data_chan(info, 1, 1, c);
+        break;
+    case STATE_SCOPE_DATA_EXPECT_B_LOW:
+        cgr101_rcv_scope_data_chan(info, 1, 0, c);
+        info->device->scope.data_count++;
+        if (info->device->scope.data_count == SCOPE_NUM_SAMPLE) {
+            info->device->scope.data_state = STATE_SCOPE_DATA_COMPLETE;
+            cgr101_rcv_idle(info);
+            /* Done receiving. */
+        }
+        break;
+    default:
+        assert(0);
+        break;
+    }
+
+    return err;
+}
+
+/*
  * Device Identify Handling
  */
 
@@ -599,6 +780,9 @@ static int cgr101_rcv_sm(struct info *info, char c)
         break;
     case SCOPE_STATUS:
         err = cgr101_rcv_scope_status(info, c);
+        break;
+    case SCOPE_DATA:
+        err = cgr101_rcv_scope_data(info, c);
         break;
     default:
         assert(0);
@@ -821,33 +1005,28 @@ static void cgr101_digitizer_set_range(struct info *info,int chan)
     }
 }
 
-static void cgr101_digitizer_update_control(struct info *info)
+static void cgr101_sweep_time(struct info *info, double time)
 {
-    int ctl;
-    int err;
+    double sweep_time = (double)SCOPE_NUM_SAMPLE/SCOPE_SR_MAX;
+    double sweep_time2 = sweep_time * 2.0;
+    int sweep_div;
 
-    assert(info->device->scope.sample_rate_divisor >= 0);
-    assert(info->device->scope.sample_rate_divisor <= SCOPE_SR_DIV_MAX);
-    assert(info->device->scope.internal_trigger_source >= 0);
-    assert(info->device->scope.internal_trigger_source <= 1);
-    assert(info->device->scope.trigger_polarity >= 0);
-    assert(info->device->scope.trigger_polarity <= 1);
-    assert(info->device->scope.trigger_external >= 0);
-    assert(info->device->scope.trigger_external <= 1);
-    assert(info->device->scope.trigger_filter_disable >= 0);
-    assert(info->device->scope.trigger_filter_disable <= 1);
+    for (sweep_div = 0; sweep_div <= SCOPE_SR_DIV_MAX; sweep_div++) {
+        if (time >= sweep_time && time < sweep_time2) {
+            break;
+        }
+        sweep_time = sweep_time2;
+        sweep_time2 = sweep_time * 2.0;
+    }
 
-    ctl = info->device->scope.sample_rate_divisor;
-    ctl |= (info->device->scope.internal_trigger_source << 4);
-    ctl |= (info->device->scope.trigger_polarity << 5);
-    ctl |= (info->device->scope.trigger_external << 6);
-    /* (scope.tcl)scope::updateScopeControlReg twiddles with bit 7
-     * which is not documented in circuit-gear-manual.pdf */
-    ctl |= (info->device->scope.trigger_filter_disable << 7);
-
-    err = cgr101_device_printf(info, "S R %d\n", ctl);
-    assert(!err);
+    if (sweep_div >= 0 && sweep_div <= SCOPE_SR_DIV_MAX) {
+        info->device->scope.sweep_time = sweep_time;
+        info->device->scope.sample_rate_divisor = sweep_div;
+    } else {
+        /*error*/
+    }
 }
+
 
 /*
  * Initialization
@@ -860,18 +1039,26 @@ static void cgr101_device_init(struct info *info)
 
     /*Consistency check*/
     assert(COUNT_OF(info->device->scope.channel) == SCOPE_NUM_CHAN);
+    /* Set Defaults */
+    info->device->scope.trigger_offset = 0;
+    info->device->scope.trigger_ref = SCOPE_NUM_SAMPLE/2;
     for (chan=0; chan<SCOPE_NUM_CHAN; chan++) {
         info->device->scope.channel[chan].input_low = SCOPE_DEFAULT_LOW;
         info->device->scope.channel[chan].input_high = SCOPE_DEFAULT_HIGH;
-        info->device->scope.channel[chan].input_midpoint = SCOPE_DEFAULT_MIDPOINT;
+        info->device->scope.channel[chan].input_midpoint =
+            SCOPE_DEFAULT_MIDPOINT;
         info->device->scope.channel[chan].input_ptp = SCOPE_DEFAULT_PTP;
         /* Force */
         info->device->scope.channel[chan].input_low_range = -1;
         cgr101_digitizer_set_range(info, chan);
     }
-    info->device->scope.offset_state = STATE_SCOPE_OFFSET_EXPECT_A_HIGH;
-    err = cgr101_device_send(info, "S O\n"); /* Get offsets. */
-    assert(!err);
+
+    /* Query device for offsets. */
+    if (info->device->scope.offset_state != STATE_SCOPE_OFFSET_EXPECT_A_HIGH) {
+        info->device->scope.offset_state = STATE_SCOPE_OFFSET_EXPECT_A_HIGH;
+        err = cgr101_device_send(info, "S O\n"); /* Get offsets. */
+        assert(!err);
+    }
 }
 
 
@@ -957,10 +1144,19 @@ int cgr101_close(struct info *info)
 
 int cgr101_initiate(struct info *info)
 {
+    int err;
+
     if (info->device->digital_read_requested) {
-        int err = cgr101_digital_read_start(info);
+        err = cgr101_digital_read_start(info);
         assert(!err);
     }
+
+    if (info->device->scope.channel[0].enable ||
+        info->device->scope.channel[1].enable) {
+        err = cgr101_digitizer_start(info, 0);
+        assert(!err);
+    }
+
 
     return 0;
 }
@@ -1134,46 +1330,65 @@ void cgr101_digitizer_channel_stateq(struct info *info, long chan_mask)
 
 void cgr101_digitizer_offset_point(struct info *info, double value)
 {
-    (void)info;
-    (void)value;
+    double offset = floor(value);
+
+    if (offset >=-(SCOPE_NUM_SAMPLE/2) && offset < (SCOPE_NUM_SAMPLE/2)) {
+        info->device->scope.trigger_offset = offset;
+    } else {
+        /*Some error */
+    }
 }
 
 void cgr101_digitizer_offset_pointq(struct info *info)
 {
-    (void)info;
+    scpi_output_fp(info->output, info->device->scope.trigger_offset);
 }
 
 void cgr101_digitizer_offset_time(struct info *info, double value)
 {
-    (void)info;
-    (void)value;
+    double interval = info->device->scope.sweep_time / SCOPE_NUM_SAMPLE;
+    cgr101_digitizer_offset_point(info, value*interval);
 }
 
 void cgr101_digitizer_offset_timeq(struct info *info)
 {
-    (void)info;
+    double value =
+        (info->device->scope.sweep_time / SCOPE_NUM_SAMPLE) *
+        info->device->scope.trigger_offset;
+    scpi_output_fp(info->output, value);
 }
 
 void cgr101_digitizer_oref_loc(struct info *info, double value)
 {
-    (void)info;
-    (void)value;
+    double offset = floor(value * SCOPE_NUM_SAMPLE);
+
+    if (offset >=0 && offset < SCOPE_NUM_SAMPLE) {
+        info->device->scope.trigger_ref = offset;
+    } else {
+        /*Some error */
+    }
 }
 
 void cgr101_digitizer_oref_locq(struct info *info)
 {
-    (void)info;
+    double loc = floor(info->device->scope.trigger_ref/SCOPE_NUM_SAMPLE);
+    scpi_output_fp(info->output, loc);
 }
 
 void cgr101_digitizer_oref_point(struct info *info, double value)
 {
-    (void)info;
-    (void)value;
+    double offset = floor(value);
+
+    if (offset >= 0 && offset < SCOPE_NUM_SAMPLE) {
+        info->device->scope.trigger_ref = offset;
+    } else {
+        /*Some error */
+    }
 }
 
 void cgr101_digitizer_oref_pointq(struct info *info)
 {
-    (void)info;
+    scpi_output_fp(info->output, info->device->scope.trigger_ref);
 }
 
 void cgr101_digitizer_sweep_pointq(struct info *info)
@@ -1183,12 +1398,12 @@ void cgr101_digitizer_sweep_pointq(struct info *info)
 
 void cgr101_digitizer_sweep_time(struct info *info, double value)
 {
-    info->device->scope.sweep_time = (int)floor(value);
+    cgr101_sweep_time(info, value);
 }
 
 void cgr101_digitizer_sweep_interval(struct info *info, double value)
 {
-    info->device->scope.sweep_time = (int)floor(1.0/value);
+    cgr101_sweep_time(info, value * SCOPE_NUM_SAMPLE);
 }
 
 /*
@@ -1347,27 +1562,9 @@ void cgr101_digitizer_reset(struct info *info)
     assert(!err);
 }
 
-/* FIXME: needs cgr101_manual_trigger_delay and infrastructure. */
 void cgr101_digitizer_immediate(struct info *info)
 {
-    int cur_ext_trig = info->device->scope.trigger_external;
-    int err;
-
-    if (cur_ext_trig == 0) {
-        info->device->scope.trigger_external = 1;
-        cgr101_digitizer_update_control(info);
-    }
-    /* Manual Trigger; needs ext trigger */
-    err = cgr101_device_send(info, "S D 5\n");
-    assert(!err);
-    err = cgr101_device_send(info, "S D 4\n");
-    assert(!err);
-
-    /* Restore internal trigger */
-    if (cur_ext_trig == 0) {
-        info->device->scope.trigger_external = 0;
-        cgr101_digitizer_update_control(info);
-    }
+    cgr101_digitizer_start(info, 1);
 }
 
 void cgr101_trigger_coupling(struct info *info, const char *value)
