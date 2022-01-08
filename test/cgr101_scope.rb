@@ -13,8 +13,8 @@
 # | SENS:SWE:OFFS:POIN?                     | +
 # | SENS:SWE:OFFS:TIME numeric_value        | WIP
 # | SENS:SWE:OFFS:TIME?                     | WIP
-# | SENS:SWE:OREF:LOC numeric_value         |
-# | SENS:SWE:OREF:LOC?                      |
+# | SENS:SWE:OREF:LOC numeric_value         | WIP
+# | SENS:SWE:OREF:LOC?                      | WIP
 # | SENS:SWE:OREF:POIN numeric_value        |
 # | SENS:SWE:OREF:POIN?                     |
 # | SENS:SWE:TIME numeric_value             |
@@ -107,7 +107,7 @@ module CGR101Scope
     # get a value
     self.class.hdl.send("SENS:SWE:OFFS:TIME?")
     out = self.class.hdl.recv
-    v0 = out.split(',').map { |s| Integer(s) }
+    v0 = out.split(',').map { |s| Float(s) }
     assert_equal(1, v0.length)
     assert_equal(0, self.class.hdl.out_length)
     assert_equal(0, self.class.hdl.err_length)
@@ -120,7 +120,36 @@ module CGR101Scope
     # get it again
     self.class.hdl.send("SENS:SWE:OFFS:TIME?")
     out = self.class.hdl.recv
-    v1 = out.split(',').map { |s| Integer(s) }
+    v1 = out.split(',').map { |s| Float(s) }
+    assert_equal(1, v1.length)
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+
+    # should match 1st value
+    assert_equal(v0, v1)
+  end
+
+  #
+  # SENS:SWE:OREF:LOC/LOC?
+  #
+  def no_test_scope_004
+    # get a value
+    self.class.hdl.send("SENS:SWE:OREF:LOC?")
+    out = self.class.hdl.recv
+    v0 = out.split(',').map { |s| Float(s) }
+    assert_equal(1, v0.length)
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+
+    # set it
+    self.class.hdl.send("SENS:SWE:OREF:LOC " + v0[0].to_s)
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+
+    # get it again
+    self.class.hdl.send("SENS:SWE:OREF:LOC?")
+    out = self.class.hdl.recv
+    v1 = out.split(',').map { |s| Float(s) }
     assert_equal(1, v1.length)
     assert_equal(0, self.class.hdl.out_length)
     assert_equal(0, self.class.hdl.err_length)
