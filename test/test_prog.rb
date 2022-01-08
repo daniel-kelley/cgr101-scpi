@@ -21,6 +21,21 @@ class TestProg < Test::Unit::TestCase
   include CGR101Meas
   include CGR101Scope
 
+  # Make sure each test starts in a known state
+  def setup
+    self.class.hdl.send("*RST")
+  end
+
+  # Make sure there is no error at the conclusion of each test
+  def cleanup
+    # no error reports
+    self.class.hdl.send("SYSTem:ERRor:COUNt?")
+    out = self.class.hdl.recv
+    assert_equal("0", out)
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+  end
+
   class << self
     attr_reader :hdl
 

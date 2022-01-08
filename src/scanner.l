@@ -34,7 +34,7 @@
 \*SRE\?                 { return SREQ; }
 \*STB\?                 { return STBQ; }
 \*TST\?                 { return TSTQ; }
-\WAI*                   { return WAI; }
+\*WAI                   { return WAI; }
 ABOR|ABORt              { return ABOR; }
 ALL                     { return ALL; }
 ASC|ASCii               { return ASC; }
