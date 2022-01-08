@@ -18,7 +18,9 @@
 # | SENS:SWE:OREF:POIN numeric_value        |
 # | SENS:SWE:OREF:POIN?                     |
 # | SENS:SWE:TIME numeric_value             |
+# | SENS:SWE:TIME? numeric_value            | needs implementation
 # | SENS:SWE:TINT numeric_value             |
+# | SENS:SWE:TINT? numeric_value            | needs implementation
 # | SENS:VOLT:DC:LOW numeric_value channel  |
 # | SENS:VOLT:DC:LOW? channel               |
 # | SENS:VOLT:DC:OFFS numeric_value channel |
@@ -96,13 +98,35 @@ module CGR101Scope
 
     # should match 1st value
     assert_equal(v0, v1)
+  end
 
-    # no error reports
-    self.class.hdl.send("SYSTem:ERRor:COUNt?")
+  #
+  # SENS:SWE:OFFS:TIME/TIME?
+  #
+  def no_test_scope_003
+    # get a value
+    self.class.hdl.send("SENS:SWE:OFFS:TIME?")
     out = self.class.hdl.recv
-    assert_equal("0", out)
+    v0 = out.split(',').map { |s| Integer(s) }
+    assert_equal(1, v0.length)
     assert_equal(0, self.class.hdl.out_length)
     assert_equal(0, self.class.hdl.err_length)
+
+    # set it
+    self.class.hdl.send("SENS:SWE:OFFS:TIME " + v0[0].to_s)
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+
+    # get it again
+    self.class.hdl.send("SENS:SWE:OFFS:TIME?")
+    out = self.class.hdl.recv
+    v1 = out.split(',').map { |s| Integer(s) }
+    assert_equal(1, v1.length)
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+
+    # should match 1st value
+    assert_equal(v0, v1)
   end
 
 end
