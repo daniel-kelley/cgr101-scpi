@@ -11,7 +11,7 @@
 #include "info.h"
 
 #define CGR101_MIN_CHAN 1
-#define CGR101_MAX_CHAN 21
+#define CGR101_MAX_CHAN 7
 
 extern int cgr101_identify(struct info *info);
 extern int cgr101_open(struct info *info);

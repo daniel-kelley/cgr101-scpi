@@ -30,7 +30,7 @@ struct scpi_type *scpi_dev_channel_num(struct info *info,
         val->val.ival >= CGR101_MIN_CHAN &&
         val->val.ival <= CGR101_MAX_CHAN)
     {
-        val->val.chan = 1<<val->val.ival;
+        val->val.chan = 1<<(val->val.ival-1);
         val->type = SCPI_TYPE_CHAN;
     } else {
         /*scpi_error(info->scpi, SCPI_ERR_DATA_OUT_OF_RANGE, val->src);*/

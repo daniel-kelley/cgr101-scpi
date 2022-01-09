@@ -12,7 +12,8 @@
 #include <stdarg.h>
 #include "scpi_output.h"
 
-#define OUTPUT_SIZE 1024
+#define OUTPUT_SIZE (1024*32)
+
 struct scpi_output {
     int                 num_sep;
     int                 num_elem;

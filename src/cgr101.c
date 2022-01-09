@@ -41,6 +41,7 @@ enum cgr101_rcv_state {
     SCOPE_OFFSET,
     SCOPE_STATUS,
     SCOPE_READ,
+    SCOPE_ADDR,
     SCOPE_DATA,
 };
 
@@ -78,6 +79,13 @@ enum cgr101_scope_status_state {
     STATE_SCOPE_STATUS_IDLE,
     STATE_SCOPE_STATUS_PENDING,
     STATE_SCOPE_STATUS_COMPLETE,
+};
+
+enum cgr101_scope_addr_state {
+    STATE_SCOPE_ADDR_IDLE,
+    STATE_SCOPE_ADDR_EXPECT_HIGH,
+    STATE_SCOPE_ADDR_EXPECT_LOW,
+    STATE_SCOPE_ADDR_COMPLETE,
 };
 
 enum cgr101_scope_data_state {
@@ -190,6 +198,8 @@ struct cgr101 {
         enum cgr101_scope_trigger_source trigger_source;
         double trigger_offset;     /* SCPI SENSe:SWEep:OFFSet:POINts */
         double trigger_ref;        /* SCPI SENSe:SWEep:OREFerence:POINts */
+        enum cgr101_scope_addr_state addr_state;
+        int addr;               /* offset of first data capture. */
         enum cgr101_scope_data_state data_state;
         int data_count;
         struct {
@@ -295,6 +305,11 @@ static int cgr101_rcv_start(struct info *info, char c)
     case 'S':
         info->device->rcv_state = SCOPE_STATUS;
         /* 'Status N' */
+        err = 0;
+        break;
+    case 'A':
+        info->device->rcv_state = SCOPE_ADDR;
+        /* O<int8_t>*2 */
         err = 0;
         break;
     case 'D':
@@ -541,10 +556,14 @@ static int cgr101_digitizer_start(struct info *info, int manual)
     int err;
     int low;
     int high;
-    int post_trigger;
+    int post_trigger = SCOPE_NUM_SAMPLE;
+    int trigger_ref = (int)info->device->scope.trigger_ref;
+    int trigger_offset = (int)info->device->scope.trigger_offset;
 
     /* Data return state initialization */
 
+    info->device->scope.addr_state = STATE_SCOPE_ADDR_EXPECT_HIGH;
+    info->device->scope.addr = -1; /* Illegal value */
     info->device->scope.data_state = STATE_SCOPE_DATA_EXPECT_A_HIGH;
     info->device->scope.data_count = 0;
 
@@ -552,10 +571,8 @@ static int cgr101_digitizer_start(struct info *info, int manual)
         /* Trigger Level - assume done */
 
         /* Post Trigger Sample Count */
-        post_trigger = SCOPE_NUM_SAMPLE;
-        post_trigger =- (int)info->device->scope.trigger_ref;
-        post_trigger =- (int)info->device->scope.trigger_offset;
-
+        post_trigger -= trigger_ref;
+        post_trigger -= trigger_offset;
 
         if (post_trigger < 0 || post_trigger >= SCOPE_NUM_SAMPLE) {
             /* Error: post_trigger out of bounds. */
@@ -576,14 +593,43 @@ static int cgr101_digitizer_start(struct info *info, int manual)
         }
 
         /* Manual Trigger handling */
-        if (info->device->scope.trigger_source != SCOPE_TRIGGER_SOURCE_IMM ||
+        if (info->device->scope.trigger_source == SCOPE_TRIGGER_SOURCE_IMM ||
             manual) {
-            break; /* Done with this. */
+            cgr101_digitizer_manual_trigger(info);
         }
 
-        cgr101_digitizer_manual_trigger(info);
 
     } while (0);
+
+    return err;
+}
+
+static int cgr101_rcv_scope_addr(struct info *info, char c)
+{
+    int err = 0;
+
+    switch (info->device->scope.addr_state) {
+    case STATE_SCOPE_ADDR_EXPECT_HIGH:
+        assert(c >= 0);
+        assert(c <= 3);
+        info->device->scope.addr = c<<8;
+        info->device->scope.addr_state = STATE_SCOPE_ADDR_EXPECT_LOW;
+        break;
+    case STATE_SCOPE_ADDR_EXPECT_LOW:
+        info->device->scope.addr |= c;
+        info->device->scope.addr_state = STATE_SCOPE_ADDR_COMPLETE;
+        cgr101_rcv_idle(info);
+        /* Get the buffer. */
+        err = cgr101_device_send(info, "S B\n");
+        if (err) {
+            break;
+        }
+        /* Done receiving. */
+        break;
+    default:
+        assert(0);
+        break;
+    }
 
     return err;
 }
@@ -602,7 +648,6 @@ static void cgr101_rcv_scope_data_chan(struct info *info,
     } else {
         info->device->scope.channel[chan].data[idx] += (double)c;
     }
-    /*FIXME: Handle offsets */
 }
 
 static int cgr101_rcv_scope_data(struct info *info, char c)
@@ -612,12 +657,15 @@ static int cgr101_rcv_scope_data(struct info *info, char c)
     switch (info->device->scope.data_state) {
     case STATE_SCOPE_DATA_EXPECT_A_HIGH:
         cgr101_rcv_scope_data_chan(info, 0, 1, c);
+        info->device->scope.data_state = STATE_SCOPE_DATA_EXPECT_A_LOW;
         break;
     case STATE_SCOPE_DATA_EXPECT_A_LOW:
         cgr101_rcv_scope_data_chan(info, 0, 0, c);
+        info->device->scope.data_state = STATE_SCOPE_DATA_EXPECT_B_HIGH;
         break;
     case STATE_SCOPE_DATA_EXPECT_B_HIGH:
         cgr101_rcv_scope_data_chan(info, 1, 1, c);
+        info->device->scope.data_state = STATE_SCOPE_DATA_EXPECT_B_LOW;
         break;
     case STATE_SCOPE_DATA_EXPECT_B_LOW:
         cgr101_rcv_scope_data_chan(info, 1, 0, c);
@@ -626,6 +674,8 @@ static int cgr101_rcv_scope_data(struct info *info, char c)
             info->device->scope.data_state = STATE_SCOPE_DATA_COMPLETE;
             cgr101_rcv_idle(info);
             /* Done receiving. */
+        } else {
+            info->device->scope.data_state = STATE_SCOPE_DATA_EXPECT_A_HIGH;
         }
         break;
     default:
@@ -780,6 +830,9 @@ static int cgr101_rcv_sm(struct info *info, char c)
         break;
     case SCOPE_STATUS:
         err = cgr101_rcv_scope_status(info, c);
+        break;
+    case SCOPE_ADDR:
+        err = cgr101_rcv_scope_addr(info, c);
         break;
     case SCOPE_DATA:
         err = cgr101_rcv_scope_data(info, c);
@@ -1163,9 +1216,16 @@ int cgr101_initiate(struct info *info)
 
 int cgr101_initiate_immediate(struct info *info)
 {
-    /*FIXME*/
+    int err;
+
     if (info->device->digital_read_requested) {
-        int err = cgr101_digital_read_start(info);
+        err = cgr101_digital_read_start(info);
+        assert(!err);
+    }
+
+    if (info->device->scope.channel[0].enable ||
+        info->device->scope.channel[1].enable) {
+        err = cgr101_digitizer_start(info, 1);
         assert(!err);
     }
 
@@ -1284,14 +1344,24 @@ void cgr101_digitizer_dataq(struct info *info, long chan_mask)
 {
     int chan;
     int j;
+    int offset;
+    double data;
 
+    assert(info->device->scope.addr_state == STATE_SCOPE_ADDR_COMPLETE);
     for (chan=0; chan<SCOPE_NUM_CHAN; chan++) {
         if (!(chan_mask & 1<<chan)) {
             continue;
         }
         for (j=0; j<SCOPE_NUM_SAMPLE; j++) {
-            scpi_output_fp(info->output,
-                           info->device->scope.channel[chan].data[j]);
+            offset = info->device->scope.addr;
+            offset += j;
+            if (offset == SCOPE_NUM_SAMPLE) {
+                /* wrapped */
+                offset = 0;
+            }
+            data = info->device->scope.channel[chan].data[offset];
+            /* FIXME: handle offset and gain scaling. */
+            scpi_output_fp(info->output, data);
         }
     }
 }

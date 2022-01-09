@@ -187,4 +187,21 @@ module CGR101Scope
     assert_equal(v0, v1)
   end
 
+  #
+  # Manual Trigger Smoke Test
+  #
+  def test_scope_data_imm
+    self.class.hdl.send("SENS:SWE:POIN?")
+    out = self.class.hdl.recv
+    points = Integer(out)
+    self.class.hdl.send("SENS:FUNC:ON (@1)")
+    self.class.hdl.send("INIT:IMM")
+    # FIXME: needs *opc implementation
+    sleep 2
+    self.class.hdl.send("SENS:DATA? (@1)")
+    out = self.class.hdl.recv
+    v1 = out.split(',') #.map { |s| Float(s) }
+    assert_equal(points, v1.length)
+  end
+
 end
