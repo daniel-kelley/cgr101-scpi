@@ -151,10 +151,16 @@ USER\?                  { return USERQ; }
 :                       { return COLON; }
 -                       { return DASH; }
 @                       { return AT; }
-[+-]+[[:digit:]]+       { return parser_num(yytext, yylval, FLOAT); }
-[+-]+[[:digit:]]+\.[[:digit:]]* { return parser_num(yytext, yylval, FLOAT); }
-[+-]+[[:digit:]]+\.[[:digit:]]*[eE]?[[:blank:]]*[+-]+[[:digit:]]* { return parser_num(yytext, yylval, FLOAT); }
-[[:digit:]]+            { return parser_num(yytext, yylval, NUM); }
+
+[+-]*[[:digit:]]*\.[[:digit:]]+ { return parser_num(yytext, yylval, FLOAT); }
+
+[+-]*[[:digit:]]+\.[[:digit:]]* { return parser_num(yytext, yylval, FLOAT); }
+
+[+-]*[[:digit:]]*\.[[:digit:]]+[[:blank:]]*[eE]?[[:blank:]]*[+-]*[[:digit:]]+ { return parser_num(yytext, yylval, FLOAT); }
+
+[+-]*[[:digit:]]+\.[[:digit:]]*[[:blank:]]*[eE]?[[:blank:]]*[+-]*[[:digit:]]+ { return parser_num(yytext, yylval, FLOAT); }
+
+[+-]*[[:digit:]]+            { return parser_num(yytext, yylval, NUM); }
 [[:alpha:]]+[[:alnum:]]* { return IDENT; }
 [[:blank:]]*
 \n

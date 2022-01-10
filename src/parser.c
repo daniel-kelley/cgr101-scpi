@@ -5,6 +5,7 @@
 
 */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stddef.h>
 #include <string.h>
@@ -184,11 +185,46 @@ int parser_error_get(struct info *info, const char **msg, int *trace)
     return err;
 }
 
-int parser_num(const char *s, struct scpi_type *val, int token)
+static void parser_int(const char *s, struct scpi_type *val)
 {
     /* FIXME: needs error checking. */
     val->type = SCPI_TYPE_INT;
     val->val.ival = strtol(s, NULL, 10);
     val->src = s;
+}
+
+/* squeeze the blanks out of src into dst. */
+static void parser_squeeze(char *dst, const char *src)
+{
+    while (*src != 0) {
+        if (*src != ' ') {
+            *dst++ = *src;
+        }
+        src++;
+    }
+    *dst = 0;
+}
+
+static void parser_float(const char *s, struct scpi_type *val)
+{
+    char p[32];
+
+    parser_squeeze(p,s);
+    /* FIXME: needs error checking. */
+    val->type = SCPI_TYPE_FLOAT;
+    sscanf(p,"%lf",&val->val.fval);
+    val->src = s;
+}
+
+int parser_num(const char *s, struct scpi_type *val, int token)
+{
+    if (token == NUM) {
+        parser_int(s, val);
+    } else if (token == FLOAT) {
+        parser_float(s, val);
+    } else {
+        assert(0);
+    }
+
     return token;
 }

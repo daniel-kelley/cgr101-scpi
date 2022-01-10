@@ -81,9 +81,16 @@ int scpi_input_uint16(struct info *info,
 int scpi_input_fp(struct info *info, struct scpi_type *in, double *out)
 {
     (void)info;
-    (void)in;
-
-    *out = 0.0;
+    switch (in->type) {
+    case SCPI_TYPE_FLOAT:
+    *out = in->val.fval;
+    break;
+    case SCPI_TYPE_INT:
+        *out = (double)in->val.ival;
+    break;
+    default:
+        assert(0);
+    }
 
     return 0;
 }
