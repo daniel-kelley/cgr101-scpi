@@ -133,6 +133,7 @@
 %token TIME
 %token TIMEQ
 %token TINT
+%token TINTQ
 %token TRI
 %token TRIG
 %token TSTQ
@@ -530,8 +531,14 @@ dev-cmd
     | SENS COLON SWE COLON TIME numeric_value
     { scpi_dev_sense_sweep_time(info, &$6); }
 
+    | SENS COLON SWE COLON TIMEQ
+    { scpi_dev_sense_sweep_timeq(info); }
+
     | SENS COLON SWE COLON TINT numeric_value
     { scpi_dev_sense_sweep_time_interval(info, &$6); }
+
+    | SENS COLON SWE COLON TINTQ
+    { scpi_dev_sense_sweep_time_intervalq(info); }
 
     | SENS COLON VOLT COLON LOW numeric_value channel
     { scpi_dev_sense_voltage_low(info, &$6, &$7); }

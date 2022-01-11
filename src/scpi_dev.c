@@ -264,6 +264,11 @@ void scpi_dev_sense_sweep_time(struct info *info, struct scpi_type *v)
     }
 }
 
+void scpi_dev_sense_sweep_timeq(struct info *info)
+{
+    cgr101_digitizer_sweep_timeq(info);
+}
+
 void scpi_dev_sense_sweep_time_interval(struct info *info,
                                                struct scpi_type *v)
 {
@@ -272,6 +277,11 @@ void scpi_dev_sense_sweep_time_interval(struct info *info,
     if (!scpi_input_fp(info, v, &value)) {
         cgr101_digitizer_sweep_interval(info, value);
     }
+}
+
+void scpi_dev_sense_sweep_time_intervalq(struct info *info)
+{
+    cgr101_digitizer_sweep_time_intervalq(info);
 }
 
 void scpi_dev_sense_voltage_low(struct info *info,

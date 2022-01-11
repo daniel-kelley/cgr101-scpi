@@ -1471,9 +1471,22 @@ void cgr101_digitizer_sweep_time(struct info *info, double value)
     cgr101_sweep_time(info, value);
 }
 
+void cgr101_digitizer_sweep_timeq(struct info *info)
+{
+    double value = info->device->scope.sweep_time;
+    scpi_output_fp(info->output, value);
+
+}
+
 void cgr101_digitizer_sweep_interval(struct info *info, double value)
 {
     cgr101_sweep_time(info, value * SCOPE_NUM_SAMPLE);
+}
+
+void cgr101_digitizer_sweep_time_intervalq(struct info *info)
+{
+    double value = info->device->scope.sweep_time / SCOPE_NUM_SAMPLE;
+    scpi_output_fp(info->output, value);
 }
 
 /*

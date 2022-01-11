@@ -53,7 +53,9 @@ extern void cgr101_digitizer_oref_point(struct info *info, double value);
 extern void cgr101_digitizer_oref_pointq(struct info *info);
 extern void cgr101_digitizer_sweep_pointq(struct info *info);
 extern void cgr101_digitizer_sweep_time(struct info *info, double value);
+extern void cgr101_digitizer_sweep_timeq(struct info *info);
 extern void cgr101_digitizer_sweep_interval(struct info *info, double value);
+extern void cgr101_digitizer_sweep_time_intervalq(struct info *info);
 extern void cgr101_digitizer_voltage_low(struct info *info,
                                          long chan_mask,
                                          double value);

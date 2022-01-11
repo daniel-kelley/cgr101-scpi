@@ -106,8 +106,10 @@ extern void scpi_dev_sense_sweep_oref_point(struct info *info,
                                             struct scpi_type *v);
 extern void scpi_dev_sense_sweep_oref_pointq(struct info *info);
 extern void scpi_dev_sense_sweep_time(struct info *info, struct scpi_type *v);
+extern void scpi_dev_sense_sweep_timeq(struct info *info);
 extern void scpi_dev_sense_sweep_time_interval(struct info *info,
                                                struct scpi_type *v);
+extern void scpi_dev_sense_sweep_time_intervalq(struct info *info);
 extern void scpi_dev_sense_voltage_low(struct info *info,
                                        struct scpi_type *v1,
                                        struct scpi_type *v2);

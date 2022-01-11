@@ -135,6 +135,7 @@ STATUS                  { return STATUS; }
 TIME                    { return TIME; }
 TIMEQ                   { return TIMEQ; }
 (TINT|TINTerval)        { return TINT; }
+(TINT|TINTerval)\?      { return TINTQ; }
 (TRI|TRIangle)          { return TRI; }
 (TRIG|TRIGger)          { return TRIG; }
 UINT                    { return UINT; }
