@@ -133,7 +133,7 @@ STATUS                  { return STATUS; }
 (SYST|SYSTem)           { return SYST; }
 (TCP|TCPip)             { return TCP; }
 TIME                    { return TIME; }
-TIMEQ                   { return TIMEQ; }
+TIME\?                  { return TIMEQ; }
 (TINT|TINTerval)        { return TINT; }
 (TINT|TINTerval)\?      { return TINTQ; }
 (TRI|TRIangle)          { return TRI; }

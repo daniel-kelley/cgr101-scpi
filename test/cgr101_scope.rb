@@ -11,8 +11,8 @@
 # | SENS:SWE:POIN?                          | +
 # | SENS:SWE:OFFS:POIN numeric_value        | +
 # | SENS:SWE:OFFS:POIN?                     | +
-# | SENS:SWE:OFFS:TIME numeric_value        | WIP
-# | SENS:SWE:OFFS:TIME?                     | WIP
+# | SENS:SWE:OFFS:TIME numeric_value        | +
+# | SENS:SWE:OFFS:TIME?                     | +
 # | SENS:SWE:OREF:LOC numeric_value         | WIP
 # | SENS:SWE:OREF:LOC?                      | WIP
 # | SENS:SWE:OREF:POIN numeric_value        | +
@@ -103,7 +103,7 @@ module CGR101Scope
   #
   # SENS:SWE:OFFS:TIME/TIME?
   #
-  def no_test_scope_003
+  def test_scope_003
     # get a value
     self.class.hdl.send("SENS:SWE:OFFS:TIME?")
     out = self.class.hdl.recv
