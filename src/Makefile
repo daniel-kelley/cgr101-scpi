@@ -66,6 +66,7 @@ SRC += scpi.tab.c
 SRC += scpi_core.c
 SRC += scpi_error.c
 SRC += scpi_output.c
+SRC += scpi_input.c
 SRC += scanner.c
 SRC += parser.c
 SRC += worker.c
