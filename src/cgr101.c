@@ -1441,7 +1441,7 @@ void cgr101_digitizer_oref_loc(struct info *info, double value)
 
 void cgr101_digitizer_oref_locq(struct info *info)
 {
-    double loc = floor(info->device->scope.trigger_ref/SCOPE_NUM_SAMPLE);
+    double loc = info->device->scope.trigger_ref/SCOPE_NUM_SAMPLE;
     scpi_output_fp(info->output, loc);
 }
 
