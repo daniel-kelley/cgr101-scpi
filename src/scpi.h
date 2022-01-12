@@ -15,7 +15,6 @@
 extern void scpi_common_ese(struct info *info, struct scpi_type *val);
 extern void scpi_common_eseq(struct info *info);
 extern void scpi_common_esrq(struct info *info);
-extern void scpi_common_idnq(struct info *info);
 extern void scpi_common_cls(struct info *info);
 extern void scpi_common_opc(struct info *info);
 extern void scpi_common_opcq(struct info *info);
@@ -163,6 +162,7 @@ extern void scpi_dev_trigger_slopeq(struct info *info);
 extern void scpi_dev_trigger_source(struct info *info,
                                     struct scpi_type *v);
 extern void scpi_dev_trigger_sourceq(struct info *info);
+extern void scpi_dev_identify(struct info *info);
 extern void scpi_system_communicate_tcp_controlq(struct info *info);
 extern void scpi_system_internal_calibrate(struct info *info);
 extern void scpi_system_internal_configure(struct info *info);

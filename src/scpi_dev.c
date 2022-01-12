@@ -554,3 +554,7 @@ void scpi_dev_trigger_sourceq(struct info *info)
     cgr101_trigger_sourceq(info);
 }
 
+void scpi_dev_identify(struct info *info)
+{
+    cgr101_identify(info);
+}

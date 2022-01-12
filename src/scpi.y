@@ -286,7 +286,7 @@ sys-cmd
 
     /* 488.2 10.14 */
     | IDNQ
-    { scpi_common_idnq(info); }
+    { scpi_dev_identify(info); }
 
     /* 488.2 10.18 */
     | OPC

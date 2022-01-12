@@ -14,7 +14,6 @@
 #include "scpi_core.h"
 #include "scpi_error.h"
 #include "parser.h"
-#include "cgr101.h"
 
 static uint8_t scpi_core_status_update(struct info *info)
 {
@@ -96,11 +95,6 @@ void scpi_common_esrq(struct info *info)
     scpi_output_int(info->output, info->scpi->sesr);
     /* 488.2: Reading sesr clears it. */
     info->scpi->sesr = 0;
-}
-
-void scpi_common_idnq(struct info *info)
-{
-    cgr101_identify(info);
 }
 
 void scpi_common_opc(struct info *info)
