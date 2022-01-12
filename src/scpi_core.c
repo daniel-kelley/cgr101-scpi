@@ -99,11 +99,14 @@ void scpi_common_esrq(struct info *info)
 
 void scpi_common_opc(struct info *info)
 {
-     info->scpi->sesr |= SCPI_SESR_OPC;
+    /* FIXME: schedules an event to set SCPI_SESR_OPC when all
+     * operations are complete. */
+    info->scpi->sesr |= SCPI_SESR_OPC;
 }
 
 void scpi_common_opcq(struct info *info)
 {
+    /* FIXME: blocks until SCPI_SESR_OPC is set. */
     scpi_output_int(info->output,
                     info->scpi->sesr & SCPI_SESR_OPC ? 1 : 0);
 }
@@ -137,6 +140,7 @@ void scpi_common_tstq(struct info *info)
 
 void scpi_common_wai(struct info *info)
 {
+    /* FIXME: blocks until SCPI_SESR_OPC is set. */
     scpi_common_opc(info);
 }
 
@@ -271,14 +275,15 @@ static int scpi_core_parser_error(struct info *info,
 int scpi_core_send(struct info *info, char *buf, int len)
 {
     int err;
+    int busy;
 
     do {
 
         memset(&info->rsp, 0, sizeof(info->rsp));
         scpi_output_clear(info->output);
 
-        err = parser_send(info, buf, len);
-        if (info->busy) {
+        err = parser_send(info, buf, len, &busy);
+        if (busy) {
             break;
         }
 
@@ -365,7 +370,7 @@ int scpi_core_done(struct info *info)
 
 void scpi_core_top(struct info *info)
 {
-    info->busy = 0;
+    (void)info;
 }
 
 void scpi_core_cmd_sep(struct info *info)
