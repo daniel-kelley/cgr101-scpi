@@ -21,6 +21,16 @@ int scpi_dev_abort(struct info *info)
     return 0;
 }
 
+int scpi_dev_initiate(struct info *info)
+{
+    return cgr101_initiate(info);
+}
+
+void scpi_dev_initiate_immediate(struct info *info)
+{
+    cgr101_initiate_immediate(info);
+}
+
 struct scpi_type *scpi_dev_channel_num(struct info *info,
                                        struct scpi_type *val)
 {
@@ -99,7 +109,7 @@ void scpi_dev_read_digital_dataq(struct info *info)
         if (scpi_dev_abort(info)) {
             break;
         }
-        if (scpi_core_initiate(info)) {
+        if (scpi_dev_initiate(info)) {
             break;
         }
         scpi_dev_fetch_digital_dataq(info);

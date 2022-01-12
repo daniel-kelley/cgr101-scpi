@@ -80,7 +80,7 @@ extern void scpi_core_format(struct info *info, struct scpi_type *v);
 extern void scpi_core_format(struct info *info, struct scpi_type *v);
 extern void scpi_core_formatq(struct info *info);
 extern void scpi_core_formatq(struct info *info);
-extern int scpi_core_initiate(struct info *info);
+extern int scpi_dev_initiate(struct info *info);
 extern void scpi_dev_input_coupling(struct info *info, struct scpi_type *v);
 extern void scpi_dev_read_digital_dataq(struct info *info);
 extern void scpi_dev_sense_dataq(struct info *info, struct scpi_type *v);
@@ -148,7 +148,7 @@ extern void scpi_dev_source_pwm_duty_cycleq(struct info *info);
 extern void scpi_dev_source_pwm_frequency(struct info *info,
                                           struct scpi_type *v);
 extern void scpi_dev_source_pwm_frequencyq(struct info *info);
-extern void scpi_core_initiate_immediate(struct info *info);
+extern void scpi_dev_initiate_immediate(struct info *info);
 extern void scpi_dev_sense_statq(struct info *info);
 extern void scpi_dev_sense_reset(struct info *info);
 extern void scpi_dev_sense_immediate(struct info *info);

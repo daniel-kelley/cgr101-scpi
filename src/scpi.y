@@ -462,13 +462,13 @@ dev-cmd
 
 
     | INIT
-    { scpi_core_initiate(info); }
+    { scpi_dev_initiate(info); }
 
     | INIT COLON IMM
-    { scpi_core_initiate_immediate(info); }
+    { scpi_dev_initiate_immediate(info); }
 
     | INIT COLON IMM COLON ALL
-    { scpi_core_initiate_immediate(info); }
+    { scpi_dev_initiate_immediate(info); }
 
 
     | INP COLON COUP coupling_arg
