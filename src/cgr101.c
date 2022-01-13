@@ -131,13 +131,13 @@ static struct cgr101_waveform_map_s cgr101_waveform_map[] = {
 #define SCOPE_NUM_CHAN 2
 #define SCOPE_NUM_RANGE 2
 #define SCOPE_NUM_SAMPLE 1024
-#define SCOPE_DEFAULT_LOW -25.0
+#define SCOPE_DEFAULT_LOW (-25.0)
 #define SCOPE_DEFAULT_HIGH 25.0
 #define SCOPE_DEFAULT_MIDPOINT 0.0
 #define SCOPE_DEFAULT_PTP 50.0
 #define SCOPE_SR_DIV_MAX 15
 #define SCOPE_SR_MAX 20.0e6 /* 20MHz */
-#define SCOPE_NUM_DATA = SCOPE_NUM_SAMPLE*SCOPE_NUM_CHAN*2
+#define SCOPE_NUM_DATA = (SCOPE_NUM_SAMPLE*SCOPE_NUM_CHAN*2)
 static char cgr101_range_cmd[SCOPE_NUM_CHAN][SCOPE_NUM_RANGE] = {
     {'A','a'},
     {'B','b'}
@@ -399,19 +399,19 @@ static int cgr101_rcv_scope_offset(struct info *info, char c)
 
     switch (info->device->scope.offset_state) {
     case STATE_SCOPE_OFFSET_EXPECT_A_HIGH:
-        info->device->scope.channel[0].offset_high = c; /* signed */
+        info->device->scope.channel[0].offset_high = (int)c; /* signed */
         info->device->scope.offset_state = STATE_SCOPE_OFFSET_EXPECT_B_HIGH;
         break;
     case STATE_SCOPE_OFFSET_EXPECT_B_HIGH:
-        info->device->scope.channel[1].offset_high = c; /* signed */
+        info->device->scope.channel[1].offset_high = (int)c; /* signed */
         info->device->scope.offset_state = STATE_SCOPE_OFFSET_EXPECT_A_LOW;
         break;
     case STATE_SCOPE_OFFSET_EXPECT_A_LOW:
-        info->device->scope.channel[0].offset_low = c; /* signed */
+        info->device->scope.channel[0].offset_low = (int)c; /* signed */
         info->device->scope.offset_state = STATE_SCOPE_OFFSET_EXPECT_B_LOW;
         break;
     case STATE_SCOPE_OFFSET_EXPECT_B_LOW:
-        info->device->scope.channel[1].offset_low = c; /* signed */
+        info->device->scope.channel[1].offset_low = (int)c; /* signed */
         info->device->scope.offset_state = STATE_SCOPE_OFFSET_COMPLETE;
         /* Done receiving. */
         cgr101_rcv_idle(info);
@@ -444,8 +444,8 @@ static int cgr101_rcv_scope_status(struct info *info, char c)
 
     switch (info->device->scope.status_state) {
     case STATE_SCOPE_STATUS_PENDING:
-        if (c >= '1' || c <= '6') {
-            info->device->scope.status = c - '0'; /* convert to int 1-6 */
+        if ((c >= '1') && (c <= '6')) {
+            info->device->scope.status = (int)c - '0'; /* convert to int 1-6 */
             info->device->scope.status_state = STATE_SCOPE_STATUS_COMPLETE;
             cgr101_event_send(info, EVENT_SCOPE_STATUS_COMPLETE);
 
@@ -553,7 +553,7 @@ static void cgr101_digitizer_manual_trigger(struct info *info)
 
 static int cgr101_digitizer_start(struct info *info, int manual)
 {
-    int err;
+    int err = 1;
     int low;
     int high;
     int post_trigger = SCOPE_NUM_SAMPLE;
@@ -998,6 +998,7 @@ static void cgr101_waveform_program(struct info *info)
         for (i=0; i<COUNT_OF(info->device->waveform.user); i++) {
             int val = (int)info->device->waveform.user[i]*255;
             err = cgr101_device_printf(info, "W S %d %d\n", i, val);
+            assert(!err);
         }
         err = cgr101_device_printf(info, "W P\n");
         assert(!err);
@@ -1091,12 +1092,12 @@ static void cgr101_device_init(struct info *info)
 {
     int chan;
     int err;
-
+    double midpoint = (double)SCOPE_NUM_SAMPLE/2;
     /*Consistency check*/
     assert(COUNT_OF(info->device->scope.channel) == SCOPE_NUM_CHAN);
     /* Set Defaults */
     info->device->scope.trigger_offset = 0;
-    info->device->scope.trigger_ref = SCOPE_NUM_SAMPLE/2;
+    info->device->scope.trigger_ref = midpoint;
     for (chan=0; chan<SCOPE_NUM_CHAN; chan++) {
         info->device->scope.channel[chan].input_low = SCOPE_DEFAULT_LOW;
         info->device->scope.channel[chan].input_high = SCOPE_DEFAULT_HIGH;
@@ -1403,8 +1404,9 @@ void cgr101_digitizer_channel_stateq(struct info *info, long chan_mask)
 void cgr101_digitizer_offset_point(struct info *info, double value)
 {
     double offset = floor(value);
+    double midpoint = (double)SCOPE_NUM_SAMPLE/2;
 
-    if (offset >=-(SCOPE_NUM_SAMPLE/2) && offset < (SCOPE_NUM_SAMPLE/2)) {
+    if (offset >=-midpoint && offset < midpoint) {
         info->device->scope.trigger_offset = offset;
     } else {
         /*Some error */
@@ -1695,6 +1697,7 @@ void cgr101_trigger_levelq(struct info *info)
 void cgr101_trigger_slope(struct info *info, const char *value)
 {
 
+    assert(value);
     if (!strcmp(value, "POS")) {
         info->device->scope.trigger_polarity = 1;
     } else if (!strcmp(value, "NEG")) {
@@ -1715,6 +1718,7 @@ void cgr101_trigger_slopeq(struct info *info)
 void cgr101_trigger_source(struct info *info, const char *value)
 {
     /*IMM INT EXT - FIXME how to pick A, B? */
+    assert(value);
     if (!strcmp(value, "IMM")) {
         info->device->scope.trigger_source = SCOPE_TRIGGER_SOURCE_IMM;
     } else if (!strcmp(value, "INT")) {
