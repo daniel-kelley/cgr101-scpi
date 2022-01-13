@@ -49,6 +49,7 @@ struct info {
     struct scpi_errq *error;
     struct worker *worker;
     struct cgr101 *device;
+    int sweep_status;
 };
 
 #endif /* INFO_H_ */

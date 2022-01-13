@@ -16,16 +16,23 @@
 #define SCPI_SESR_OPC (1u<<0) /* SESR bit 0 Operation Complete */
 #define SCPI_SBR_ERQ  (1u<<2) /* SBR  bit 2 Error queue not empty */
 #define SCPI_SBR_QUES (1u<<3) /* SBR  bit 3 SCPI QUEStionable status */
-#define SCPI_SBR_SESR (1u<<5) /* SBR  bit 6 SESR Status */
+#define SCPI_SBR_SESR (1u<<5) /* SBR  bit 5 SESR Status */
 #define SCPI_SBR_MSS  (1u<<6) /* SBR  bit 6 Master Summary Status */
 #define SCPI_SBR_OPER (1u<<7) /* SBR  bit 7 SCPI OPERation status */
+#define SCPI_OPER_SWE (1u<<3) /* OPER bit 7 SCPI OPERation SWEEP */
+
+struct scpi_reg {
+    uint16_t            cond;   /* Condition Register */
+    uint16_t            pos;    /* Positive Transition Filter Register */
+    uint16_t            neg;    /* Negative Transition Filter Register */
+    uint16_t            event;  /* Event Register */
+    uint16_t            enable; /* Event Enable Register */
+};
 
 struct scpi_core {
     /* SCPI Registers */
-    uint16_t            ques_event;
-    uint16_t            ques_enable;
-    uint16_t            oper_event;
-    uint16_t            oper_enable;
+    struct scpi_reg     ques;
+    struct scpi_reg     oper;
     /* 488.2 Registers */
     uint8_t             seser;  /* Standard Event Status Enable Register */
     uint8_t             sesr;   /* Standard Event Status Register */

@@ -196,8 +196,20 @@ module CGR101Scope
     points = Integer(out)
     self.class.hdl.send("SENS:FUNC:ON (@1)")
     self.class.hdl.send("INIT:IMM")
-    # FIXME: needs *opc implementation
-    sleep 2
+
+    # Use STAT:OPER:COND? bit 3 (SWEEP status) and poll for completion
+    status = 0
+    20.times do
+      self.class.hdl.send("STAT:OPER:COND?")
+      out = self.class.hdl.recv
+      status = Integer(out)
+      if (status & 8) == 0
+        break
+      end
+      sleep(0.1)
+    end
+    assert_equal(status & 8, 0)
+
     self.class.hdl.send("SENS:DATA? (@1)")
     out = self.class.hdl.recv
     v1 = out.split(',') #.map { |s| Float(s) }

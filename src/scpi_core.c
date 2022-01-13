@@ -30,7 +30,7 @@ static uint8_t scpi_core_status_update(struct info *info)
     }
 
     /* SBR.3: SCPI QUEStionable status not zero */
-    if (info->scpi->ques_event && info->scpi->ques_enable) {
+    if (info->scpi->ques.event && info->scpi->ques.enable) {
         sbr |= SCPI_SBR_QUES;
     }
 
@@ -46,7 +46,7 @@ static uint8_t scpi_core_status_update(struct info *info)
     /* Currently unused. */
 
     /* SBR.7: SCPI OPERation status not zero */
-    if (info->scpi->oper_event & info->scpi->oper_enable) {
+    if (info->scpi->oper.event & info->scpi->oper.enable) {
         sbr |= SCPI_SBR_OPER;
     }
 
@@ -70,10 +70,10 @@ void scpi_common_cls(struct info *info)
 {
     struct scpi_core *scpi = info->scpi;
 
-    scpi->ques_event = 0;
-    scpi->ques_enable = 0;
-    scpi->oper_enable = 0;
-    scpi->oper_event = 0;
+    scpi->ques.event = 0;
+    scpi->ques.enable = 0;
+    scpi->oper.enable = 0;
+    scpi->oper.event = 0;
     scpi->seser = 0;
     scpi->sesr = 0;
     scpi_error_reset(info->error);
@@ -106,7 +106,8 @@ void scpi_common_opc(struct info *info)
 
 void scpi_common_opcq(struct info *info)
 {
-    /* FIXME: blocks until SCPI_SESR_OPC is set. */
+    /* FIXME: blocks until all operations are complete (like *WAI) and
+       then outputs a "1". Nothing to do with SCPI_SESR_OPC is set. */
     scpi_output_int(info->output,
                     info->scpi->sesr & SCPI_SESR_OPC ? 1 : 0);
 }
@@ -140,7 +141,8 @@ void scpi_common_tstq(struct info *info)
 
 void scpi_common_wai(struct info *info)
 {
-    /* FIXME: blocks until SCPI_SESR_OPC is set. */
+    /* FIXME: blocks until all operations are complete. Nothing to do
+     * with SCPI_SESR_OPC. */
     scpi_common_opc(info);
 }
 
@@ -185,17 +187,18 @@ void scpi_status_operation_eventq(struct info *info)
 
 void scpi_status_operation_conditionq(struct info *info)
 {
-    scpi_output_int(info->output, info->scpi->oper_event);
+    info->scpi->oper.cond = info->sweep_status ? 8 : 0;
+    scpi_output_int(info->output, info->scpi->oper.cond);
 }
 
 void scpi_status_operation_enable(struct info *info, struct scpi_type *val)
 {
-    scpi_input_uint16(info, val, &info->scpi->oper_enable);
+    scpi_input_uint16(info, val, &info->scpi->oper.enable);
 }
 
 void scpi_status_operation_enableq(struct info *info)
 {
-    scpi_output_int(info->output, info->scpi->oper_enable);
+    scpi_output_int(info->output, info->scpi->oper.enable);
 }
 
 void scpi_status_operation_preset(struct info *info)
@@ -205,18 +208,18 @@ void scpi_status_operation_preset(struct info *info)
 
 void scpi_status_questionableq(struct info *info)
 {
-    scpi_output_int(info->output, info->scpi->ques_event);
+    scpi_output_int(info->output, info->scpi->ques.cond);
 }
 
 void scpi_status_questionable_enable(struct info *info,
                                      struct scpi_type *val)
 {
-    scpi_input_uint16(info, val, &info->scpi->ques_enable);
+    scpi_input_uint16(info, val, &info->scpi->ques.enable);
 }
 
 void scpi_status_questionable_enableq(struct info *info)
 {
-    scpi_output_int(info->output, info->scpi->ques_enable);
+    scpi_output_int(info->output, info->scpi->ques.enable);
 }
 
 void scpi_system_internal_setupq(struct info *info)
