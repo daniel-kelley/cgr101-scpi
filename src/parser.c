@@ -136,13 +136,11 @@ static void parser_loop(struct info *info,
  * This function handles exactly one line. Multiple lines need to be
  * split up by the caller.
  */
-int parser_send(struct info *info, char *line, int len, int *busy)
+int parser_send(struct info *info, char *line, int len)
 {
     YY_BUFFER_STATE bs;
     yyscan_t scanner = info->lexer->scanner;
     int err = 1;
-
-    info->busy = 0;
 
     bs = yy_scan_bytes(line, len, scanner);
 
@@ -169,8 +167,6 @@ int parser_send(struct info *info, char *line, int len, int *busy)
         yy_delete_buffer(bs, scanner);
         err = (info->parser->error.valid);
     } while (0);
-
-    *busy = info->busy;
 
     return err;
 }

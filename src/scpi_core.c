@@ -278,15 +278,14 @@ static int scpi_core_parser_error(struct info *info,
 int scpi_core_send(struct info *info, char *buf, int len)
 {
     int err;
-    int busy;
 
     do {
 
         memset(&info->rsp, 0, sizeof(info->rsp));
         scpi_output_clear(info->output);
 
-        err = parser_send(info, buf, len, &busy);
-        if (busy) {
+        err = parser_send(info, buf, len);
+        if (info->busy) {
             break;
         }
 
@@ -373,7 +372,7 @@ int scpi_core_done(struct info *info)
 
 void scpi_core_top(struct info *info)
 {
-    (void)info;
+    info->busy = 0;
 }
 
 void scpi_core_cmd_sep(struct info *info)
