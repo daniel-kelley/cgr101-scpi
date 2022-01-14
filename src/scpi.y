@@ -544,61 +544,61 @@ dev-cmd
     { scpi_dev_sense_voltage_low(info, &$6, &$7); }
 
     | SENS COLON VOLT COLON DC COLON LOW numeric_value channel
-    { scpi_dev_sense_voltage_low(info, &$6, &$7); }
+    { scpi_dev_sense_voltage_low(info, &$8, &$9); }
 
     | SENS COLON VOLT COLON OFFS numeric_value channel
     { scpi_dev_sense_voltage_offset(info, &$6, &$7); }
 
     | SENS COLON VOLT COLON DC COLON OFFS numeric_value channel
-    { scpi_dev_sense_voltage_offset(info, &$6, &$7); }
+    { scpi_dev_sense_voltage_offset(info, &$8, &$9); }
 
     | SENS COLON VOLT COLON PTP numeric_value channel
     { scpi_dev_sense_voltage_ptp(info, &$6, &$7); }
 
     | SENS COLON VOLT COLON DC COLON PTP numeric_value channel
-    { scpi_dev_sense_voltage_ptp(info, &$6, &$7); }
+    { scpi_dev_sense_voltage_ptp(info, &$8, &$9); }
 
     | SENS COLON VOLT COLON RANG numeric_value channel
     { scpi_dev_sense_voltage_up(info, &$6, &$7); }
 
     | SENS COLON VOLT COLON DC COLON RANG numeric_value channel
-    { scpi_dev_sense_voltage_up(info, &$6, &$7); }
+    { scpi_dev_sense_voltage_up(info, &$8, &$9); }
 
     | SENS COLON VOLT COLON UPP numeric_value channel
     { scpi_dev_sense_voltage_up(info, &$6, &$7); }
 
     | SENS COLON VOLT COLON DC COLON UPP numeric_value channel
-    { scpi_dev_sense_voltage_up(info, &$6, &$7); }
+    { scpi_dev_sense_voltage_up(info, &$8, &$9); }
 
     | SENS COLON VOLT COLON LOWQ channel
     { scpi_dev_sense_voltage_lowq(info, &$6); }
 
     | SENS COLON VOLT COLON DC COLON LOWQ channel
-    { scpi_dev_sense_voltage_lowq(info, &$6); }
+    { scpi_dev_sense_voltage_lowq(info, &$8); }
 
     | SENS COLON VOLT COLON OFFSQ  channel
     { scpi_dev_sense_voltage_offsetq(info, &$6); }
 
     | SENS COLON VOLT COLON DC COLON OFFSQ channel
-    { scpi_dev_sense_voltage_offsetq(info, &$6); }
+    { scpi_dev_sense_voltage_offsetq(info, &$8); }
 
     | SENS COLON VOLT COLON PTPQ channel
     { scpi_dev_sense_voltage_ptpq(info, &$6); }
 
     | SENS COLON VOLT COLON DC COLON PTPQ channel
-    { scpi_dev_sense_voltage_ptpq(info, &$6); }
+    { scpi_dev_sense_voltage_ptpq(info, &$8); }
 
     | SENS COLON VOLT COLON RANGQ channel
     { scpi_dev_sense_voltage_upq(info, &$6); }
 
     | SENS COLON VOLT COLON DC COLON RANGQ channel
-    { scpi_dev_sense_voltage_upq(info, &$6); }
+    { scpi_dev_sense_voltage_upq(info, &$8); }
 
     | SENS COLON VOLT COLON UPPQ channel
     { scpi_dev_sense_voltage_upq(info, &$6); }
 
     | SENS COLON VOLT COLON DC COLON UPPQ channel
-    { scpi_dev_sense_voltage_upq(info, &$6); }
+    { scpi_dev_sense_voltage_upq(info, &$8); }
 
     | SOUR COLON DIG COLON DAT nr1
     { scpi_dev_source_digital_data(info, &$6); }
