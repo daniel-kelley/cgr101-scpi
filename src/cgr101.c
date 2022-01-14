@@ -137,6 +137,7 @@ static struct cgr101_waveform_map_s cgr101_waveform_map[] = {
 #define SCOPE_DEFAULT_PTP 50.0
 #define SCOPE_SR_DIV_MAX 15
 #define SCOPE_SR_MAX 20.0e6 /* 20MHz */
+#define SCOPE_MIN_SWEEP_TIME ((double)SCOPE_NUM_SAMPLE/SCOPE_SR_MAX)
 #define SCOPE_NUM_DATA = (SCOPE_NUM_SAMPLE*SCOPE_NUM_CHAN*2)
 static char cgr101_range_cmd[SCOPE_NUM_CHAN][SCOPE_NUM_RANGE] = {
     {'A','a'},
@@ -1098,11 +1099,12 @@ static void cgr101_digitizer_set_range(struct info *info,int chan)
     assert(!err);
 }
 
-static void cgr101_sweep_time(struct info *info, double time)
+static int cgr101_sweep_time(struct info *info, double time)
 {
-    double sweep_time = (double)SCOPE_NUM_SAMPLE/SCOPE_SR_MAX;
+    double sweep_time = SCOPE_MIN_SWEEP_TIME;
     double sweep_time2 = sweep_time * 2.0;
     int sweep_div;
+    int err = 1;
 
     for (sweep_div = 0; sweep_div <= SCOPE_SR_DIV_MAX; sweep_div++) {
         if (time >= sweep_time && time < sweep_time2) {
@@ -1115,9 +1117,10 @@ static void cgr101_sweep_time(struct info *info, double time)
     if (sweep_div >= 0 && sweep_div <= SCOPE_SR_DIV_MAX) {
         info->device->scope.sweep_time = sweep_time;
         info->device->scope.sample_rate_divisor = sweep_div;
-    } else {
-        /*error*/
+        err = 0;
     }
+
+    return err;
 }
 
 
@@ -1129,12 +1132,15 @@ static void cgr101_device_reset(struct info *info)
 {
     int chan;
     double midpoint = (double)SCOPE_NUM_SAMPLE/2;
+    int err;
 
     /*Consistency check*/
     assert(COUNT_OF(info->device->scope.channel) == SCOPE_NUM_CHAN);
     /* Set Defaults */
     info->device->scope.trigger_offset = 0;
     info->device->scope.trigger_ref = midpoint;
+    err = cgr101_sweep_time(info, SCOPE_MIN_SWEEP_TIME);
+    assert(!err);
     for (chan=0; chan<SCOPE_NUM_CHAN; chan++) {
         info->device->scope.channel[chan].enable = 0;
         info->device->scope.channel[chan].input_low = SCOPE_DEFAULT_LOW;
@@ -1519,7 +1525,9 @@ void cgr101_digitizer_sweep_pointq(struct info *info)
 
 void cgr101_digitizer_sweep_time(struct info *info, double value)
 {
-    cgr101_sweep_time(info, value);
+    if (cgr101_sweep_time(info, value)) {
+        /* some error */
+    }
 }
 
 void cgr101_digitizer_sweep_timeq(struct info *info)
@@ -1531,7 +1539,9 @@ void cgr101_digitizer_sweep_timeq(struct info *info)
 
 void cgr101_digitizer_sweep_interval(struct info *info, double value)
 {
-    cgr101_sweep_time(info, value * SCOPE_NUM_SAMPLE);
+    if (cgr101_sweep_time(info, value * SCOPE_NUM_SAMPLE)) {
+        /* some error */
+    }
 }
 
 void cgr101_digitizer_sweep_time_intervalq(struct info *info)
