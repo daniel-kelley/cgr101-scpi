@@ -18,6 +18,7 @@ class CGR101
   PROG = ENV['CGR101_PROG'] || 'src/cgr101-scpi'
   SWITCHES = ENV['CGR101_TEST'] || '-DE' # Default: Emulation
   RECV_TIMEOUT = 5
+  CMDLOG = ENV['CGR101_CMDLOG']
 
   def initialize(arg=nil)
     cmd = "#{PROG} #{SWITCHES}"
@@ -32,6 +33,7 @@ class CGR101
     @errr = true
     @outt = Thread.new { out_reader }
     @errt = Thread.new { err_reader }
+    @cmdlog = CMDLOG.nil? ? nil : File.open(CMDLOG, "w")
   end
 
   def close
@@ -47,7 +49,14 @@ class CGR101
     return @wthr.value
   end
 
+  def cmdlog(str)
+    if !@cmdlog.nil?
+      @cmdlog.puts str
+    end
+  end
+
   def send(str)
+    cmdlog(str)
     @stdin.puts str
   end
 
