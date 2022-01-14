@@ -21,26 +21,26 @@
 # | SENS:SWE:TIME? numeric_value            | +
 # | SENS:SWE:TINT numeric_value             | +
 # | SENS:SWE:TINT? numeric_value            | +
-# | SENS:VOLT:DC:LOW numeric_value channel  |
-# | SENS:VOLT:DC:LOW? channel               |
-# | SENS:VOLT:DC:OFFS numeric_value channel |
-# | SENS:VOLT:DC:OFFS? channel              |
-# | SENS:VOLT:DC:PTP numeric_value channel  |
-# | SENS:VOLT:DC:PTP? channel               |
-# | SENS:VOLT:DC:RANG numeric_value channel |
-# | SENS:VOLT:DC:RANG? channel              |
-# | SENS:VOLT:DC:UPP numeric_value channel  |
-# | SENS:VOLT:DC:UPP? channel               |
-# | SENS:VOLT:LOW numeric_value channel     |
-# | SENS:VOLT:LOW? channel                  |
-# | SENS:VOLT:OFFS numeric_value channel    |
-# | SENS:VOLT:OFFS?  channel                |
-# | SENS:VOLT:PTP numeric_value channel     |
-# | SENS:VOLT:PTP? channel                  |
-# | SENS:VOLT:RANG numeric_value channel    |
-# | SENS:VOLT:RANG? channel                 |
-# | SENS:VOLT:UPP numeric_value channel     |
-# | SENS:VOLT:UPP? channel                  |
+# | SENS:VOLT:DC:LOW numeric_value channel  | +
+# | SENS:VOLT:DC:LOW? channel               | +
+# | SENS:VOLT:DC:OFFS numeric_value channel | +
+# | SENS:VOLT:DC:OFFS? channel              | +
+# | SENS:VOLT:DC:PTP numeric_value channel  | +
+# | SENS:VOLT:DC:PTP? channel               | +
+# | SENS:VOLT:DC:RANG numeric_value channel | +
+# | SENS:VOLT:DC:RANG? channel              | +
+# | SENS:VOLT:DC:UPP numeric_value channel  | +
+# | SENS:VOLT:DC:UPP? channel               | +
+# | SENS:VOLT:LOW numeric_value channel     | +
+# | SENS:VOLT:LOW? channel                  | +
+# | SENS:VOLT:OFFS numeric_value channel    | +
+# | SENS:VOLT:OFFS?  channel                | +
+# | SENS:VOLT:PTP numeric_value channel     | +
+# | SENS:VOLT:PTP? channel                  | +
+# | SENS:VOLT:RANG numeric_value channel    | +
+# | SENS:VOLT:RANG? channel                 | +
+# | SENS:VOLT:UPP numeric_value channel     | +
+# | SENS:VOLT:UPP? channel                  | +
 #
 # | SENS:DAT? channel                       |
 # | SENS:FUNC:CONC boolean                  | Not Implemented
@@ -247,6 +247,216 @@ module CGR101Scope
 
     # should match 1st value
     assert_equal(v0, v1)
+  end
+
+  #
+  # SENS:VOLT[:DC]:LOW/LOW? + multiple channels
+  #
+  def test_scope_008
+    # get a value (long form)
+    self.class.hdl.send("SENS:VOLT:DC:LOW? (@1,2)")
+    out = self.class.hdl.recv
+    v0 = out.split(',').map { |s| Float(s) }
+    assert_equal(2, v0.length)
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+
+    # set it (long form)
+    self.class.hdl.send("SENS:VOLT:DC:LOW " + v0[0].to_s + " (@1,2)")
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+
+    # get it again (short form)
+    self.class.hdl.send("SENS:VOLT:LOW? (@1,2)")
+    out = self.class.hdl.recv
+    v1 = out.split(',').map { |s| Float(s) }
+    assert_equal(2, v1.length)
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+
+    # should match 1st value
+    assert_equal(v0, v1)
+
+    # set it again (short form)
+    self.class.hdl.send("SENS:VOLT:LOW " + v0[0].to_s + " (@1,2)")
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+
+    # get it again (short form)
+    self.class.hdl.send("SENS:VOLT:LOW? (@1,2)")
+    out = self.class.hdl.recv
+    v2 = out.split(',').map { |s| Float(s) }
+    # should match 2nd value
+    assert_equal(v1, v2)
+
+  end
+
+  #
+  # SENS:VOLT[:DC]:OFFS/OFFS? + multiple channels
+  #
+  def test_scope_009
+    # get a value (long form)
+    self.class.hdl.send("SENS:VOLT:DC:OFFS? (@1,2)")
+    out = self.class.hdl.recv
+    v0 = out.split(',').map { |s| Float(s) }
+    assert_equal(2, v0.length)
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+
+    # set it (long form)
+    self.class.hdl.send("SENS:VOLT:DC:OFFS " + v0[0].to_s + " (@1,2)")
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+
+    # get it again (short form)
+    self.class.hdl.send("SENS:VOLT:OFFS? (@1,2)")
+    out = self.class.hdl.recv
+    v1 = out.split(',').map { |s| Float(s) }
+    assert_equal(2, v1.length)
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+
+    # should match 1st value
+    assert_equal(v0, v1)
+
+    # set it again (short form)
+    self.class.hdl.send("SENS:VOLT:OFFS " + v0[0].to_s + " (@1,2)")
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+
+    # get it again (short form)
+    self.class.hdl.send("SENS:VOLT:OFFS? (@1,2)")
+    out = self.class.hdl.recv
+    v2 = out.split(',').map { |s| Float(s) }
+    # should match 2nd value
+    assert_equal(v1, v2)
+
+  end
+
+  #
+  # SENS:VOLT[:DC]:PTP/PTP? + multiple channels
+  #
+  def test_scope_010
+    # get a value (long form)
+    self.class.hdl.send("SENS:VOLT:DC:PTP? (@1,2)")
+    out = self.class.hdl.recv
+    v0 = out.split(',').map { |s| Float(s) }
+    assert_equal(2, v0.length)
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+
+    # set it (long form)
+    self.class.hdl.send("SENS:VOLT:DC:PTP " + v0[0].to_s + " (@1,2)")
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+
+    # get it again (short form)
+    self.class.hdl.send("SENS:VOLT:PTP? (@1,2)")
+    out = self.class.hdl.recv
+    v1 = out.split(',').map { |s| Float(s) }
+    assert_equal(2, v1.length)
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+
+    # should match 1st value
+    assert_equal(v0, v1)
+
+    # set it again (short form)
+    self.class.hdl.send("SENS:VOLT:PTP " + v0[0].to_s + " (@1,2)")
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+
+    # get it again (short form)
+    self.class.hdl.send("SENS:VOLT:PTP? (@1,2)")
+    out = self.class.hdl.recv
+    v2 = out.split(',').map { |s| Float(s) }
+    # should match 2nd value
+    assert_equal(v1, v2)
+
+  end
+
+  #
+  # SENS:VOLT[:DC]:RANG/RANG? + multiple channels
+  #
+  def test_scope_011
+    # get a value (long form)
+    self.class.hdl.send("SENS:VOLT:DC:RANG? (@1,2)")
+    out = self.class.hdl.recv
+    v0 = out.split(',').map { |s| Float(s) }
+    assert_equal(2, v0.length)
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+
+    # set it (long form)
+    self.class.hdl.send("SENS:VOLT:DC:RANG " + v0[0].to_s + " (@1,2)")
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+
+    # get it again (short form)
+    self.class.hdl.send("SENS:VOLT:RANG? (@1,2)")
+    out = self.class.hdl.recv
+    v1 = out.split(',').map { |s| Float(s) }
+    assert_equal(2, v1.length)
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+
+    # should match 1st value
+    assert_equal(v0, v1)
+
+    # set it again (short form)
+    self.class.hdl.send("SENS:VOLT:RANG " + v0[0].to_s + " (@1,2)")
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+
+    # get it again (short form)
+    self.class.hdl.send("SENS:VOLT:RANG? (@1,2)")
+    out = self.class.hdl.recv
+    v2 = out.split(',').map { |s| Float(s) }
+    # should match 2nd value
+    assert_equal(v1, v2)
+
+  end
+
+  #
+  # SENS:VOLT[:DC]:UPP/UPP? + multiple channels
+  #
+  def test_scope_012
+    # get a value (long form)
+    self.class.hdl.send("SENS:VOLT:DC:UPP? (@1,2)")
+    out = self.class.hdl.recv
+    v0 = out.split(',').map { |s| Float(s) }
+    assert_equal(2, v0.length)
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+
+    # set it (long form)
+    self.class.hdl.send("SENS:VOLT:DC:UPP " + v0[0].to_s + " (@1,2)")
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+
+    # get it again (short form)
+    self.class.hdl.send("SENS:VOLT:UPP? (@1,2)")
+    out = self.class.hdl.recv
+    v1 = out.split(',').map { |s| Float(s) }
+    assert_equal(2, v1.length)
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+
+    # should match 1st value
+    assert_equal(v0, v1)
+
+    # set it again (short form)
+    self.class.hdl.send("SENS:VOLT:UPP " + v0[0].to_s + " (@1,2)")
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+
+    # get it again (short form)
+    self.class.hdl.send("SENS:VOLT:UPP? (@1,2)")
+    out = self.class.hdl.recv
+    v2 = out.split(',').map { |s| Float(s) }
+    # should match 2nd value
+    assert_equal(v1, v2)
+
   end
 
   #
