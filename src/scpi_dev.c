@@ -428,6 +428,21 @@ void scpi_dev_source_waveform_frequencyq(struct info *info)
     cgr101_source_waveform_frequencyq(info);
 }
 
+void scpi_dev_source_waveform_level(struct info *info,
+                                    struct scpi_type *v)
+{
+    double value;
+
+    if (!scpi_input_fp(info, v, &value)) {
+        cgr101_source_waveform_level(info, value);
+    }
+}
+
+void scpi_dev_source_waveform_levelq(struct info *info)
+{
+    cgr101_source_waveform_levelq(info);
+}
+
 void scpi_dev_source_waveform_function(struct info *info,
                                        struct scpi_type *v)
 {

@@ -28,6 +28,8 @@ extern void cgr101_source_waveform_frequencyq(struct info *info);
 extern void cgr101_source_waveform_function(struct info *info,
                                             const char *value);
 extern void cgr101_source_waveform_functionq(struct info *info);
+extern void cgr101_source_waveform_level(struct info *info, double value);
+extern void cgr101_source_waveform_levelq(struct info *info);
 extern void cgr101_source_waveform_user(struct info *info,
                                         size_t len,
                                         double *data);

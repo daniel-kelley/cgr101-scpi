@@ -184,6 +184,7 @@ struct cgr101 {
         enum cgr101_waveform_shape shape;
         double user[WAVEFORM_USER_MAX];
         double frequency;
+        double amplitude;
     } waveform;
     struct {
         enum cgr101_scope_offset_state offset_state;
@@ -1338,6 +1339,26 @@ void cgr101_source_waveform_frequency(struct info *info, double value)
 void cgr101_source_waveform_frequencyq(struct info *info)
 {
     scpi_output_fp(info->output, info->device->waveform.frequency);
+}
+
+void cgr101_source_waveform_level(struct info *info, double value)
+{
+    int err;
+    int amp;
+
+    if (value >= 0.0 && value <= 1.0) {
+        info->device->waveform.amplitude = value;
+        amp = (int)floor(value * 255.0);
+        err = cgr101_device_printf(info, "W A %d\n", amp);
+        assert(!err);
+    } else {
+        /* Range error */
+    }
+}
+
+void cgr101_source_waveform_levelq(struct info *info)
+{
+    scpi_output_fp(info->output, info->device->waveform.amplitude);
 }
 
 void cgr101_source_waveform_function(struct info *info,

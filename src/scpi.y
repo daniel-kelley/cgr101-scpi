@@ -624,6 +624,12 @@ dev-cmd
     | SOUR COLON FUNC COLON USERQ
     { scpi_dev_source_waveform_userq(info); }
 
+    | SOUR COLON FUNC COLON LEV numeric_value
+    { scpi_dev_source_waveform_level(info, &$6); }
+
+    | SOUR COLON FUNC COLON LEVQ
+    { scpi_dev_source_waveform_levelq(info); }
+
     | SOUR COLON PULS COLON DCYC numeric_value
     { scpi_dev_source_pwm_duty_cycle(info, &$6); }
 

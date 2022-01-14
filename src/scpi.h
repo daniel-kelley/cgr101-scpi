@@ -141,6 +141,9 @@ extern void scpi_dev_source_waveform_functionq(struct info *info);
 extern void scpi_dev_source_waveform_user(struct info *info,
                                           struct scpi_type *v);
 extern void scpi_dev_source_waveform_userq(struct info *info);
+extern void scpi_dev_source_waveform_level(struct info *info,
+                                           struct scpi_type *v);
+extern void scpi_dev_source_waveform_levelq(struct info *info);
 extern void scpi_dev_source_pwm_duty_cycle(struct info *info,
                                            struct scpi_type *v);
 extern void scpi_dev_source_pwm_duty_cycleq(struct info *info);
