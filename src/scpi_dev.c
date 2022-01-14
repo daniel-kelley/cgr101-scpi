@@ -12,6 +12,7 @@
 #include <string.h>
 #include "scpi.h"
 #include "scpi_core.h"
+#include "scpi_input.h"
 #include "cgr101.h"
 
 int scpi_dev_abort(struct info *info)
@@ -144,7 +145,7 @@ void scpi_dev_fetch_digital_dataq(struct info *info)
 
 void scpi_dev_input_coupling(struct info *info, struct scpi_type *v)
 {
-    char *value;
+    const char *value;
 
     if (!scpi_input_str(info, v, &value)) {
         cgr101_digitizer_coupling(info, value);
@@ -446,7 +447,7 @@ void scpi_dev_source_waveform_levelq(struct info *info)
 void scpi_dev_source_waveform_function(struct info *info,
                                        struct scpi_type *v)
 {
-    char *value;
+    const char *value;
 
     if (!scpi_input_str(info, v, &value)) {
         cgr101_source_waveform_function(info, value);
@@ -517,7 +518,7 @@ void scpi_dev_sense_reset(struct info *info)
 void scpi_dev_trigger_coupling(struct info *info,
                                struct scpi_type *v)
 {
-    char *value;
+    const char *value;
 
     if (!scpi_input_str(info, v, &value)) {
         cgr101_trigger_coupling(info, value);
@@ -542,7 +543,7 @@ void scpi_dev_trigger_levelq(struct info *info)
 void scpi_dev_trigger_slope(struct info *info,
                             struct scpi_type *v)
 {
-    char *value;
+    const char *value;
 
     if (!scpi_input_str(info, v, &value)) {
         cgr101_trigger_slope(info, value);
@@ -557,7 +558,7 @@ void scpi_dev_trigger_slopeq(struct info *info)
 void scpi_dev_trigger_source(struct info *info,
                              struct scpi_type *v)
 {
-    char *value;
+    const char *value;
 
     if (!scpi_input_str(info, v, &value)) {
         cgr101_trigger_source(info, value);

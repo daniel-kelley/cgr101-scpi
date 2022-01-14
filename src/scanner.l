@@ -37,8 +37,8 @@
 \*WAI                   { return WAI; }
 ABOR|ABORt              { return ABOR; }
 ALL                     { return ALL; }
-ASC|ASCii               { return ASC; }
-BIN|BINary              { return BIN; }
+ASC|ASCii               { return parser_ident(yytext, yylval, ASC); }
+BIN|BINary              { return parser_ident(yytext, yylval, BIN); }
 CAL|CALibrate           { return CAL; }
 (CAP|CAPability)\?      { return CAPQ; }
 COMM|COMMunicate        { return COMM; }
@@ -62,7 +62,7 @@ DEF                     { return DEF; }
 (ERR|ERRor)             { return ERR; }
 (ERR|ERRor)\?           { return ERRQ; }
 (EVEN|EVENt)\?          { return EVENQ; }
-(EXT|EXTernal)          { return EXT; }
+(EXT|EXTernal)          { return parser_ident(yytext, yylval, EXT); }
 (FETC|FETCh)            { return FETC; }
 (FIX|FIXed)             { return FIX; }
 (FORM|FORMat)           { return FORM; }
@@ -71,12 +71,12 @@ DEF                     { return DEF; }
 (FREQ|FREQuency)\?      { return FREQQ; }
 (FUNC|FUNCtion)         { return FUNC; }
 (FUNC|FUNCtion)\?       { return FUNCQ; }
-(HEX|HEXadecimal)       { return HEX; }
-(IMM|IMMediate)         { return IMM; }
+(HEX|HEXadecimal)       { return parser_ident(yytext, yylval, HEX); }
+(IMM|IMMediate)         { return parser_ident(yytext, yylval, IMM); }
 (INIT|INITiate)         { return INIT; }
 (INP|INPut)             { return INP; }
-INT                     { return INT; }
-INTeger                 { return INTEGER; }
+INT                     { return parser_ident(yytext, yylval, INT); }
+INTeger                 { return parser_ident(yytext, yylval, INTEGER); }
 INTernal                { return INTERNAL; }
 (LEV|LEVel)             { return LEV; }
 (LEV|LEVel)\?           { return LEVQ; }
@@ -84,24 +84,24 @@ INTernal                { return INTERNAL; }
 (LOC|LOCation)\?        { return LOCQ; }
 (LOW|LOWer)             { return LOW; }
 (LOW|LOWer)\?           { return LOWQ; }
-MAX                     { return MAX; }
+MAX                     { return parser_ident(yytext, yylval, MAX); }
 (MEAS|MEASure)          { return MEAS; }
-MIN                     { return MIN; }
-(NEG|NEGative)          { return NEG; }
+MIN                     { return parser_ident(yytext, yylval, MIN); }
+(NEG|NEGative)          { return parser_ident(yytext, yylval, NEG); }
 NEXT\?                  { return NEXTQ; }
-(OCT|OCTal)             { return OCT; }
-NONE                    { return NONE; }
-OFF                     { return OFF; }
+(OCT|OCTal)             { return parser_ident(yytext, yylval, OCT); }
+NONE                    { return parser_ident(yytext, yylval, NONE); }
+OFF                     { return parser_ident(yytext, yylval, OFF); }
 (OFFS|OFFSet)           { return OFFS; }
 (OFFS|OFFSet)\?         { return OFFSQ; }
-ON                      { return ON; }
+ON                      { return parser_ident(yytext, yylval, ON); }
 (OPER|OPERation)        { return OPER; }
 (OPER|OPERation)\?      { return OPERQ; }
 (OREF|OREFERENCE)       { return OREF; }
-PACK                    { return PACK; }
+PACK                    { return parser_ident(yytext, yylval, PACK); }
 (POIN|POINts)           { return POIN; }
 (POIN|POINts)\?         { return POINQ; }
-(POS|POSitive)          { return POS; }
+(POS|POSitive)          { return parser_ident(yytext, yylval, POS); }
 (PRES|PRESet)           { return PRES; }
 (PTP|PTPeak)            { return PTP; }
 (PTP|PTPeak)\?          { return PTPQ; }
@@ -109,22 +109,22 @@ PACK                    { return PACK; }
 (QUES|QUEStionable)     { return QUES; }
 (QUES|QUEStionable)\?   { return QUESQ; }
 QUIT                    { return QUIT; }
-(RAND|RANDom)           { return RAND; }
+(RAND|RANDom)           { return parser_ident(yytext, yylval, RAND); }
 (RANG|RANGe)            { return RANG; }
 (RANG|RANGe)\?          { return RANGQ; }
 READ                    { return READ; }
-REAL                    { return REAL; }
+REAL                    { return parser_ident(yytext, yylval, REAL); }
 (RES|RESet)             { return RES; }
 (SENS|SENSe)            { return SENS; }
 (SET|SETup)\?           { return SETUQ; }
 (SHAP|SHAPe)            { return SHAP; }
 SHOW\?                  { return SHOWQ; }
-(SIN|SINusoid)          { return SIN; }
+(SIN|SINusoid)          { return parser_ident(yytext, yylval, SIN); }
 (SLOP|SLOPe)            { return SLOP; }
 (SLOP|SLOPe)\?          { return SLOPQ; }
 (SOUR|SOURce)           { return SOUR; }
 (SOUR|SOURce)\?         { return SOURQ; }
-(SQU|SQUare)            { return SQU; }
+(SQU|SQUare)            { return parser_ident(yytext, yylval, SQU); }
 STATe                   { return STATE; }
 STATe\?                 { return STATEQ; }
 STAT                    { return STAT; }
@@ -137,9 +137,9 @@ TIME                    { return TIME; }
 TIME\?                  { return TIMEQ; }
 (TINT|TINTerval)        { return TINT; }
 (TINT|TINTerval)\?      { return TINTQ; }
-(TRI|TRIangle)          { return TRI; }
+(TRI|TRIangle)          { return parser_ident(yytext, yylval, TRI); }
 (TRIG|TRIGger)          { return TRIG; }
-UINT                    { return UINT; }
+UINT                    { return parser_ident(yytext, yylval, UINT); }
 (UPP|UPPer)             { return UPP; }
 (UPP|UPPer)\?           { return UPPQ; }
 USER                    { return USER; }
@@ -163,7 +163,7 @@ USER\?                  { return USERQ; }
 [+-]*[[:digit:]]+\.[[:digit:]]*[[:blank:]]*[eE]?[[:blank:]]*[+-]*[[:digit:]]+ { return parser_num(yytext, yylval, FLOAT); }
 
 [+-]*[[:digit:]]+            { return parser_num(yytext, yylval, NUM); }
-[[:alpha:]]+[[:alnum:]]* { return IDENT; }
+[[:alpha:]]+[[:alnum:]]* { return parser_ident(yytext, yylval, IDENT); }
 [[:blank:]]*
 \n
 \0                      { return YYEOF; }

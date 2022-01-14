@@ -13,6 +13,7 @@ struct scpi_type {
         SCPI_TYPE_UNKNOWN,
         SCPI_TYPE_INT,
         SCPI_TYPE_FLOAT,
+        SCPI_TYPE_STR,
         SCPI_TYPE_CHAN,
     } type;
     union {

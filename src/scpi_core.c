@@ -13,6 +13,7 @@
 #include "scpi.h"
 #include "scpi_core.h"
 #include "scpi_error.h"
+#include "scpi_input.h"
 #include "parser.h"
 
 static uint8_t scpi_core_status_update(struct info *info)

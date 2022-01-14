@@ -956,7 +956,7 @@ static void cgr101_waveform_lookup(const char *value,
     assert(value);
     assert(shape);
     for (p = cgr101_waveform_map; p != NULL; p++) {
-        if (!strcmp(value, p->name)) {
+        if (!strcasecmp(value, p->name)) {
             *shape = p->shape;
             break;
         }
@@ -1010,7 +1010,7 @@ static void cgr101_waveform_create_fn(double *data, size_t points, wff_t wfn)
 {
     size_t i;
     double phase = 0.0;
-    double phase_incr = 1.0/((double)points);
+    double phase_incr = 1.0/((double)points-1);
     for (i=0; i<points; i++) {
         data[i] = (double)wfn(phase);
         phase += phase_incr;
@@ -1026,18 +1026,21 @@ static void cgr101_waveform_create(struct info *info,
         break;
     case WAV_SIN:
         cgr101_waveform_create_fn(info->device->waveform.user,
-                                  sizeof(info->device->waveform.user),
+                                  COUNT_OF(info->device->waveform.user),
                                   cgr101_fn_sin);
         break;
     case WAV_SQU:
         cgr101_waveform_create_fn(info->device->waveform.user,
-                                  sizeof(info->device->waveform.user),
+                                  COUNT_OF(info->device->waveform.user),
                                   cgr101_fn_squ);
         break;
     case WAV_TRI:
         cgr101_waveform_create_fn(info->device->waveform.user,
-                                  sizeof(info->device->waveform.user),
+                                  COUNT_OF(info->device->waveform.user),
                                   cgr101_fn_tri);
+        break;
+    case WAV_NONE:
+        /* Nothing to do. */
         break;
     default:
         assert(0);
@@ -1055,7 +1058,9 @@ static void cgr101_waveform_program(struct info *info)
     } else {
         size_t i;
         for (i=0; i<COUNT_OF(info->device->waveform.user); i++) {
-            int val = (int)info->device->waveform.user[i]*255;
+            int val = 128 + (int)floor(info->device->waveform.user[i]*127);
+            assert(val >= 0);
+            assert(val <= 255);
             err = cgr101_device_printf(info, "W S %d %d\n", i, val);
             assert(!err);
         }
@@ -1383,8 +1388,10 @@ void cgr101_source_waveform_function(struct info *info,
     enum cgr101_waveform_shape shape;
 
     cgr101_waveform_lookup(value, &shape);
-    cgr101_waveform_create(info, shape);
-    cgr101_waveform_program(info);
+    if (shape != WAV_NONE) {
+        cgr101_waveform_create(info, shape);
+        cgr101_waveform_program(info);
+    }
 }
 
 void cgr101_source_waveform_functionq(struct info *info)
@@ -1794,9 +1801,9 @@ void cgr101_trigger_slope(struct info *info, const char *value)
 {
 
     assert(value);
-    if (!strcmp(value, "POS")) {
+    if (!strcasecmp(value, "POS")) {
         info->device->scope.trigger_polarity = 1;
-    } else if (!strcmp(value, "NEG")) {
+    } else if (!strcasecmp(value, "NEG")) {
         info->device->scope.trigger_polarity = 0;
     } else {
         assert(0);
@@ -1815,11 +1822,11 @@ void cgr101_trigger_source(struct info *info, const char *value)
 {
     /*IMM INT EXT - FIXME how to pick A, B? */
     assert(value);
-    if (!strcmp(value, "IMM")) {
+    if (!strcasecmp(value, "IMM")) {
         info->device->scope.trigger_source = SCOPE_TRIGGER_SOURCE_IMM;
-    } else if (!strcmp(value, "INT")) {
+    } else if (!strcasecmp(value, "INT")) {
         info->device->scope.trigger_source = SCOPE_TRIGGER_SOURCE_INT;
-    } else if (!strcmp(value, "EXT")) {
+    } else if (!strcasecmp(value, "EXT")) {
         info->device->scope.trigger_source = SCOPE_TRIGGER_SOURCE_EXT;
     } else {
         assert(0);

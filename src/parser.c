@@ -228,3 +228,11 @@ int parser_num(const char *s, struct scpi_type *val, int token)
 
     return token;
 }
+
+int parser_ident(const char *s, struct scpi_type *val, int token)
+{
+    val->type = SCPI_TYPE_STR;
+    val->src = s;
+
+    return token;
+}

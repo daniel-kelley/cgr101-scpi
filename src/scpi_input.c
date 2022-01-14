@@ -107,13 +107,12 @@ int scpi_input_fp_block(struct info *info,
     return 0;
 }
 
-int scpi_input_str(struct info *info, struct scpi_type *in, char **out)
+int scpi_input_str(struct info *info, struct scpi_type *in, const char **out)
 {
     (void)info;
-    (void)in;
 
-    /*FIXME*/
-    *out = NULL;
+    assert(in->type == SCPI_TYPE_STR);
+    *out = in->src;
 
     return 0;
 }

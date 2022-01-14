@@ -45,29 +45,5 @@ extern int scpi_core_done(struct info *info);
 extern int scpi_core_send(struct info *info, char *buf, int len);
 extern int scpi_core_recv(struct info *info);
 extern int scpi_core_recv_ready(struct info *info);
-extern int scpi_input_int(struct info *info,
-                          struct scpi_type *in,
-                          long low,
-                          long high,
-                          long *out);
-extern int scpi_input_boolean(struct info *info,
-                              struct scpi_type *in,
-                              int *out);
-extern int scpi_input_uint8(struct info *info,
-                            struct scpi_type *in,
-                            uint8_t *out);
-extern int scpi_input_uint16(struct info *info,
-                             struct scpi_type *in,
-                             uint16_t *out);
-extern int scpi_input_fp(struct info *info,
-                         struct scpi_type *in,
-                         double *out);
-extern int scpi_input_fp_block(struct info *info,
-                               struct scpi_type *in,
-                               size_t *out_len,
-                               double **out_block);
-extern int scpi_input_str(struct info *info,
-                          struct scpi_type *in,
-                          char **out);
 
 #endif /* SCPI_CORE_H_ */
