@@ -199,7 +199,7 @@ struct cgr101 {
         double trigger_offset;     /* SCPI SENSe:SWEep:OFFSet:POINts */
         double trigger_ref;        /* SCPI SENSe:SWEep:OREFerence:POINts */
         enum cgr101_scope_addr_state addr_state;
-        int addr;               /* offset of first data capture. */
+        unsigned int addr;         /* offset of first data capture. */
         enum cgr101_scope_data_state data_state;
         int data_count;
         struct {
@@ -208,8 +208,8 @@ struct cgr101 {
             double input_midpoint;
             double input_ptp;
             int input_low_range; /* derived from above */
-            int offset_low;
-            int offset_high;
+            double offset_low;
+            double offset_high;
             int enable;
             double data[SCOPE_NUM_SAMPLE];
         } channel[SCOPE_NUM_CHAN];
@@ -396,22 +396,28 @@ static void cgr101_digital_read_output(struct info *info)
 static int cgr101_rcv_scope_offset(struct info *info, char c)
 {
     int err = 0;
+    double value = (double)(unsigned char)c;
+
+    value = 128 - value;
+    /* Offsets are expected to be relatively small. */
+    assert(value >= -10.0);
+    assert(value < 10.0);
 
     switch (info->device->scope.offset_state) {
     case STATE_SCOPE_OFFSET_EXPECT_A_HIGH:
-        info->device->scope.channel[0].offset_high = (int)c; /* signed */
-        info->device->scope.offset_state = STATE_SCOPE_OFFSET_EXPECT_B_HIGH;
-        break;
-    case STATE_SCOPE_OFFSET_EXPECT_B_HIGH:
-        info->device->scope.channel[1].offset_high = (int)c; /* signed */
+        info->device->scope.channel[0].offset_high = value;
         info->device->scope.offset_state = STATE_SCOPE_OFFSET_EXPECT_A_LOW;
         break;
     case STATE_SCOPE_OFFSET_EXPECT_A_LOW:
-        info->device->scope.channel[0].offset_low = (int)c; /* signed */
+        info->device->scope.channel[0].offset_low = value;
+        info->device->scope.offset_state = STATE_SCOPE_OFFSET_EXPECT_B_HIGH;
+        break;
+    case STATE_SCOPE_OFFSET_EXPECT_B_HIGH:
+        info->device->scope.channel[1].offset_high = value;
         info->device->scope.offset_state = STATE_SCOPE_OFFSET_EXPECT_B_LOW;
         break;
     case STATE_SCOPE_OFFSET_EXPECT_B_LOW:
-        info->device->scope.channel[1].offset_low = (int)c; /* signed */
+        info->device->scope.channel[1].offset_low = value;
         info->device->scope.offset_state = STATE_SCOPE_OFFSET_COMPLETE;
         /* Done receiving. */
         cgr101_rcv_idle(info);
@@ -492,6 +498,35 @@ static void cgr101_scope_status_completion(struct info *info)
  * Oscilloscope Data Handling
  */
 
+#define STEP_HIGH 0.0521
+#define STEP_LOW  0.00592
+
+static double cgr101_digitizer_value(struct info *info,
+                                     int chan,
+                                     unsigned int idx)
+{
+    double data;
+    double offset;
+    double gain;
+    double value;
+
+    data = info->device->scope.channel[chan].data[idx];
+
+
+    if (info->device->scope.channel[chan].input_low_range) {
+        offset = info->device->scope.channel[chan].offset_low;
+        gain = STEP_LOW;
+    } else {
+        offset = info->device->scope.channel[chan].offset_high;
+        gain = STEP_HIGH;
+    }
+
+    data += offset;
+    value = (511.0 - data) * gain;
+
+    return value;
+}
+
 static void cgr101_digitizer_update_control(struct info *info)
 {
     int ctl;
@@ -563,7 +598,7 @@ static int cgr101_digitizer_start(struct info *info, int manual)
     /* Data return state initialization */
 
     info->device->scope.addr_state = STATE_SCOPE_ADDR_EXPECT_HIGH;
-    info->device->scope.addr = -1; /* Illegal value */
+    info->device->scope.addr = 0;
     info->device->scope.data_state = STATE_SCOPE_DATA_EXPECT_A_HIGH;
     info->device->scope.data_count = 0;
 
@@ -613,11 +648,11 @@ static int cgr101_rcv_scope_addr(struct info *info, char c)
     case STATE_SCOPE_ADDR_EXPECT_HIGH:
         assert(c >= 0);
         assert(c <= 3);
-        info->device->scope.addr = c<<8;
+        info->device->scope.addr = ((unsigned char)c)<<8;
         info->device->scope.addr_state = STATE_SCOPE_ADDR_EXPECT_LOW;
         break;
     case STATE_SCOPE_ADDR_EXPECT_LOW:
-        info->device->scope.addr |= c;
+        info->device->scope.addr |= ((unsigned char)c);
         info->device->scope.addr_state = STATE_SCOPE_ADDR_COMPLETE;
         cgr101_rcv_idle(info);
         /* Get the buffer. */
@@ -645,9 +680,11 @@ static void cgr101_rcv_scope_data_chan(struct info *info,
     assert(idx >= 0);
     assert((size_t)idx < COUNT_OF(info->device->scope.channel[chan].data));
     if (byte) {
-        info->device->scope.channel[chan].data[idx] = (double)(c<<8);
+        info->device->scope.channel[chan].data[idx] =
+            (double)((unsigned char)c<<8);
     } else {
-        info->device->scope.channel[chan].data[idx] += (double)c;
+        info->device->scope.channel[chan].data[idx] +=
+            (double)(unsigned char)c;
     }
 }
 
@@ -1346,8 +1383,8 @@ void cgr101_digitizer_coupling(struct info *info, const char *value)
 void cgr101_digitizer_dataq(struct info *info, long chan_mask)
 {
     int chan;
-    int j;
-    int offset;
+    unsigned int j;
+    unsigned int idx;
     double data;
 
     assert(info->device->scope.addr_state == STATE_SCOPE_ADDR_COMPLETE);
@@ -1356,14 +1393,16 @@ void cgr101_digitizer_dataq(struct info *info, long chan_mask)
             continue;
         }
         for (j=0; j<SCOPE_NUM_SAMPLE; j++) {
-            offset = info->device->scope.addr;
-            offset += j;
-            if (offset == SCOPE_NUM_SAMPLE) {
+            idx = info->device->scope.addr;
+            idx += j;
+            if (idx >= SCOPE_NUM_SAMPLE) {
                 /* wrapped */
-                offset = 0;
+                idx -= SCOPE_NUM_SAMPLE;
             }
-            data = info->device->scope.channel[chan].data[offset];
-            /* FIXME: handle offset and gain scaling. */
+            assert(chan >= 0);
+            assert(chan < SCOPE_NUM_CHAN);
+            assert(idx < SCOPE_NUM_SAMPLE);
+            data = cgr101_digitizer_value(info, chan, idx);
             scpi_output_fp(info->output, data);
         }
     }
