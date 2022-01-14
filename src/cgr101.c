@@ -510,6 +510,10 @@ static double cgr101_digitizer_value(struct info *info,
     double gain;
     double value;
 
+    assert(chan >= 0);
+    assert(chan < SCOPE_NUM_CHAN);
+    assert(idx < SCOPE_NUM_SAMPLE);
+
     data = info->device->scope.channel[chan].data[idx];
 
 
@@ -1399,9 +1403,6 @@ void cgr101_digitizer_dataq(struct info *info, long chan_mask)
                 /* wrapped */
                 idx -= SCOPE_NUM_SAMPLE;
             }
-            assert(chan >= 0);
-            assert(chan < SCOPE_NUM_CHAN);
-            assert(idx < SCOPE_NUM_SAMPLE);
             data = cgr101_digitizer_value(info, chan, idx);
             scpi_output_fp(info->output, data);
         }
