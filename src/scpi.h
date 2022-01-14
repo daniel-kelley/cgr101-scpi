@@ -163,6 +163,7 @@ extern void scpi_dev_trigger_source(struct info *info,
                                     struct scpi_type *v);
 extern void scpi_dev_trigger_sourceq(struct info *info);
 extern void scpi_dev_identify(struct info *info);
+extern void scpi_dev_rst(struct info *info);
 extern void scpi_system_communicate_tcp_controlq(struct info *info);
 extern void scpi_system_internal_calibrate(struct info *info);
 extern void scpi_system_internal_configure(struct info *info);

@@ -558,3 +558,8 @@ void scpi_dev_identify(struct info *info)
 {
     cgr101_identify(info);
 }
+
+void scpi_dev_rst(struct info *info)
+{
+    cgr101_rst(info);
+}

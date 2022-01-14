@@ -1093,13 +1093,9 @@ static void cgr101_digitizer_set_range(struct info *info,int chan)
                      info->device->scope.channel[chan].input_high <= 2.5);
     assert(chan >= 0 && chan < SCOPE_NUM_CHAN);
     assert(low_range >= 0 && low_range < SCOPE_NUM_RANGE);
-    /* Only set preamp when changing */
-    if (info->device->scope.channel[chan].input_low_range != low_range) {
-        info->device->scope.channel[chan].input_low_range = low_range;
-        err = cgr101_device_printf(info, "S P %c\n",
-                                   cgr101_range_cmd[chan][low_range]);
-        assert(!err);
-    }
+    err = cgr101_device_printf(info, "S P %c\n",
+                               cgr101_range_cmd[chan][low_range]);
+    assert(!err);
 }
 
 static void cgr101_sweep_time(struct info *info, double time)
@@ -1129,24 +1125,35 @@ static void cgr101_sweep_time(struct info *info, double time)
  * Initialization
  */
 
-static void cgr101_device_init(struct info *info)
+static void cgr101_device_reset(struct info *info)
 {
     int chan;
-    int err;
     double midpoint = (double)SCOPE_NUM_SAMPLE/2;
+
     /*Consistency check*/
     assert(COUNT_OF(info->device->scope.channel) == SCOPE_NUM_CHAN);
     /* Set Defaults */
     info->device->scope.trigger_offset = 0;
     info->device->scope.trigger_ref = midpoint;
     for (chan=0; chan<SCOPE_NUM_CHAN; chan++) {
+        info->device->scope.channel[chan].enable = 0;
         info->device->scope.channel[chan].input_low = SCOPE_DEFAULT_LOW;
         info->device->scope.channel[chan].input_high = SCOPE_DEFAULT_HIGH;
         info->device->scope.channel[chan].input_midpoint =
             SCOPE_DEFAULT_MIDPOINT;
         info->device->scope.channel[chan].input_ptp = SCOPE_DEFAULT_PTP;
         /* Force */
-        info->device->scope.channel[chan].input_low_range = -1;
+        info->device->scope.channel[chan].input_low_range = 0;
+    }
+}
+
+static void cgr101_device_init(struct info *info)
+{
+    int err;
+    int chan;
+
+    cgr101_device_reset(info);
+    for (chan=0; chan<SCOPE_NUM_CHAN; chan++) {
         cgr101_digitizer_set_range(info, chan);
     }
 
@@ -1791,3 +1798,7 @@ void cgr101_trigger_sourceq(struct info *info)
 
 }
 
+void cgr101_rst(struct info *info)
+{
+    cgr101_device_reset(info);
+}

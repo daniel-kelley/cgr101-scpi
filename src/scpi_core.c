@@ -114,6 +114,7 @@ void scpi_common_opcq(struct info *info)
 
 void scpi_common_rst(struct info *info)
 {
+    scpi_dev_rst(info);
     scpi_common_opc(info);
 }
 

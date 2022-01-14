@@ -86,5 +86,6 @@ extern void cgr101_trigger_slope(struct info *info, const char *value);
 extern void cgr101_trigger_slopeq(struct info *info);
 extern void cgr101_trigger_source(struct info *info, const char *value);
 extern void cgr101_trigger_sourceq(struct info *info);
+extern void cgr101_rst(struct info *info);
 
 #endif /* CGR101_H_ */
