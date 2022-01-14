@@ -90,6 +90,7 @@ MIN                     { return MIN; }
 (NEG|NEGative)          { return NEG; }
 NEXT\?                  { return NEXTQ; }
 (OCT|OCTal)             { return OCT; }
+NONE                    { return NONE; }
 OFF                     { return OFF; }
 (OFFS|OFFSet)           { return OFFS; }
 (OFFS|OFFSet)\?         { return OFFSQ; }

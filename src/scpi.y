@@ -81,6 +81,7 @@
 %token MIN
 %token NEG
 %token NEXTQ
+%token NONE
 %token OCT
 %token OFF
 %token OFFS
@@ -413,7 +414,8 @@ coupling_arg
     ;
 
 source_function
-    : RAND
+    : NONE
+    | RAND
     | SIN
     | SQU
     | TRI

@@ -120,6 +120,7 @@ struct cgr101_waveform_map_s {
 };
 
 static struct cgr101_waveform_map_s cgr101_waveform_map[] = {
+    { "NONE", WAV_NONE},
     { "RAND", WAV_RAND},
     { "SIN", WAV_SIN},
     { "SQU", WAV_SQU},
@@ -180,7 +181,6 @@ struct cgr101 {
     int digital_write_data;
     /* Waveform */
     struct {
-        const char *name;
         enum cgr101_waveform_shape shape;
         double user[WAVEFORM_USER_MAX];
         double frequency;
@@ -964,6 +964,22 @@ static void cgr101_waveform_lookup(const char *value,
     assert(p != NULL);
 }
 
+static const char *cgr101_waveform_name(enum cgr101_waveform_shape shape)
+{
+    struct cgr101_waveform_map_s *p;
+    const char *name = NULL;
+
+    for (p = cgr101_waveform_map; p != NULL; p++) {
+        if (shape == p->shape) {
+            name = p->name;
+            break;
+        }
+    }
+    assert(name != NULL);
+
+    return name;
+}
+
 /*
  * Waveform functions:
  *  phase: 0.0 .. 1.0
@@ -1366,7 +1382,6 @@ void cgr101_source_waveform_function(struct info *info,
 {
     enum cgr101_waveform_shape shape;
 
-    info->device->waveform.name = value;
     cgr101_waveform_lookup(value, &shape);
     cgr101_waveform_create(info, shape);
     cgr101_waveform_program(info);
@@ -1374,12 +1389,15 @@ void cgr101_source_waveform_function(struct info *info,
 
 void cgr101_source_waveform_functionq(struct info *info)
 {
-    scpi_output_str(info->output, info->device->waveform.name);
+    const char *name;
+
+    name = cgr101_waveform_name(info->device->waveform.shape);
+    assert(name);
+    scpi_output_str(info->output, name);
 }
 
 void cgr101_source_waveform_user(struct info *info, size_t len, double *data)
 {
-    info->device->waveform.name = "USER";
     info->device->waveform.shape = WAV_USER;
     cgr101_waveform_user(info, len, data);
     cgr101_waveform_program(info);
