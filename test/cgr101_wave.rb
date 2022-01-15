@@ -108,7 +108,7 @@ module CGR101Wave
   #
   # SOUR:FUNC/FUNC? {SIN,SQU,TRI,RAND}
   #
-  def no_test_wave_003b
+  def test_wave_003b
     ["SIN","SQU","TRI","RAND"].each do |func|
       # set it
       self.class.hdl.send("SOUR:FUNC " + func)
@@ -124,7 +124,7 @@ module CGR101Wave
       assert_equal(0, self.class.hdl.err_length)
 
       # should match 1st value
-      assert_equal(func, v1)
+      assert_equal(func, v1[0])
     end
   end
 

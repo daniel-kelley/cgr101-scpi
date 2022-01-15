@@ -1113,6 +1113,10 @@ static void cgr101_waveform_create(struct info *info,
         assert(0);
         break;
     }
+
+    /* FIXME: only set if no error. */
+    info->device->waveform.shape = shape;
+
 }
 
 static void cgr101_waveform_program(struct info *info)
