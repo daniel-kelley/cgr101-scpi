@@ -406,7 +406,12 @@ struct scpi_type *scpi_core_nrf_list(struct info *info,
     char *buf;
     size_t hsize = sizeof(struct scpi_type_list);
 
-    assert(NRF_CHUNK > 1); /* Check minimum chunk size. */
+    assert(NRF_CHUNK > 1); /* Check minimum chunk size for allocations. */
+    /* Lists will be converted to arrays of the underlying scalar type
+     * in place, which will only work if the header is at least the
+     * size of the largest scalar type.
+     */
+    assert(hsize >= sizeof(val));
     if (vl->type != SCPI_TYPE_LIST) {
         /* Start list */
         assert(vl->type == vs->type);

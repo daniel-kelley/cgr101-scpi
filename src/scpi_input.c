@@ -92,17 +92,51 @@ int scpi_input_fp(struct info *info, struct scpi_type *in, double *out)
     return 0;
 }
 
+/* Reformat the list into an array of doubles in place. */
+static void scpi_input_fp_block_copy(struct scpi_type *in,
+                                     size_t *out_len,
+                                     double **out_block)
+{
+    double *dp;
+    size_t len;
+    union scpi_type_val *val;
+
+    assert(out_len);
+    assert(out_block);
+    val = in->val.list->val;
+    len = in->val.list->len;
+    /* Type conversion is done in place, which destroys the type
+     * metadata. This is expected to happen when the block type is
+     * passed to the device function, and the SCPI type data is no
+     * longer needed. The SCPI type is changed to UNKNOWN so any
+     * subsequent references will assert.
+     */
+    in->type = SCPI_TYPE_UNKNOWN;
+    dp = (double *)in->val.list;
+    *out_len = len;
+    *out_block = dp;
+    while(len--) {
+        *dp++ = val->fval;
+        val++;
+    }
+
+}
+
 int scpi_input_fp_block(struct info *info,
                         struct scpi_type *in,
                         size_t *out_len,
                         double **out_block)
 {
     (void)info;
-    (void)in;
-
-    /*FIXME*/
-    *out_len = 0;
-    *out_block = NULL;
+    if (in->type == SCPI_TYPE_FLOAT) {
+        *out_block = &in->val.fval;
+        *out_len = 1;
+    } else if (in->type == SCPI_TYPE_LIST &&
+               in->val.list->type == SCPI_TYPE_FLOAT) {
+        scpi_input_fp_block_copy(in, out_len, out_block);
+    } else {
+        assert(0); /* Some error */
+    }
 
     return 0;
 }
