@@ -393,11 +393,14 @@ struct scpi_type *scpi_core_format_type(struct info *info,
 }
 
 struct scpi_type *scpi_core_nrf_list(struct info *info,
-                                     struct scpi_type *v)
+                                     struct scpi_type *vl,
+                                     struct scpi_type *vs)
 {
     (void)info;
+    (void)vl;
+    (void)vs;
 
-    return v;
+    return vl;
 }
 
 struct scpi_type *scpi_core_symbolic_value(struct info *info,

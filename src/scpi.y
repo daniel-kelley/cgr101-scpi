@@ -224,7 +224,7 @@ nrf: FLOAT
 nrf-list
     : nrf
     | nrf-list COMMA nrf
-    { $$ = *scpi_core_nrf_list(info, &$3); }
+    { $$ = *scpi_core_nrf_list(info, &$1, &$3); }
     ;
 
 symbolic_value
