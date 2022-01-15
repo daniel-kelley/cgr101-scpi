@@ -218,6 +218,10 @@ struct cgr101 {
     } scope;
 };
 
+struct cgr101_w_interp {
+    size_t len;
+    double *data;
+};
 
 /*
  * Event Queue Sender
@@ -986,33 +990,93 @@ static const char *cgr101_waveform_name(enum cgr101_waveform_shape shape)
  *  amplitude: -1.0 .. 1.0
  */
 
-static double cgr101_fn_sin(double phase)
+static double cgr101_fn_sin(double phase, void *arg)
 {
     double angle = 2.0 * M_PI * phase;
+    (void)arg;
     return ((double)sin(angle));
 }
 
 
-static double cgr101_fn_squ(double phase)
+static double cgr101_fn_squ(double phase, void *arg)
 {
+    (void)arg;
     return (double)((phase < 0.5) ? 1.0 : -1.0);
 }
 
-static double cgr101_fn_tri(double phase)
+static double cgr101_fn_tri(double phase, void *arg)
 {
     double amp = phase * 2.0;
+    (void)arg;
     return (double)((phase < 0.5) ? (amp - 1.0) : (1.0 - amp));
 }
 
-typedef double (*wff_t)(double phase);
+static double cgr101_fn_const(double phase, void *arg)
+{
+    double value = *(double *)arg;
+    (void)phase;
+    return (double)value;
+}
 
-static void cgr101_waveform_create_fn(double *data, size_t points, wff_t wfn)
+/*
+ * Interpolate a set of points. 'phase' ranges from 0.0 to (almost) 1.0.
+ */
+static double cgr101_fn_interp(double phase, void *arg)
+{
+    struct cgr101_w_interp *interp = (struct cgr101_w_interp  *)arg;
+    double value = 0.0;
+    double in_phase;
+    double start_phase;
+    double end_phase;
+    double interp_phase;
+    double delta;
+    double v1;
+    double v2;
+    size_t start_idx;
+    size_t end_idx;
+    size_t segments;
+
+    assert(interp);
+    assert(interp->data);
+    assert(interp->len > 1);
+    assert(interp->len <= WAVEFORM_USER_MAX);
+    /* Number of line segments to use. */
+    segments = interp->len - 1;
+    in_phase = phase * (double)segments;
+    /* Indexes for starting and ending interpolation points */
+    start_phase = floor(in_phase);
+    end_phase = start_phase + 1.0;
+    start_idx = (size_t)start_phase;
+    end_idx = (size_t)end_phase;
+    assert(start_idx < segments);
+    assert(end_idx < interp->len);
+    assert(end_idx > start_idx);
+    interp_phase = phase - start_phase;
+    assert(interp_phase >= 0);
+    assert(interp_phase < 1.0);
+
+    /* Get the endpoints of the interpolation segment. */
+    v1 = interp->data[start_idx];
+    v2 = interp->data[end_idx];
+    /* Calculate the interpolated value. */
+    delta = v2 - v1;
+    value = v1 + delta*interp_phase;
+
+    return value;
+}
+
+typedef double (*wff_t)(double phase, void *arg);
+
+static void cgr101_waveform_create_fn(double *data,
+                                      size_t points,
+                                      wff_t wfn,
+                                      void *arg)
 {
     size_t i;
     double phase = 0.0;
-    double phase_incr = 1.0/((double)points-1);
+    double phase_incr = 1.0/((double)points);
     for (i=0; i<points; i++) {
-        data[i] = (double)wfn(phase);
+        data[i] = (double)wfn(phase, arg);
         phase += phase_incr;
     }
 }
@@ -1027,17 +1091,20 @@ static void cgr101_waveform_create(struct info *info,
     case WAV_SIN:
         cgr101_waveform_create_fn(info->device->waveform.user,
                                   COUNT_OF(info->device->waveform.user),
-                                  cgr101_fn_sin);
+                                  cgr101_fn_sin,
+                                  NULL);
         break;
     case WAV_SQU:
         cgr101_waveform_create_fn(info->device->waveform.user,
                                   COUNT_OF(info->device->waveform.user),
-                                  cgr101_fn_squ);
+                                  cgr101_fn_squ,
+                                  NULL);
         break;
     case WAV_TRI:
         cgr101_waveform_create_fn(info->device->waveform.user,
                                   COUNT_OF(info->device->waveform.user),
-                                  cgr101_fn_tri);
+                                  cgr101_fn_tri,
+                                  NULL);
         break;
     case WAV_NONE:
         /* Nothing to do. */
@@ -1075,14 +1142,33 @@ static void cgr101_waveform_user(struct info *info,
                                  size_t len,
                                  double *data)
 {
-    (void)info;
-    (void)len;
-    (void)data;
+    if (len == 1) {
+        cgr101_waveform_create_fn(info->device->waveform.user,
+                                  COUNT_OF(info->device->waveform.user),
+                                  cgr101_fn_const,
+                                  data);
+    } else if (len <= COUNT_OF(info->device->waveform.user)) {
+        struct cgr101_w_interp interp = {
+            .len = len,
+            .data = data
+        };
+        cgr101_waveform_create_fn(info->device->waveform.user,
+                                  COUNT_OF(info->device->waveform.user),
+                                  cgr101_fn_interp,
+                                  &interp);
+    } else {
+        /* Handle this case someday or return an error. */
+        assert(0);
+    }
 }
 
 static void cgr101_waveform_userq(struct info *info)
 {
-    (void)info;
+    size_t i;
+
+    for (i=0; i<COUNT_OF(info->device->waveform.user); i++) {
+        scpi_output_fp(info->output, info->device->waveform.user[i]);
+    }
 }
 
 /*

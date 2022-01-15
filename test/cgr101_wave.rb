@@ -127,4 +127,35 @@ module CGR101Wave
       assert_equal(func, v1)
     end
   end
+
+  #
+  # SOUR:FUNC:USER/USER?
+  #
+  def test_wave_004
+    # set it
+    self.class.hdl.send("SOUR:FUNC:USER -1.0,1.0")
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+
+    # get it
+    self.class.hdl.send("SOUR:FUNC:USER?")
+    out = self.class.hdl.recv
+    v0 = out.split(',')
+    assert_equal(256, v0.length)
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+
+    # get SOUR:FUNC?
+    self.class.hdl.send("SOUR:FUNC?")
+    out = self.class.hdl.recv
+    v1 = out.split(',')
+    assert_equal(1, v1.length)
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+
+    # should match 'USER'
+    assert_equal('USER', v1[0])
+
+  end
+
 end
