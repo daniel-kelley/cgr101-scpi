@@ -374,6 +374,10 @@ int scpi_core_done(struct info *info)
 
 void scpi_core_top(struct info *info)
 {
+    if (info->scpi->pool) {
+        free(info->scpi->pool);
+        info->scpi->pool = NULL;
+    }
     info->busy = 0;
 }
 
@@ -392,13 +396,48 @@ struct scpi_type *scpi_core_format_type(struct info *info,
     return v1;
 }
 
+#define NRF_CHUNK 256
+
 struct scpi_type *scpi_core_nrf_list(struct info *info,
                                      struct scpi_type *vl,
                                      struct scpi_type *vs)
 {
-    (void)info;
-    (void)vl;
-    (void)vs;
+    union scpi_type_val val;
+    char *buf;
+    size_t hsize = sizeof(struct scpi_type_list);
+
+    assert(NRF_CHUNK > 1); /* Check minimum chunk size. */
+    if (vl->type != SCPI_TYPE_LIST) {
+        /* Start list */
+        assert(vl->type == vs->type);
+        val = vl->val;
+        vl->type = SCPI_TYPE_LIST;
+        buf = malloc(hsize + sizeof(val)*NRF_CHUNK);
+        assert(buf);
+        assert(!info->scpi->pool);
+        info->scpi->pool = buf;
+        vl->val.list = (struct scpi_type_list *)buf;
+        buf += sizeof(struct scpi_type_list);
+        vl->val.list->type = vs->type;
+        vl->val.list->val = (union scpi_type_val *)buf;
+        vl->val.list->len = 1;
+        vl->val.list->max = NRF_CHUNK;
+        vl->val.list->val[0] = val;
+    } else {
+        /* Lists always contain a uniform type */
+        assert(vl->val.list->type == vs->type);
+        if (vl->val.list->len == vl->val.list->max) {
+            /* Expand list */
+            vl->val.list->max += NRF_CHUNK;
+            buf = realloc(vl->val.list, hsize + sizeof(val)*vl->val.list->max);
+            assert(buf);
+            vl->val.list = (struct scpi_type_list *)buf;
+        }
+    }
+    /* Append vs to list vl. */
+    assert(vl->val.list->len < vl->val.list->max);
+    vl->val.list->val[vl->val.list->len] = vs->val;
+    vl->val.list->len++;
 
     return vl;
 }
