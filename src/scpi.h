@@ -173,4 +173,15 @@ extern void scpi_system_internal_calibrate(struct info *info);
 extern void scpi_system_internal_configure(struct info *info);
 extern void scpi_system_internal_showq(struct info *info);
 
+extern void scpi_dev_conf_digital_event(struct info *info,
+                                        struct scpi_type *v1,
+                                        struct scpi_type *v2,
+                                        struct scpi_type *v3);
+extern void scpi_dev_fetch_digital_eventq(struct info *info);
+extern void scpi_dev_measure_digital_eventq(struct info *info,
+                                            struct scpi_type *v1,
+                                            struct scpi_type *v2,
+                                            struct scpi_type *v3);
+extern void scpi_dev_read_digital_eventq(struct info *info);
+
 #endif /* SCPI_H_ */

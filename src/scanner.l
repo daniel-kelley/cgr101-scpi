@@ -61,6 +61,7 @@ DEF                     { return DEF; }
 (ENAB|ENABle)\?         { return ENABQ; }
 (ERR|ERRor)             { return ERR; }
 (ERR|ERRor)\?           { return ERRQ; }
+(EVEN|EVENt)            { return EVEN; }
 (EVEN|EVENt)\?          { return EVENQ; }
 (EXT|EXTernal)          { return parser_ident(yytext, yylval, EXT); }
 (FETC|FETCh)            { return FETC; }
@@ -72,6 +73,7 @@ DEF                     { return DEF; }
 (FUNC|FUNCtion)         { return FUNC; }
 (FUNC|FUNCtion)\?       { return FUNCQ; }
 (HEX|HEXadecimal)       { return parser_ident(yytext, yylval, HEX); }
+HIGH                    { return parser_ident(yytext, yylval, HIGH); }
 (IMM|IMMediate)         { return parser_ident(yytext, yylval, IMM); }
 (INIT|INITiate)         { return INIT; }
 (INP|INPut)             { return INP; }
@@ -82,7 +84,8 @@ INTernal                { return INTERNAL; }
 (LEV|LEVel)\?           { return LEVQ; }
 (LOC|LOCation)          { return LOC; }
 (LOC|LOCation)\?        { return LOCQ; }
-(LOW|LOWer)             { return LOW; }
+LOW                     { return parser_ident(yytext, yylval, LOW); }
+LOWer                   { return LOWER; }
 (LOW|LOWer)\?           { return LOWQ; }
 MAX                     { return parser_ident(yytext, yylval, MAX); }
 (MEAS|MEASure)          { return MEAS; }

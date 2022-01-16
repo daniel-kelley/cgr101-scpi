@@ -579,3 +579,34 @@ void scpi_dev_rst(struct info *info)
 {
     cgr101_rst(info);
 }
+void scpi_dev_conf_digital_event(struct info *info,
+                                 struct scpi_type *v1,
+                                 struct scpi_type *v2,
+                                 struct scpi_type *v3)
+{
+    (void)info;
+    (void)v1;
+    (void)v2;
+    (void)v3;
+}
+
+void scpi_dev_fetch_digital_eventq(struct info *info)
+{
+    (void)info;
+}
+
+void scpi_dev_measure_digital_eventq(struct info *info,
+                                     struct scpi_type *v1,
+                                     struct scpi_type *v2,
+                                     struct scpi_type *v3)
+{
+    (void)info;
+    (void)v1;
+    (void)v2;
+    (void)v3;
+}
+
+void scpi_dev_read_digital_eventq(struct info *info)
+{
+    (void)info;
+}

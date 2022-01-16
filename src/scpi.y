@@ -51,6 +51,7 @@
 %token ESE
 %token ESEQ
 %token ESRQ
+%token EVEN
 %token EVENQ
 %token EXT
 %token FETC
@@ -63,6 +64,7 @@
 %token FUNC
 %token FUNCQ
 %token HEX
+%token HIGH
 %token IDNQ
 %token IMM
 %token INIT
@@ -75,6 +77,7 @@
 %token LOC
 %token LOCQ
 %token LOW
+%token LOWER
 %token LOWQ
 %token MAX
 %token MEAS
@@ -243,6 +246,12 @@ numeric_value
  * A number of keywords have identical short forms, so the
  * long and short forms are handled here in the grammar.
  */
+
+lower
+    : LOWER
+    | LOW
+    ;
+
 status
     : STATUS
     | STAT
@@ -433,6 +442,13 @@ trigger_source
     | EXT
     ;
 
+int_sel
+    : HIGH
+    | LOW
+    | POS
+    | NEG
+    ;
+
 block
     : nrf-list
     ;
@@ -444,11 +460,20 @@ dev-cmd
     | CONF COLON DIG COLON DAT
     { scpi_dev_conf_digital_data(info); }
 
+    | CONF COLON DIG COLON EVEN int_sel NUM channel
+    { scpi_dev_conf_digital_event(info, &$6, &$7, &$8); }
+
+    | CONF COLON DIG COLON EVEN NUM channel
+    { scpi_dev_conf_digital_event(info, NULL, &$6, &$7); }
+
     | CONFQ
     { scpi_dev_confq(info); }
 
     | FETC COLON DIG COLON DATQ
     { scpi_dev_fetch_digital_dataq(info); }
+
+    | FETC COLON DIG COLON EVENQ
+    { scpi_dev_fetch_digital_eventq(info); }
 
     | FORM format_arg
     { scpi_core_format(info, &$2); }
@@ -479,8 +504,17 @@ dev-cmd
     | MEAS COLON DIG COLON DATQ
     { scpi_dev_measure_digital_dataq(info); }
 
+    | MEAS COLON DIG COLON EVENQ int_sel NUM channel
+    { scpi_dev_measure_digital_eventq(info, &$6, &$7, &$8); }
+
+    | MEAS COLON DIG COLON EVENQ NUM channel
+    { scpi_dev_measure_digital_eventq(info, NULL, &$6, &$7); }
+
     | READ COLON DIG COLON DATQ
     { scpi_dev_read_digital_dataq(info); }
+
+    | READ COLON DIG COLON EVENQ
+    { scpi_dev_read_digital_eventq(info); }
 
     | SENS COLON DATQ channel
     { scpi_dev_sense_dataq(info, &$4); }
@@ -542,10 +576,10 @@ dev-cmd
     | SENS COLON SWE COLON TINTQ
     { scpi_dev_sense_sweep_time_intervalq(info); }
 
-    | SENS COLON VOLT COLON LOW numeric_value channel
+    | SENS COLON VOLT COLON lower numeric_value channel
     { scpi_dev_sense_voltage_low(info, &$6, &$7); }
 
-    | SENS COLON VOLT COLON DC COLON LOW numeric_value channel
+    | SENS COLON VOLT COLON DC COLON lower numeric_value channel
     { scpi_dev_sense_voltage_low(info, &$8, &$9); }
 
     | SENS COLON VOLT COLON OFFS numeric_value channel
