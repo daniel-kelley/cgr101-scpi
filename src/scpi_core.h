@@ -40,6 +40,8 @@ struct scpi_core {
     uint8_t             srer;   /* Service Request Enable Register */
     /* Internal memory pool(s) */
     void *pool;
+    /* Internal flags */
+    int opcq;
 };
 
 extern int scpi_core_init(struct info *info);

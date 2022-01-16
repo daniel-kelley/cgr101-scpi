@@ -207,6 +207,8 @@ struct cgr101 {
         unsigned int addr;         /* offset of first data capture. */
         enum cgr101_scope_data_state data_state;
         int data_count;
+        int output_pending;
+        long output_mask;
         struct {
             double input_low;
             double input_high;
@@ -683,6 +685,38 @@ static int cgr101_rcv_scope_addr(struct info *info, char c)
     return err;
 }
 
+static void cgr101_digitizer_data_output(struct info *info, long chan_mask)
+{
+    int chan;
+    unsigned int j;
+    unsigned int idx;
+    double data;
+
+    assert(info->device->scope.addr_state == STATE_SCOPE_ADDR_COMPLETE);
+    for (chan=0; chan<SCOPE_NUM_CHAN; chan++) {
+        if (!(chan_mask & 1<<chan)) {
+            continue;
+        }
+        for (j=0; j<SCOPE_NUM_SAMPLE; j++) {
+            idx = info->device->scope.addr;
+            idx += j;
+            if (idx >= SCOPE_NUM_SAMPLE) {
+                /* wrapped */
+                idx -= SCOPE_NUM_SAMPLE;
+            }
+            data = cgr101_digitizer_value(info, chan, idx);
+            scpi_output_fp(info->output, data);
+        }
+    }
+}
+
+static void cgr101_scope_data_output(struct info *info)
+{
+    assert(info->device->scope.output_pending);
+    cgr101_digitizer_data_output(info,info->device->scope.output_mask);
+    info->device->scope.output_pending = 0;
+}
+
 static void cgr101_rcv_scope_data_chan(struct info *info,
                                        int chan,
                                        int byte,
@@ -725,6 +759,10 @@ static int cgr101_rcv_scope_data(struct info *info, char c)
             info->device->scope.data_state = STATE_SCOPE_DATA_COMPLETE;
             info->overlapped = 0;
             info->sweep_status = 0;
+            if (info->device->scope.output_pending) {
+                cgr101_scope_data_output(info);
+            }
+            event_send(info->event, EVENT_UNBLOCK);
             /* Unblock. */
             cgr101_rcv_idle(info);
             /* Done receiving. */
@@ -884,6 +922,7 @@ static void cgr101_event_init(struct info *info)
                     cgr101_scope_status_output,
                     info);
     assert(!err);
+
 }
 
 /*
@@ -1266,6 +1305,13 @@ static int cgr101_sweep_time(struct info *info, double time)
     return err;
 }
 
+static void cgr101_digitizer_data_pending(struct info *info, long chan_mask)
+{
+    info->block_input = 1;
+    info->device->scope.output_pending = 1;
+    info->device->scope.output_mask = chan_mask;
+}
+
 
 /*
  * Initialization
@@ -1552,26 +1598,10 @@ void cgr101_digitizer_coupling(struct info *info, const char *value)
 
 void cgr101_digitizer_dataq(struct info *info, long chan_mask)
 {
-    int chan;
-    unsigned int j;
-    unsigned int idx;
-    double data;
-
-    assert(info->device->scope.addr_state == STATE_SCOPE_ADDR_COMPLETE);
-    for (chan=0; chan<SCOPE_NUM_CHAN; chan++) {
-        if (!(chan_mask & 1<<chan)) {
-            continue;
-        }
-        for (j=0; j<SCOPE_NUM_SAMPLE; j++) {
-            idx = info->device->scope.addr;
-            idx += j;
-            if (idx >= SCOPE_NUM_SAMPLE) {
-                /* wrapped */
-                idx -= SCOPE_NUM_SAMPLE;
-            }
-            data = cgr101_digitizer_value(info, chan, idx);
-            scpi_output_fp(info->output, data);
-        }
+    if (info->sweep_status) {
+        cgr101_digitizer_data_pending(info, chan_mask);
+    } else {
+        cgr101_digitizer_data_output(info, chan_mask);
     }
 }
 

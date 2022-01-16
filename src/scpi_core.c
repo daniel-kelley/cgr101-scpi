@@ -15,6 +15,7 @@
 #include "scpi_error.h"
 #include "scpi_input.h"
 #include "parser.h"
+#include "event.h"
 
 static uint8_t scpi_core_status_update(struct info *info)
 {
@@ -107,10 +108,12 @@ void scpi_common_opc(struct info *info)
 
 void scpi_common_opcq(struct info *info)
 {
-    /* FIXME: blocks until all operations are complete (like *WAI) and
-       then outputs a "1". Nothing to do with SCPI_SESR_OPC is set. */
-    scpi_output_int(info->output,
-                    info->scpi->sesr & SCPI_SESR_OPC ? 1 : 0);
+    if (info->overlapped) {
+        info->block_input = 1;
+        info->scpi->opcq = 1;
+    } else {
+        scpi_output_int(info->output, 1);
+    }
 }
 
 void scpi_common_rst(struct info *info)
@@ -143,9 +146,9 @@ void scpi_common_tstq(struct info *info)
 
 void scpi_common_wai(struct info *info)
 {
-    /* FIXME: blocks until all operations are complete. Nothing to do
-     * with SCPI_SESR_OPC. */
-    scpi_common_opc(info);
+    if (info->overlapped) {
+        info->block_input = 1;
+    }
 }
 
 void scpi_system_versionq(struct info *info)
@@ -323,6 +326,17 @@ int scpi_core_recv(struct info *info)
     return err;
 }
 
+static void scpi_core_unblock_input(void *arg)
+{
+    struct info *info = arg;
+
+    info->block_input = 0;
+    if (info->scpi->opcq) {
+        info->scpi->opcq = 0;
+        scpi_output_int(info->output, 1);
+    }
+}
+
 int scpi_core_init(struct info *info)
 {
     int err;
@@ -347,6 +361,15 @@ int scpi_core_init(struct info *info)
         }
 
         err = parser_init(info);
+        if (err) {
+            break;
+        }
+
+        err = event_add(info->event,
+                        EVENT_UNBLOCK,
+                        scpi_core_unblock_input,
+                        info);
+
     } while (0);
 
     return err;
