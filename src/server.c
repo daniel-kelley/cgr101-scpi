@@ -253,7 +253,7 @@ static int server_select(struct info *info)
         return rc;
     }
 
-    if (FD_ISSET(info->cli_in_fd, &fds)) {
+    if (FD_ISSET(info->cli_in_fd, &fds) && !info->block_input) {
         srv_event |= SERVER_CLI;
     }
 

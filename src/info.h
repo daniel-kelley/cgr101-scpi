@@ -37,6 +37,8 @@ struct info {
     int dev;
     int port;
     int busy;
+    int overlapped;
+    int block_input;
     const char *debug;
     char cli_buf[INFO_CLI_LEN];
     struct response rsp;

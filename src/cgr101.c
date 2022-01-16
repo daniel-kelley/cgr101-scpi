@@ -662,6 +662,7 @@ static int cgr101_digitizer_start(struct info *info, int manual)
             cgr101_digitizer_manual_trigger(info);
         }
 
+        info->overlapped = 1;
         info->sweep_status = 1;
 
     } while (0);
@@ -739,7 +740,9 @@ static int cgr101_rcv_scope_data(struct info *info, char c)
         info->device->scope.data_count++;
         if (info->device->scope.data_count == SCOPE_NUM_SAMPLE) {
             info->device->scope.data_state = STATE_SCOPE_DATA_COMPLETE;
+            info->overlapped = 0;
             info->sweep_status = 0;
+            /* Unblock. */
             cgr101_rcv_idle(info);
             /* Done receiving. */
         } else {
