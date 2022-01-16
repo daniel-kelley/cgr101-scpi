@@ -16,6 +16,7 @@
 struct scpi_output;
 struct scpi_errq;
 struct worker;
+struct event;
 struct cgr101;
 
 struct response {
@@ -50,6 +51,7 @@ struct info {
     struct scpi_output *output;
     struct scpi_errq *error;
     struct worker *worker;
+    struct event *event;
     struct cgr101 *device;
     int sweep_status;
 };

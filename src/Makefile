@@ -72,6 +72,7 @@ SRC += parser.c
 SRC += worker.c
 SRC += spawn.c
 SRC += misc.c
+SRC += event.c
 SRC += scpi_dev.c
 
 OBJ := $(SRC:%.c=%.o)

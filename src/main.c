@@ -15,6 +15,7 @@
 #include "server.h"
 #include "cgr101.h"
 #include "worker.h"
+#include "event.h"
 
 #define SCPI_PORT 5025
 
@@ -25,6 +26,12 @@ static int init(struct info *info)
     do {
         info->worker = worker_init();
         if (!info->worker) {
+            err = -1;
+            break;
+        }
+
+        info->event = event_init(info->worker);
+        if (!info->event) {
             err = -1;
             break;
         }
@@ -46,6 +53,10 @@ static int done(struct info *info)
     int err = 0;
 
     cgr101_close(info);
+
+    if (info->event) {
+        event_done(info->event);
+    }
 
     if (info->worker) {
         worker_done(info->worker);

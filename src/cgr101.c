@@ -15,7 +15,7 @@
 #include <math.h>
 #include "worker.h"
 #include "spawn.h"
-#include "misc.h"
+#include "event.h"
 #include "scpi_output.h"
 #include "scpi_error.h"
 #include "cgr101.h"
@@ -46,15 +46,6 @@ enum cgr101_rcv_state {
     SCOPE_ADDR,
     SCOPE_DATA,
     ERROR_MSG,
-};
-
-enum cgr101_event {
-    EVENT_IDENTIFY_COMPLETE,
-    EVENT_IDENTIFY_OUTPUT,
-    EVENT_DIGITAL_READ_COMPLETE,
-    EVENT_DIGITAL_READ_OUTPUT,
-    EVENT_SCOPE_STATUS_COMPLETE,
-    EVENT_SCOPE_STATUS_OUTPUT,
 };
 
 enum cgr101_identify_state {
@@ -184,8 +175,6 @@ struct cgr101 {
     enum cgr101_digital_read_state digital_read_state;
     int digital_read_requested;
     int digital_read_data;
-    /* Event Queue */
-    int eventq[2];
     /* Device Error Message */
     enum cgr101_error_state error_state;
     int error_msg_len;
@@ -236,20 +225,6 @@ struct cgr101_w_interp {
     size_t len;
     double *data;
 };
-
-/*
- * Event Queue Sender
- */
-
-static void cgr101_event_send(struct info *info, enum cgr101_event event)
-{
-    ssize_t len_out;
-    char cevent = (char)event;
-    assert(event == (enum cgr101_event)cevent);
-    len_out = write(info->device->eventq[1], &cevent, sizeof(cevent));
-    assert(len_out == sizeof(cevent));
-}
-
 
 /*
  * Device Sender
@@ -375,14 +350,16 @@ static int cgr101_rcv_digital_read(struct info *info, char c)
 
     /* Done receiving. */
     info->device->digital_read_data = (unsigned char)c;
-    cgr101_event_send(info, EVENT_DIGITAL_READ_COMPLETE);
+    event_send(info->event, EVENT_DIGITAL_READ_COMPLETE);
     cgr101_rcv_idle(info);
 
     return err;
 }
 
-static void cgr101_digital_read_completion(struct info *info)
+static void cgr101_digital_read_completion(void *arg)
 {
+    struct info *info = arg;
+
     /* By default, the device sends updates when the inputs change, so
      * completion may happen when in the PENDING state *or* the
      * COMPLETION state.
@@ -390,8 +367,10 @@ static void cgr101_digital_read_completion(struct info *info)
     info->device->digital_read_state = STATE_DIGITAL_READ_COMPLETE;
 }
 
-static void cgr101_digital_read_output(struct info *info)
+static void cgr101_digital_read_output(void *arg)
 {
+    struct info *info = arg;
+
     switch (info->device->digital_read_state) {
     case STATE_DIGITAL_READ_IDLE:
         /*
@@ -402,7 +381,7 @@ static void cgr101_digital_read_output(struct info *info)
         break;
     case STATE_DIGITAL_READ_PENDING:
         /* Reschedule */
-        cgr101_event_send(info, EVENT_DIGITAL_READ_OUTPUT);
+        event_send(info->event, EVENT_DIGITAL_READ_OUTPUT);
         break;
     case STATE_DIGITAL_READ_COMPLETE:
         /* Done. */
@@ -478,7 +457,7 @@ static int cgr101_rcv_scope_status(struct info *info, char c)
         if ((c >= '1') && (c <= '6')) {
             info->device->scope.status = (int)c - '0'; /* convert to int 1-6 */
             info->device->scope.status_state = STATE_SCOPE_STATUS_COMPLETE;
-            cgr101_event_send(info, EVENT_SCOPE_STATUS_COMPLETE);
+            event_send(info->event, EVENT_SCOPE_STATUS_COMPLETE);
 
             /* Done receiving. */
             cgr101_rcv_idle(info);
@@ -492,8 +471,10 @@ static int cgr101_rcv_scope_status(struct info *info, char c)
     return err;
 }
 
-static void cgr101_scope_status_output(struct info *info)
+static void cgr101_scope_status_output(void *arg)
 {
+    struct info *info = arg;
+
     switch (info->device->scope.status_state) {
     case STATE_SCOPE_STATUS_IDLE:
     {
@@ -503,7 +484,7 @@ static void cgr101_scope_status_output(struct info *info)
         break;
     case STATE_SCOPE_STATUS_PENDING:
         /* Reschedule */
-        cgr101_event_send(info, EVENT_SCOPE_STATUS_OUTPUT);
+        event_send(info->event, EVENT_SCOPE_STATUS_OUTPUT);
         break;
     case STATE_SCOPE_STATUS_COMPLETE:
         scpi_output_int(info->output, info->device->scope.status);
@@ -514,9 +495,11 @@ static void cgr101_scope_status_output(struct info *info)
     }
 }
 
-static void cgr101_scope_status_completion(struct info *info)
+static void cgr101_scope_status_completion(void *arg)
 {
-    cgr101_event_send(info, EVENT_SCOPE_STATUS_OUTPUT);
+    struct info *info = arg;
+
+    event_send(info->event, EVENT_SCOPE_STATUS_OUTPUT);
 }
 
 /*
@@ -796,7 +779,7 @@ static int cgr101_identify_start(struct info *info)
 
 static void cgr101_identify_done(struct info *info)
 {
-    cgr101_event_send(info, EVENT_IDENTIFY_COMPLETE);
+    event_send(info->event, EVENT_IDENTIFY_COMPLETE);
 }
 
 static int cgr101_rcv_ident(struct info *info, char c)
@@ -817,21 +800,25 @@ static int cgr101_rcv_ident(struct info *info, char c)
 int cgr101_identify(struct info *info)
 {
     info->device->identify_output_requested = 1;
-    cgr101_event_send(info, EVENT_IDENTIFY_OUTPUT);
+    event_send(info->event, EVENT_IDENTIFY_OUTPUT);
     return 0;
 }
 
-static void cgr101_identify_completion(struct info *info)
+static void cgr101_identify_completion(void *arg)
 {
+    struct info *info = arg;
+
     assert(info->device->identify_state == STATE_IDENTIFY_PENDING);
     info->device->identify_state = STATE_IDENTIFY_COMPLETE;
     if (info->device->identify_output_requested) {
-        cgr101_event_send(info, EVENT_IDENTIFY_OUTPUT);
+        event_send(info->event, EVENT_IDENTIFY_OUTPUT);
     }
 }
 
-static void cgr101_identify_output(struct info *info)
+static void cgr101_identify_output(void *arg)
 {
+    struct info *info = arg;
+
     switch (info->device->identify_state) {
     case STATE_IDENTIFY_IDLE:
     {
@@ -841,7 +828,7 @@ static void cgr101_identify_output(struct info *info)
         break;
     case STATE_IDENTIFY_PENDING:
         /* Reschedule */
-        cgr101_event_send(info, EVENT_IDENTIFY_OUTPUT);
+        event_send(info->event, EVENT_IDENTIFY_OUTPUT);
         break;
     case STATE_IDENTIFY_COMPLETE:
         scpi_output_printf(info->output,
@@ -855,49 +842,48 @@ static void cgr101_identify_output(struct info *info)
 }
 
 /*
- * Event Handler
+ * Event Registration
  */
 
-static int cgr101_event_handler(void *arg)
+static void cgr101_event_init(struct info *info)
 {
-    struct info *info = arg;
-    int err = 0;
-    ssize_t len;
-    char eventc;
-    enum cgr101_event event;
+    int err;
 
-    len = read(
-        info->device->eventq[0],
-        &eventc,
-        sizeof(eventc));
+    err = event_add(info->event,
+                    EVENT_IDENTIFY_COMPLETE,
+                    cgr101_identify_completion,
+                    info);
+    assert(!err);
 
-    assert(len == sizeof(eventc));
-    event = (enum cgr101_event)eventc;
-    switch (event) {
-    case EVENT_IDENTIFY_COMPLETE:
-        cgr101_identify_completion(info);
-        break;
-    case EVENT_IDENTIFY_OUTPUT:
-        cgr101_identify_output(info);
-        break;
-    case EVENT_DIGITAL_READ_COMPLETE:
-        cgr101_digital_read_completion(info);
-        break;
-    case EVENT_DIGITAL_READ_OUTPUT:
-        cgr101_digital_read_output(info);
-        break;
-    case EVENT_SCOPE_STATUS_COMPLETE:
-        cgr101_scope_status_completion(info);
-        break;
-    case EVENT_SCOPE_STATUS_OUTPUT:
-        cgr101_scope_status_output(info);
-        break;
-    default:
-        assert(0);
-        break;
-    }
+    err = event_add(info->event,
+                    EVENT_IDENTIFY_OUTPUT,
+                    cgr101_identify_output,
+                    info);
+    assert(!err);
 
-    return err;
+    err = event_add(info->event,
+                    EVENT_DIGITAL_READ_COMPLETE,
+                    cgr101_digital_read_completion,
+                    info);
+    assert(!err);
+
+    err = event_add(info->event,
+                    EVENT_DIGITAL_READ_OUTPUT,
+                    cgr101_digital_read_output,
+                    info);
+    assert(!err);
+
+    err = event_add(info->event,
+                    EVENT_SCOPE_STATUS_COMPLETE,
+                    cgr101_scope_status_completion,
+                    info);
+    assert(!err);
+
+    err = event_add(info->event,
+                    EVENT_SCOPE_STATUS_OUTPUT,
+                    cgr101_scope_status_output,
+                    info);
+    assert(!err);
 }
 
 /*
@@ -1370,23 +1356,7 @@ int cgr101_open(struct info *info)
             break;
         }
 
-        /* Event queue. */
-        err = pipe(info->device->eventq);
-        if (err) {
-            break;
-        }
-
-        cloexec(info->device->eventq[0]);
-        cloexec(info->device->eventq[1]);
-
-        err = worker_add(
-            info->worker,
-            info->device->eventq[0],
-            cgr101_event_handler,
-            info);
-        if (err) {
-            break;
-        }
+        cgr101_event_init(info);
 
         /* Initialize device. */
         cgr101_device_init(info);
@@ -1460,7 +1430,7 @@ int cgr101_digital_data_configured(struct info *info)
 
 void cgr101_fetch_digital_data(struct info *info)
 {
-    cgr101_event_send(info, EVENT_DIGITAL_READ_OUTPUT);
+    event_send(info->event, EVENT_DIGITAL_READ_OUTPUT);
 }
 
 void cgr101_source_digital_data(struct info *info, int value)
@@ -1877,7 +1847,7 @@ void cgr101_digitizer_upq(struct info *info, long chan_mask)
 
 void cgr101_digitizer_statq(struct info *info)
 {
-    cgr101_event_send(info, EVENT_SCOPE_STATUS_OUTPUT);
+    event_send(info->event, EVENT_SCOPE_STATUS_OUTPUT);
 }
 
 void cgr101_digitizer_reset(struct info *info)
