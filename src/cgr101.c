@@ -17,11 +17,13 @@
 #include "spawn.h"
 #include "misc.h"
 #include "scpi_output.h"
+#include "scpi_error.h"
 #include "cgr101.h"
 
-#define ID_MAX 32
-#define RCV_MAX 4100 /* 4097 plus some slop */
-#define ERR_MAX 1024
+#define ID_MAX 32       /* '*' identify message */
+#define RCV_MAX 4100    /* 'D' message; 4097 plus some slop */
+#define ERR_MAX 1024    /* stderr from device interface */
+#define E_MAX 32        /* 'E' message */
 
 #define COUNT_OF(a) (sizeof((a))/sizeof((a)[0]))
 #define FPEPSILON 0.0001
@@ -43,6 +45,7 @@ enum cgr101_rcv_state {
     SCOPE_READ,
     SCOPE_ADDR,
     SCOPE_DATA,
+    ERROR_MSG,
 };
 
 enum cgr101_event {
@@ -58,6 +61,12 @@ enum cgr101_identify_state {
     STATE_IDENTIFY_IDLE,
     STATE_IDENTIFY_PENDING,
     STATE_IDENTIFY_COMPLETE,
+};
+
+enum cgr101_error_state {
+    STATE_ERROR_IDLE,
+    STATE_ERROR_PENDING,
+    STATE_ERROR_COMPLETE,
 };
 
 enum cgr101_digital_read_state {
@@ -177,6 +186,10 @@ struct cgr101 {
     int digital_read_data;
     /* Event Queue */
     int eventq[2];
+    /* Device Error Message */
+    enum cgr101_error_state error_state;
+    int error_msg_len;
+    char error_msg[E_MAX];
     /* Digital Data Output */
     int digital_write_data;
     /* Waveform */
@@ -186,6 +199,7 @@ struct cgr101 {
         double frequency;
         double amplitude;
     } waveform;
+    /* Oscilloscope */
     struct {
         enum cgr101_scope_offset_state offset_state;
         double sweep_time;
@@ -278,7 +292,6 @@ static int cgr101_device_printf(struct info *info,
     return err;
 }
 
-
 /*
  * Receive State Machine
  */
@@ -322,6 +335,12 @@ static int cgr101_rcv_start(struct info *info, char c)
         info->device->rcv_state = SCOPE_DATA;
         /* 'DA1a1B1b2A2a2B2b2...' */
         err = 0;
+        break;
+    case 'E':
+        info->device->rcv_state = ERROR_MSG;
+        /* Variable length: terminated by <cr><lf> */
+        info->device->error_state = STATE_ERROR_PENDING;
+        info->device->error_msg_len = 0;
         break;
     default:
         assert(0);
@@ -736,6 +755,28 @@ static int cgr101_rcv_scope_data(struct info *info, char c)
 }
 
 /*
+ * Device Error handler
+ */
+
+static int cgr101_rcv_error_msg(struct info *info, char c)
+{
+    int err = 0;
+
+    if (c == '\n') {
+        /* Done receiving. */
+        info->device->error_msg[info->device->error_msg_len++] = 0;
+        scpi_error(info->error,
+                   SCPI_ERR_HARDWARE_ERROR,
+                   info->device->error_msg);
+        cgr101_rcv_idle(info);
+    } else if (c != '\r') {
+        info->device->error_msg[info->device->error_msg_len++] = c;
+    }
+
+    return err;
+}
+
+/*
  * Device Identify Handling
  */
 
@@ -885,6 +926,9 @@ static int cgr101_rcv_sm(struct info *info, char c)
         break;
     case SCOPE_DATA:
         err = cgr101_rcv_scope_data(info, c);
+        break;
+    case ERROR_MSG:
+        err = cgr101_rcv_error_msg(info, c);
         break;
     default:
         assert(0);
@@ -1136,8 +1180,6 @@ static void cgr101_waveform_program(struct info *info)
             assert(!err);
         }
         err = cgr101_device_printf(info, "W P\n");
-        assert(!err);
-        err = cgr101_device_printf(info, "W A 255\n"); /*FIXME*/
         assert(!err);
     }
 }
@@ -1460,6 +1502,8 @@ void cgr101_source_waveform_level(struct info *info, double value)
     if (value >= 0.0 && value <= 1.0) {
         info->device->waveform.amplitude = value;
         amp = (int)floor(value * 255.0);
+        assert(amp >= 0);
+        assert(amp <= 255);
         err = cgr101_device_printf(info, "W A %d\n", amp);
         assert(!err);
     } else {

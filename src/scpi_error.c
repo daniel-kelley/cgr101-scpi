@@ -45,6 +45,9 @@ static struct {
     { SCPI_ERR_INTERNAL_PARSER_ERROR,
       "Parser Error"
     },
+    { SCPI_ERR_HARDWARE_ERROR,
+      "Hardware error"
+    },
     { SCPI_ERR_NONE,
       NULL,
     }
