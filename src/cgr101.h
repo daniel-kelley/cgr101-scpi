@@ -90,4 +90,10 @@ extern void cgr101_trigger_source(struct info *info, const char *value);
 extern void cgr101_trigger_sourceq(struct info *info);
 extern void cgr101_rst(struct info *info);
 
+extern void cgr101_configure_digital_event(struct info *info,
+                                           const char *int_sel,
+                                           long count,
+                                           long chan_mask);
+extern void cgr101_fetch_digital_event(struct info *info);
+
 #endif /* CGR101_H_ */

@@ -579,20 +579,69 @@ void scpi_dev_rst(struct info *info)
 {
     cgr101_rst(info);
 }
-void scpi_dev_conf_digital_event(struct info *info,
-                                 struct scpi_type *v1,
-                                 struct scpi_type *v2,
-                                 struct scpi_type *v3)
+
+static int scpi_dev_input_digital_event(struct info *info,
+                                        struct scpi_type *v1,
+                                        struct scpi_type *v2,
+                                        struct scpi_type *v3,
+                                        const char **int_sel,
+                                        long *count,
+                                        long *chan_mask)
 {
-    (void)info;
-    (void)v1;
-    (void)v2;
-    (void)v3;
+    int err;
+
+    do {
+        if (v1) {
+            err = scpi_input_str(info, v1, int_sel);
+            if (err) {
+                break;
+            }
+        }
+
+        err = scpi_input_int(info, v2, 0, 0x00ffffff, count);
+        if (err) {
+            break;
+        }
+
+        err = scpi_dev_chan(v3, chan_mask);
+
+        if (err) {
+            break;
+        }
+    } while(0);
+
+    return err;
+}
+
+int scpi_dev_conf_digital_event(struct info *info,
+                                struct scpi_type *v1,
+                                struct scpi_type *v2,
+                                struct scpi_type *v3)
+{
+    const char *int_sel = NULL;
+    long count;
+    long chan_mask;
+    int err;
+
+    err = scpi_dev_input_digital_event(info,
+                                       v1,
+                                       v2,
+                                       v3,
+                                       &int_sel,
+                                       &count,
+                                       &chan_mask);
+
+
+    if (!err) {
+        cgr101_configure_digital_event(info, int_sel, count, chan_mask);
+    }
+
+    return err;
 }
 
 void scpi_dev_fetch_digital_eventq(struct info *info)
 {
-    (void)info;
+    cgr101_fetch_digital_event(info);
 }
 
 void scpi_dev_measure_digital_eventq(struct info *info,
@@ -600,13 +649,20 @@ void scpi_dev_measure_digital_eventq(struct info *info,
                                      struct scpi_type *v2,
                                      struct scpi_type *v3)
 {
-    (void)info;
-    (void)v1;
-    (void)v2;
-    (void)v3;
+    if (!scpi_dev_conf_digital_event(info, v1, v2, v3)) {
+        scpi_dev_read_digital_eventq(info);
+    }
 }
 
 void scpi_dev_read_digital_eventq(struct info *info)
 {
-    (void)info;
+    do {
+        if (scpi_dev_abort(info)) {
+            break;
+        }
+        if (scpi_dev_initiate(info)) {
+            break;
+        }
+        scpi_dev_fetch_digital_eventq(info);
+    } while (0);
 }

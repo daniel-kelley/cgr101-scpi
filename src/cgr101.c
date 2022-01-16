@@ -1995,3 +1995,19 @@ void cgr101_rst(struct info *info)
 {
     cgr101_device_reset(info);
 }
+
+void cgr101_configure_digital_event(struct info *info,
+                                    const char *int_sel,
+                                    long count,
+                                    long chan_mask)
+{
+    (void)info;
+    (void)int_sel;
+    (void)count;
+    (void)chan_mask;
+}
+
+void cgr101_fetch_digital_event(struct info *info)
+{
+    (void)info;
+}
