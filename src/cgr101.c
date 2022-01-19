@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <math.h>
+#include <sys/time.h>
 #include "worker.h"
 #include "spawn.h"
 #include "event.h"
@@ -159,6 +160,27 @@ static unsigned int cgr101_manual_trigger_delay_ms[] = {
     1000,  2000,  2000,  2000
 };
 
+struct digital_event {
+    struct timeval tv;
+    int data;
+};
+
+#define INTERRUPT_CHANNEL (1<<4)
+#define DIGITAL_DATA_CHANNEL (1<<6)
+#define DEVICE_EVENT_INTERRUPT 256
+
+struct cgr101_event_mode_map_s {
+    const char *name;
+    char mode;
+};
+
+static struct cgr101_event_mode_map_s cgr101_event_mode_map[] = {
+    { "POS", 'R'},
+    { "NEG", 'F'},
+    { "HIGH", 'H'},
+    { "LOW", 'L'},
+    { NULL, 0},
+};
 
 struct cgr101 {
     struct spawn child;
@@ -221,6 +243,14 @@ struct cgr101 {
             double data[SCOPE_NUM_SAMPLE];
         } channel[SCOPE_NUM_CHAN];
     } scope;
+    struct {
+        long chan_mask;
+        char mode;
+        long current;
+        long max;
+        struct digital_event *data;
+        int output_pending;
+    } event;
 };
 
 struct cgr101_w_interp {
@@ -267,6 +297,87 @@ static int cgr101_device_printf(struct info *info,
     err = cgr101_device_send(info, buf);
 
     return err;
+}
+
+/*
+ * Digital Event Support
+ */
+
+static char cgr101_digital_event_mode(const char *int_sel)
+{
+    struct cgr101_event_mode_map_s *p;
+    char mode = 0;
+
+    assert(int_sel);
+    for (p = cgr101_event_mode_map; p != NULL; p++) {
+        if (!strcasecmp(int_sel, p->name)) {
+            mode = p->mode;
+            break;
+        }
+    }
+    assert(p != NULL);
+
+    return mode;
+}
+
+static void cgr101_digital_event_pending(struct info *info)
+{
+    info->block_input = 1;
+    info->device->event.output_pending = 1;
+}
+
+static void cgr101_digital_event_output(struct info *info)
+{
+    long idx;
+    double seconds;
+
+    for (idx = 0; idx < info->device->event.current; idx++) {
+        /* show tv */
+        seconds =
+            (double)info->device->event.data[idx].tv.tv_sec +
+            ((double)info->device->event.data[idx].tv.tv_usec/1000000.0);
+        scpi_output_fp(info->output, seconds);
+        scpi_output_int(info->output, info->device->event.data[idx].data);
+    }
+}
+
+static void cgr101_device_event(struct info *info, int data)
+{
+    struct timeval tv;
+    int err;
+    long current = info->device->event.current;
+    assert(current < info->device->event.max);
+    assert(data >= 0);
+    assert(data <= DEVICE_EVENT_INTERRUPT);
+    assert(info->device->event.data);
+
+    err = gettimeofday(&tv, NULL);
+    assert(!err);
+
+    info->device->event.data[info->device->event.current].tv = tv;
+    if (data == DEVICE_EVENT_INTERRUPT) {
+        info->device->event.data[current].data = DEVICE_EVENT_INTERRUPT;
+    } else {
+        info->device->event.data[current].data = data;
+    }
+    info->device->event.current++;
+    if (info->device->event.current == info->device->event.max) {
+        info->device->event.chan_mask = 0;
+        info->digital_event_status = 0;
+        if (info->device->event.output_pending) {
+            cgr101_digital_event_output(info);
+        }
+        event_send(info->event, EVENT_UNBLOCK);
+
+    }
+}
+
+static void cgr101_interrupt_mode(struct info *info)
+{
+    int err;
+
+    err = cgr101_device_printf(info, "D ! %c\n", info->device->event.mode);
+    assert(!err);
 }
 
 /*
@@ -318,6 +429,12 @@ static int cgr101_rcv_start(struct info *info, char c)
         /* Variable length: terminated by <cr><lf> */
         info->device->error_state = STATE_ERROR_PENDING;
         info->device->error_msg_len = 0;
+        break;
+    case '!':
+        /* '!' */
+        if (info->device->event.chan_mask & INTERRUPT_CHANNEL) {
+            cgr101_device_event(info, DEVICE_EVENT_INTERRUPT);
+        }
         break;
     default:
         assert(0);
@@ -1440,6 +1557,9 @@ int cgr101_initiate(struct info *info)
         assert(!err);
     }
 
+    if ((info->device->event.chan_mask & INTERRUPT_CHANNEL) != 0) {
+        cgr101_interrupt_mode(info);
+    }
 
     return 0;
 }
@@ -1996,18 +2116,49 @@ void cgr101_rst(struct info *info)
     cgr101_device_reset(info);
 }
 
+void cgr101_abort(struct info *info)
+{
+    /* Scope */
+    /* Digital Event */
+    /* FIXME: STUB */
+    (void)info;
+}
+
 void cgr101_configure_digital_event(struct info *info,
                                     const char *int_sel,
                                     long count,
                                     long chan_mask)
 {
-    (void)info;
-    (void)int_sel;
-    (void)count;
-    (void)chan_mask;
+    char mode = 0;
+    size_t data_size;
+
+    if ((chan_mask & INTERRUPT_CHANNEL) != 0) {
+        assert(int_sel);
+        mode = cgr101_digital_event_mode(int_sel);
+    }
+
+    if ((chan_mask & DIGITAL_DATA_CHANNEL) != 0) {
+    }
+
+    /* Error if bogus channels */
+
+    data_size = (size_t)count * sizeof(info->device->event.data[0]);
+
+    info->device->event.chan_mask = chan_mask;
+    info->device->event.mode = mode;
+    info->device->event.current = 0;
+    info->device->event.max = count;
+    info->device->event.output_pending = 0;
+    info->device->event.data = realloc(info->device->event.data,data_size);
+    assert(info->device->event.data);
 }
 
 void cgr101_fetch_digital_event(struct info *info)
 {
+    if (info->digital_event_status) {
+        cgr101_digital_event_pending(info);
+    } else {
+        cgr101_digital_event_output(info);
+    }
     (void)info;
 }

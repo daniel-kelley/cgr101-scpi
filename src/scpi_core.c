@@ -192,7 +192,18 @@ void scpi_status_operation_eventq(struct info *info)
 
 void scpi_status_operation_conditionq(struct info *info)
 {
-    info->scpi->oper.cond = info->sweep_status ? 8 : 0;
+    uint16_t cond = 0;
+
+    if (info->sweep_status) {
+        cond |= SCPI_OPER_SWE;
+    }
+
+    if (info->digital_event_status) {
+        cond |= SCPI_OPER_DE;
+    }
+
+    info->scpi->oper.cond = cond;
+
     scpi_output_int(info->output, info->scpi->oper.cond);
 }
 

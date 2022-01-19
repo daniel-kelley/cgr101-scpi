@@ -89,6 +89,7 @@ extern void cgr101_trigger_slopeq(struct info *info);
 extern void cgr101_trigger_source(struct info *info, const char *value);
 extern void cgr101_trigger_sourceq(struct info *info);
 extern void cgr101_rst(struct info *info);
+extern void cgr101_abort(struct info *info);
 
 extern void cgr101_configure_digital_event(struct info *info,
                                            const char *int_sel,

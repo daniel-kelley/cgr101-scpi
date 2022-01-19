@@ -17,7 +17,7 @@
 
 int scpi_dev_abort(struct info *info)
 {
-    (void)info;
+    cgr101_abort(info);
 
     return 0;
 }

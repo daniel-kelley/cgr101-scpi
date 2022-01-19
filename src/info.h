@@ -54,6 +54,7 @@ struct info {
     struct event *event;
     struct cgr101 *device;
     int sweep_status;
+    int digital_event_status;
 };
 
 #endif /* INFO_H_ */
