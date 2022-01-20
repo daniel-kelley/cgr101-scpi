@@ -73,12 +73,12 @@ struct scpi_type *scpi_dev_channel_range(struct info *info,
     assert(chan_start < chan_end);
     /* Set a range of channels */
     while (chan_start != chan_end) {
-        v2->val.chan |= chan_start;
+        v1->val.chan |= chan_start;
         chan_start <<= 1;
         assert(chan_start != 0);
     }
 
-    return v2;
+    return v1;
 }
 
 struct scpi_type *scpi_dev_channel_range_append(struct info *info,
@@ -90,9 +90,9 @@ struct scpi_type *scpi_dev_channel_range_append(struct info *info,
     assert(v1->type == SCPI_TYPE_CHAN);
     assert(v2->type == SCPI_TYPE_CHAN);
 
-    v2->val.chan |= v1->val.chan;
+    v1->val.chan |= v2->val.chan;
 
-    return v2;
+    return v1;
 }
 
 static int scpi_dev_chan(struct scpi_type *v, long *chan_mask)

@@ -391,12 +391,18 @@ static int server_action(struct info *info, int event)
     if (event & SERVER_CLI) {
         if (server_cli(info)) {
             err = 1;
+            if (info->verbose) {
+                fprintf(stderr, "server_cli() failed.\n");
+            }
         }
     }
 
     if (event & SERVER_WORKER) {
         if (worker_run_ready(info->worker)) {
             err = 1;
+            if (info->verbose) {
+                fprintf(stderr, "worker_run_ready() failed.\n");
+            }
         }
     }
 
@@ -404,6 +410,9 @@ static int server_action(struct info *info, int event)
         scpi_core_recv(info);
         if (info->rsp.valid) {
             err = server_rsp(info);
+            if (err && info->verbose) {
+                fprintf(stderr, "server_rsp() failed.\n");
+            }
         }
     }
 
@@ -420,6 +429,9 @@ static int server_loop(struct info *info)
         assert(event >= 0);
         err = server_action(info, event);
         if (err) {
+            if (info->verbose) {
+                fprintf(stderr, "server_action() failed (%d).\n", err);
+            }
             break;
         }
     }
@@ -437,9 +449,15 @@ int server_run(struct info *info)
 
     do {
         if (scpi_core_init(info)) {
+            if (info->verbose) {
+                fprintf(stderr, "scpi_core_init() failed.\n");
+            }
             break;
         }
         if (server_init(info)) {
+            if (info->verbose) {
+                fprintf(stderr, "server_init() failed.\n");
+            }
             break;
         }
         rc = server_loop(info);

@@ -47,6 +47,7 @@ enum cgr101_rcv_state {
     SCOPE_ADDR,
     SCOPE_DATA,
     ERROR_MSG,
+    INTERRUPT_MSG,
 };
 
 enum cgr101_identify_state {
@@ -165,9 +166,12 @@ struct digital_event {
     int data;
 };
 
-#define INTERRUPT_CHANNEL (1<<4)
-#define DIGITAL_DATA_CHANNEL (1<<6)
-#define DEVICE_EVENT_INTERRUPT 256
+/* Channels are one based, but channel masks are zero based. */
+#define CHAN(n) ((n)-1)
+#define INTERRUPT_CHANNEL_MASK (1<<CHAN(4))
+#define DIGITAL_DATA_CHANNEL_MASK (1<<CHAN(6))
+
+#define DIGITAL_EVENT_INTERRUPT 256
 
 struct cgr101_event_mode_map_s {
     const char *name;
@@ -175,6 +179,7 @@ struct cgr101_event_mode_map_s {
 };
 
 static struct cgr101_event_mode_map_s cgr101_event_mode_map[] = {
+    { "NONE", 'D'},
     { "POS", 'R'},
     { "NEG", 'F'},
     { "HIGH", 'H'},
@@ -270,6 +275,15 @@ static int cgr101_device_send(struct info *info, const char *str)
     len_out = write(info->device->child.stdin, str, len_in);
     result = (len_out > 0) ? ((size_t)len_out == len_in) : 0;
 
+    /*
+     * Seems that we need to be gentle, otherwise one gets various
+     * error responses if commands are sent too quickly back to back.
+     *
+     * Start with a simple delay. 10000uS seems to be the minimum.
+     */
+
+    usleep(10000);
+
     return (result == 0);
 }
 
@@ -332,7 +346,7 @@ static void cgr101_digital_event_output(struct info *info)
     double seconds;
 
     for (idx = 0; idx < info->device->event.current; idx++) {
-        /* show tv */
+        /* show timestamp in Unix Epoch Time in seconds. */
         seconds =
             (double)info->device->event.data[idx].tv.tv_sec +
             ((double)info->device->event.data[idx].tv.tv_usec/1000000.0);
@@ -341,27 +355,36 @@ static void cgr101_digital_event_output(struct info *info)
     }
 }
 
-static void cgr101_device_event(struct info *info, int data)
+static void cgr101_interrupt_mode(struct info *info)
+{
+    int err;
+
+    err = cgr101_device_printf(info, "D ! %c\n", info->device->event.mode);
+    assert(!err);
+}
+
+static void cgr101_digital_event(struct info *info, int data)
 {
     struct timeval tv;
     int err;
     long current = info->device->event.current;
     assert(current < info->device->event.max);
     assert(data >= 0);
-    assert(data <= DEVICE_EVENT_INTERRUPT);
+    assert(data <= DIGITAL_EVENT_INTERRUPT);
     assert(info->device->event.data);
 
     err = gettimeofday(&tv, NULL);
     assert(!err);
 
-    info->device->event.data[info->device->event.current].tv = tv;
-    if (data == DEVICE_EVENT_INTERRUPT) {
-        info->device->event.data[current].data = DEVICE_EVENT_INTERRUPT;
+    info->device->event.data[current].tv = tv;
+    if (data == DIGITAL_EVENT_INTERRUPT) {
+        info->device->event.data[current].data = DIGITAL_EVENT_INTERRUPT;
     } else {
         info->device->event.data[current].data = data;
     }
-    info->device->event.current++;
-    if (info->device->event.current == info->device->event.max) {
+    current++;
+    info->device->event.current = current;
+    if (current == info->device->event.max) {
         info->device->event.chan_mask = 0;
         info->digital_event_status = 0;
         if (info->device->event.output_pending) {
@@ -369,14 +392,16 @@ static void cgr101_device_event(struct info *info, int data)
         }
         event_send(info->event, EVENT_UNBLOCK);
 
+    } else if (data == DIGITAL_EVENT_INTERRUPT) {
+        cgr101_interrupt_mode(info); /* Re-arm */
     }
 }
 
-static void cgr101_interrupt_mode(struct info *info)
+static void cgr101_digital_auto_update(struct info *info)
 {
     int err;
 
-    err = cgr101_device_printf(info, "D ! %c\n", info->device->event.mode);
+    err = cgr101_device_printf(info, "D A\n");
     assert(!err);
 }
 
@@ -429,12 +454,14 @@ static int cgr101_rcv_start(struct info *info, char c)
         /* Variable length: terminated by <cr><lf> */
         info->device->error_state = STATE_ERROR_PENDING;
         info->device->error_msg_len = 0;
+        /* Save the 'E' in 'Error...' */
+        info->device->error_msg[info->device->error_msg_len++] = c;
+        err = 0;
         break;
     case '!':
-        /* '!' */
-        if (info->device->event.chan_mask & INTERRUPT_CHANNEL) {
-            cgr101_device_event(info, DEVICE_EVENT_INTERRUPT);
-        }
+        /* '!\r\n' */
+        info->device->rcv_state = INTERRUPT_MSG;
+        err = 0;
         break;
     default:
         assert(0);
@@ -469,6 +496,9 @@ static int cgr101_rcv_digital_read(struct info *info, char c)
 
     /* Done receiving. */
     info->device->digital_read_data = (unsigned char)c;
+    if (info->device->event.chan_mask & DIGITAL_DATA_CHANNEL_MASK) {
+        cgr101_digital_event(info, info->device->digital_read_data);
+    }
     event_send(info->event, EVENT_DIGITAL_READ_COMPLETE);
     cgr101_rcv_idle(info);
 
@@ -918,6 +948,31 @@ static int cgr101_rcv_error_msg(struct info *info, char c)
 }
 
 /*
+ * Device Interrupt handler
+ */
+
+static int cgr101_rcv_interrupt_msg(struct info *info, char c)
+{
+    int err = 0;
+
+    switch (c) {
+    case '\n':
+        /* Done receiving. */
+        if (info->device->event.chan_mask & INTERRUPT_CHANNEL_MASK) {
+            cgr101_digital_event(info, DIGITAL_EVENT_INTERRUPT);
+        }
+        cgr101_rcv_idle(info);
+    case '\r':
+    case '!':
+        break;
+    default:
+        assert(0);
+    }
+
+    return err;
+}
+
+/*
  * Device Identify Handling
  */
 
@@ -1075,10 +1130,14 @@ static int cgr101_rcv_sm(struct info *info, char c)
     case ERROR_MSG:
         err = cgr101_rcv_error_msg(info, c);
         break;
+    case INTERRUPT_MSG:
+        err = cgr101_rcv_interrupt_msg(info, c);
+        break;
     default:
         assert(0);
     }
 
+    assert(!err); /*FIXME: DEBUG*/
     return err;
 }
 
@@ -1089,6 +1148,8 @@ static int cgr101_rcv_data(struct info *info, const char *buf, size_t len)
     while (len--) {
         err = cgr101_rcv_sm(info, *buf++);
         if (err) {
+            assert(0); /*FIXME: DEBUG*/
+
             break;
         }
     }
@@ -1106,6 +1167,7 @@ static int cgr101_out(void *arg)
 
     if (len < 0) {
         if (errno != EINTR && errno != EAGAIN) {
+            assert(0); /*FIXME: DEBUG*/
             err = 1;
         }
     } else if (len != 0) {
@@ -1557,8 +1619,16 @@ int cgr101_initiate(struct info *info)
         assert(!err);
     }
 
-    if ((info->device->event.chan_mask & INTERRUPT_CHANNEL) != 0) {
+    if (info->device->event.chan_mask & INTERRUPT_CHANNEL_MASK) {
         cgr101_interrupt_mode(info);
+    }
+
+    if (info->device->event.chan_mask & DIGITAL_DATA_CHANNEL_MASK) {
+        cgr101_digital_auto_update(info);
+    }
+
+    if ((info->device->event.chan_mask) != 0) {
+        info->digital_event_status = 1;
     }
 
     return 0;
@@ -2132,12 +2202,11 @@ void cgr101_configure_digital_event(struct info *info,
     char mode = 0;
     size_t data_size;
 
-    if ((chan_mask & INTERRUPT_CHANNEL) != 0) {
+    if ((chan_mask & INTERRUPT_CHANNEL_MASK) != 0) {
         assert(int_sel);
         mode = cgr101_digital_event_mode(int_sel);
-    }
-
-    if ((chan_mask & DIGITAL_DATA_CHANNEL) != 0) {
+    } else {
+        mode = cgr101_digital_event_mode("NONE");
     }
 
     /* Error if bogus channels */

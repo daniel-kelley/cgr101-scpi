@@ -412,6 +412,7 @@ void scpi_core_top(struct info *info)
         free(info->scpi->pool);
         info->scpi->pool = NULL;
     }
+    parser_cleanup();
     info->busy = 0;
 }
 

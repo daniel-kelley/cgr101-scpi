@@ -24,5 +24,6 @@ extern int parser_send(struct info *info, char *line, int len);
 extern int parser_num(const char *s, struct scpi_type *val, int token);
 extern int parser_error_get(struct info *info, const char **msg, int *trace);
 extern int parser_ident(const char *s, struct scpi_type *val, int token);
+extern void parser_cleanup(void);
 
 #endif /* PARSER_H_ */

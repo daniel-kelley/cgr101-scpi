@@ -19,6 +19,11 @@
 
 #define SCPI_PORT 5025
 
+static struct info info_ = {
+    .port = SCPI_PORT,
+    .bus = -1,
+};
+
 static int init(struct info *info)
 {
     int err = 0;
@@ -88,38 +93,35 @@ int main(int argc, char *argv[])
 {
     int rc = 1;
     int c;
-    static struct info info;
 
-    info.port = SCPI_PORT;
-    info.bus = -1;
     while ((c = getopt(argc, argv, "b:c:d:p:r:D:vxh")) != EOF) {
         switch (c) {
         case 'b':
-            info.bus = (int)strtol(optarg, NULL, 0);
+            info_.bus = (int)strtol(optarg, NULL, 0);
             break;
         case 'd':
-            info.dev = (int)strtol(optarg, NULL, 0);
+            info_.dev = (int)strtol(optarg, NULL, 0);
             break;
         case 'p':
-            info.port = (int)strtol(optarg, NULL, 0);
+            info_.port = (int)strtol(optarg, NULL, 0);
             break;
         case 'r':
-            info.conf_rsp = optarg;
+            info_.conf_rsp = optarg;
             break;
         case 'c':
             /* FIXME */
 #if 0
-            conf_add(&info.conf, optarg);
+            conf_add(&info_.conf, optarg);
 #endif
             break;
         case 'v':
-            info.verbose = 1;
+            info_.verbose = 1;
             break;
         case 'x':
-            info.no_trap = 1;
+            info_.no_trap = 1;
             break;
         case 'D':
-            info.debug = optarg;
+            info_.debug = optarg;
             break;
         case 'h':
             usage(argv[0]);
@@ -130,8 +132,8 @@ int main(int argc, char *argv[])
         }
     }
 
-    rc = init(&info);
-    done(&info);
+    rc = init(&info_);
+    done(&info_);
 
     return rc;
 }

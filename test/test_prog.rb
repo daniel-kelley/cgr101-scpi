@@ -12,16 +12,20 @@ require_relative 'cgr101_core'
 require_relative 'cgr101_meas'
 require_relative 'cgr101_scope'
 require_relative 'cgr101_wave'
+require_relative 'cgr101_event'
 
 #
 # CGR101 test cases using stdio command interface
 #
 class TestProg < Test::Unit::TestCase
 
+  JIG = ENV['TEST_JIG']
+
   include CGR101Core
   include CGR101Meas
   include CGR101Scope
   include CGR101Wave
+  include CGR101Event
 
   # Make sure each test starts in a known state
   def setup
@@ -36,6 +40,11 @@ class TestProg < Test::Unit::TestCase
     assert_equal("0", out)
     assert_equal(0, self.class.hdl.out_length)
     assert_equal(0, self.class.hdl.err_length)
+
+  end
+
+  def test_jig?
+    !JIG.nil?
   end
 
   class << self

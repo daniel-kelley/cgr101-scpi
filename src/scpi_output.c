@@ -88,7 +88,7 @@ int scpi_output_int(struct scpi_output *output, int value)
 
 int scpi_output_fp(struct scpi_output *output, double value)
 {
-    return scpi_output_printf(output, "%g", value);
+    return scpi_output_printf(output, "%+.14g", value);
 }
 
 int scpi_output_str(struct scpi_output *output, const char *value)

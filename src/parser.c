@@ -29,6 +29,14 @@ struct parser {
     int trace_yyerror;
 };
 
+struct parser_strpool_s {
+    size_t len;
+    size_t max;
+    char **pool;
+};
+
+static struct parser_strpool_s parser_strpool;
+
 void yyerror(const YYLTYPE *loc, struct info *info, const char *s)
 {
     /* 's' may be transient, (it is last I looked) so make a copy. */
@@ -229,10 +237,47 @@ int parser_num(const char *s, struct scpi_type *val, int token)
     return token;
 }
 
+#define IDENT_CHUNK 256
+
+
+static const char *parser_ident_add(struct parser_strpool_s *pool,
+                                    const char *s)
+{
+    char *t;
+    void *buf;
+
+    t = strdup(s);
+    assert(t);
+    if (pool->len >= pool->max) {
+        pool->max += IDENT_CHUNK;
+        buf = realloc(pool->pool, sizeof(pool->pool[0])*pool->max);
+        assert(buf);
+        pool->pool = buf;
+    }
+    pool->pool[pool->len++] = t;
+
+    return t;
+
+}
+
+void parser_cleanup(void)
+{
+    size_t idx;
+
+    for (idx = 0; idx < parser_strpool.len; idx++) {
+        free(parser_strpool.pool[idx]);
+    }
+    free(parser_strpool.pool);
+    parser_strpool.len = 0;
+    parser_strpool.max = 0;
+    parser_strpool.pool = NULL;
+}
+
+
 int parser_ident(const char *s, struct scpi_type *val, int token)
 {
     val->type = SCPI_TYPE_STR;
-    val->src = s;
+    val->src = parser_ident_add(&parser_strpool, s);
 
     return token;
 }
