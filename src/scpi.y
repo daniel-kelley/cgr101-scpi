@@ -64,7 +64,6 @@
 %token FUNC
 %token FUNCQ
 %token HEX
-%token HIGH
 %token IDNQ
 %token IMM
 %token INIT
@@ -77,7 +76,6 @@
 %token LOC
 %token LOCQ
 %token LOW
-%token LOWER
 %token LOWQ
 %token MAX
 %token MEAS
@@ -246,11 +244,6 @@ numeric_value
  * A number of keywords have identical short forms, so the
  * long and short forms are handled here in the grammar.
  */
-
-lower
-    : LOWER
-    | LOW
-    ;
 
 status
     : STATUS
@@ -443,9 +436,7 @@ trigger_source
     ;
 
 int_sel
-    : HIGH
-    | LOW
-    | POS
+    : POS
     | NEG
     ;
 
@@ -576,10 +567,10 @@ dev-cmd
     | SENS COLON SWE COLON TINTQ
     { scpi_dev_sense_sweep_time_intervalq(info); }
 
-    | SENS COLON VOLT COLON lower numeric_value channel
+    | SENS COLON VOLT COLON LOW numeric_value channel
     { scpi_dev_sense_voltage_low(info, &$6, &$7); }
 
-    | SENS COLON VOLT COLON DC COLON lower numeric_value channel
+    | SENS COLON VOLT COLON DC COLON LOW numeric_value channel
     { scpi_dev_sense_voltage_low(info, &$8, &$9); }
 
     | SENS COLON VOLT COLON OFFS numeric_value channel
