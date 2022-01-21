@@ -1194,7 +1194,6 @@ static int cgr101_err(void *arg)
 
     assert(len > 0);
     assert(len <= (ssize_t)sizeof(info->device->err_data));
-    (void)info;
 
     return err;
 }
@@ -2229,5 +2228,4 @@ void cgr101_fetch_digital_event(struct info *info)
     } else {
         cgr101_digital_event_output(info);
     }
-    (void)info;
 }
