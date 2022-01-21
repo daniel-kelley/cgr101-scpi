@@ -32,6 +32,11 @@ extern int scpi_input_fp_block(struct info *info,
                                struct scpi_type *in,
                                size_t *out_len,
                                double **out_block);
+extern int scpi_input_fp_range(struct info *info,
+                               struct scpi_type *in,
+                               double min,
+                               double max,
+                               double *out);
 extern int scpi_input_str(struct info *info,
                           struct scpi_type *in,
                           const char **out);

@@ -92,6 +92,26 @@ int scpi_input_fp(struct info *info, struct scpi_type *in, double *out)
     return 0;
 }
 
+int scpi_input_fp_range(struct info *info,
+                        struct scpi_type *in,
+                        double min,
+                        double max,
+                        double *out)
+{
+    int err;
+    double value;
+
+    err = scpi_input_fp(info, in, &value);
+    if (err || value < min || value > max) {
+        err = 1;
+        scpi_error(info->error, SCPI_ERR_DATA_OUT_OF_RANGE, in->src);
+    } else {
+        *out = value;
+    }
+
+    return err;
+}
+
 /* Reformat the list into an array of doubles in place. */
 static void scpi_input_fp_block_copy(struct scpi_type *in,
                                      size_t *out_len,

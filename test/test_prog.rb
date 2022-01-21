@@ -13,6 +13,7 @@ require_relative 'cgr101_meas'
 require_relative 'cgr101_scope'
 require_relative 'cgr101_wave'
 require_relative 'cgr101_event'
+require_relative 'cgr101_pwm'
 
 #
 # CGR101 test cases using stdio command interface
@@ -26,6 +27,7 @@ class TestProg < Test::Unit::TestCase
   include CGR101Scope
   include CGR101Wave
   include CGR101Event
+  include CGR101PWM
 
   # Make sure each test starts in a known state
   def setup

@@ -480,7 +480,7 @@ void scpi_dev_source_pwm_duty_cycle(struct info *info,
 {
     double value;
 
-    if (!scpi_input_fp(info, v, &value)) {
+    if (!scpi_input_fp_range(info, v, 0.0, 1.0, &value)) {
         cgr101_source_pwm_duty_cycle(info, value);
     }
 }
@@ -495,7 +495,7 @@ void scpi_dev_source_pwm_frequency(struct info *info,
 {
     double value;
 
-    if (!scpi_input_fp(info, v, &value)) {
+    if (!scpi_input_fp_range(info, v, 0.0, 72.0e3, &value)) {
         cgr101_source_pwm_frequency(info, value);
     }
 }

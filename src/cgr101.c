@@ -187,6 +187,22 @@ static struct cgr101_event_mode_map_s cgr101_event_mode_map[] = {
     { NULL, 0},
 };
 
+/* PWM Frequency in Hz. Index is argument to D F command. */
+double cgr101_pwm_freq[] = {
+    72000.0,
+    36000.0,
+    9000.0,
+    4500.0,
+    1125.0,
+    564.0,
+    281.0,
+    141.0,
+    70.0,
+    35.0,
+    0.0,
+    0.0, /* end-of-list sentinel */
+};
+
 struct cgr101 {
     struct spawn child;
     /* ID */
@@ -256,6 +272,10 @@ struct cgr101 {
         struct digital_event *data;
         int output_pending;
     } event;
+    struct {
+        double frequency;
+        double duty_cycle;
+    } pwm;
 };
 
 struct cgr101_w_interp {
@@ -1538,6 +1558,44 @@ static void cgr101_device_init(struct info *info)
     }
 }
 
+/*
+ * PWM Programming
+ */
+
+static void cgr101_pwm_duty_cycle(struct info *info, double value)
+{
+    int err;
+    int n;
+
+    n = (int)floor(value*255.0);
+    info->device->pwm.duty_cycle = (double)n/255.0;
+    err = cgr101_device_printf(info, "D D %d\n", n);
+    assert(!err);
+}
+
+static void cgr101_pwm_frequency(struct info *info, double value)
+{
+    int err;
+    size_t idx;
+    size_t last;
+    double f1;
+    double f2;
+
+    /* Don't include sentinel in iteration. */
+    last = COUNT_OF(cgr101_pwm_freq)-1;
+    for (idx=0; idx < last; idx++) {
+        f1 = cgr101_pwm_freq[idx];
+        f2 = cgr101_pwm_freq[idx+1];
+        if (value <= f1 && value > f2) {
+            info->device->pwm.frequency = f1;
+            break;
+        }
+    }
+    err = cgr101_device_printf(info, "D D %d\n", idx);
+    assert(!err);
+
+}
+
 
 /*
  * Device Open/Close
@@ -1759,24 +1817,22 @@ void cgr101_source_waveform_userq(struct info *info)
 
 void cgr101_source_pwm_duty_cycle(struct info *info, double value)
 {
-    (void)info;
-    (void)value;
+    cgr101_pwm_duty_cycle(info, value);
 }
 
 void cgr101_source_pwm_duty_cycleq(struct info *info)
 {
-    (void)info;
+    scpi_output_fp(info->output, info->device->pwm.duty_cycle);
 }
 
 void cgr101_source_pwm_frequency(struct info *info, double value)
 {
-    (void)info;
-    (void)value;
+    cgr101_pwm_frequency(info, value);
 }
 
 void cgr101_source_pwm_frequencyq(struct info *info)
 {
-    (void)info;
+    scpi_output_fp(info->output, info->device->pwm.frequency);
 }
 
 void cgr101_digitizer_coupling(struct info *info, const char *value)
