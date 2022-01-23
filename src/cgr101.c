@@ -441,31 +441,39 @@ static int cgr101_rcv_start(struct info *info, char c)
     switch (c) {
     case '*':
         info->device->rcv_state = IDENTIFY;
+        info->device->identify_state = STATE_IDENTIFY_PENDING;
         /* Variable length: terminated by <cr><lf> */
         err = 0;
         break;
     case 'I':
         info->device->rcv_state = DIGITAL_READ;
+        info->device->digital_read_state = STATE_DIGITAL_READ_PENDING;
         /* I<uint8_t> */
         err = 0;
         break;
     case 'O':
         info->device->rcv_state = SCOPE_OFFSET;
+        info->device->scope.offset_state = STATE_SCOPE_OFFSET_EXPECT_A_HIGH;
         /* O<int8_t>*4 */
         err = 0;
         break;
     case 'S':
         info->device->rcv_state = SCOPE_STATUS;
+        info->device->scope.status_state = STATE_SCOPE_STATUS_PENDING;
         /* 'Status N' */
         err = 0;
         break;
     case 'A':
         info->device->rcv_state = SCOPE_ADDR;
+        info->device->scope.addr_state = STATE_SCOPE_ADDR_EXPECT_HIGH;
+        info->device->scope.addr = 0;
         /* O<int8_t>*2 */
         err = 0;
         break;
     case 'D':
         info->device->rcv_state = SCOPE_DATA;
+        info->device->scope.data_state = STATE_SCOPE_DATA_EXPECT_A_HIGH;
+        info->device->scope.data_count = 0;
         /* 'DA1a1B1b2A2a2B2b2...' */
         err = 0;
         break;
@@ -503,10 +511,6 @@ static int cgr101_digital_read_start(struct info *info)
 {
     int err = cgr101_device_send(info, "D I\n");
 
-    if (!err) {
-        info->device->digital_read_state = STATE_DIGITAL_READ_PENDING;
-    }
-
     return err;
 }
 
@@ -542,12 +546,6 @@ static void cgr101_digital_read_output(void *arg)
 
     switch (info->device->digital_read_state) {
     case STATE_DIGITAL_READ_IDLE:
-        /*
-         * Digital reads are started via initiate, so should never be
-         * IDLE by the time a read is requested.
-         */
-        assert(0);
-        break;
     case STATE_DIGITAL_READ_PENDING:
         /* Reschedule */
         event_send(info->event, EVENT_DIGITAL_READ_OUTPUT);
@@ -776,13 +774,6 @@ static int cgr101_digitizer_start(struct info *info, int manual)
     int trigger_ref = (int)info->device->scope.trigger_ref;
     int trigger_offset = (int)info->device->scope.trigger_offset;
 
-    /* Data return state initialization */
-
-    info->device->scope.addr_state = STATE_SCOPE_ADDR_EXPECT_HIGH;
-    info->device->scope.addr = 0;
-    info->device->scope.data_state = STATE_SCOPE_DATA_EXPECT_A_HIGH;
-    info->device->scope.data_count = 0;
-
     do {
         /* Trigger Level - assume done */
 
@@ -999,10 +990,6 @@ static int cgr101_rcv_interrupt_msg(struct info *info, char c)
 static int cgr101_identify_start(struct info *info)
 {
     int err = cgr101_device_send(info, "i\n");
-
-    if (!err) {
-        info->device->identify_state = STATE_IDENTIFY_PENDING;
-    }
 
     return err;
 }
@@ -1552,7 +1539,6 @@ static void cgr101_device_init(struct info *info)
 
     /* Query device for offsets. */
     if (info->device->scope.offset_state != STATE_SCOPE_OFFSET_EXPECT_A_HIGH) {
-        info->device->scope.offset_state = STATE_SCOPE_OFFSET_EXPECT_A_HIGH;
         err = cgr101_device_send(info, "S O\n"); /* Get offsets. */
         assert(!err);
     }
