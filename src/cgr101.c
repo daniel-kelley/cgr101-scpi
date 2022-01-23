@@ -821,11 +821,11 @@ static int cgr101_rcv_scope_addr(struct info *info, char c)
     case STATE_SCOPE_ADDR_EXPECT_HIGH:
         assert(c >= 0);
         assert(c <= 3);
-        info->device->scope.addr = ((unsigned char)c)<<8;
+        info->device->scope.addr = (unsigned int)(c<<8);
         info->device->scope.addr_state = STATE_SCOPE_ADDR_EXPECT_LOW;
         break;
     case STATE_SCOPE_ADDR_EXPECT_LOW:
-        info->device->scope.addr |= ((unsigned char)c);
+        info->device->scope.addr |= (unsigned int)(c);
         info->device->scope.addr_state = STATE_SCOPE_ADDR_COMPLETE;
         cgr101_rcv_idle(info);
         /* Get the buffer. */
