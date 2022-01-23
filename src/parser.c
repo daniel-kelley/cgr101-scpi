@@ -193,9 +193,17 @@ int parser_error_get(struct info *info, const char **msg, int *trace)
     return err;
 }
 
-static void parser_int(const char *s, struct scpi_type *val)
+static void parser_update_location(YYLTYPE *loc, size_t len)
+{
+    loc->first_line = loc->last_line;
+    loc->first_column = loc->last_column+1;
+    loc->last_column = loc->first_column+(int)len;
+}
+
+static void parser_int(const char *s, struct scpi_type *val, YYLTYPE *loc)
 {
     /* FIXME: needs error checking. */
+    parser_update_location(loc, strlen(s));
     val->type = SCPI_TYPE_INT;
     val->val.ival = strtol(s, NULL, 10);
     val->src = s;
@@ -213,10 +221,13 @@ static void parser_squeeze(char *dst, const char *src)
     *dst = 0;
 }
 
-static void parser_float(const char *s, struct scpi_type *val)
+static void parser_float(const char *s,
+                         struct scpi_type *val,
+                         YYLTYPE *loc)
 {
     char p[32];
 
+    parser_update_location(loc, strlen(s));
     parser_squeeze(p,s);
     /* FIXME: needs error checking. */
     val->type = SCPI_TYPE_FLOAT;
@@ -224,12 +235,15 @@ static void parser_float(const char *s, struct scpi_type *val)
     val->src = s;
 }
 
-int parser_num(const char *s, struct scpi_type *val, int token)
+int parser_num(const char *s,
+               struct scpi_type *val,
+               YYLTYPE *loc,
+               int token)
 {
     if (token == NUM) {
-        parser_int(s, val);
+        parser_int(s, val, loc);
     } else if (token == FLOAT) {
-        parser_float(s, val);
+        parser_float(s, val, loc);
     } else {
         assert(0);
     }
@@ -273,11 +287,38 @@ void parser_cleanup(void)
     parser_strpool.pool = NULL;
 }
 
-
-int parser_ident(const char *s, struct scpi_type *val, int token)
+int parser_ident(const char *s,
+                 struct scpi_type *val,
+                 YYLTYPE *loc,
+                 int token)
 {
+    parser_update_location(loc, strlen(s));
     val->type = SCPI_TYPE_STR;
     val->src = parser_ident_add(&parser_strpool, s);
 
     return token;
+}
+
+int parser_punct(const char *s,
+                 struct scpi_type *val,
+                 YYLTYPE *loc,
+                 int token)
+{
+    parser_update_location(loc, strlen(s));
+    val->type = SCPI_TYPE_STR;
+    val->src = parser_ident_add(&parser_strpool, s);
+
+    return token;
+}
+
+void parser_blank(const char *s, struct scpi_type *val, YYLTYPE *loc)
+{
+    parser_update_location(loc, strlen(s));
+    (void)val;
+}
+
+void parser_eol(const char *s, struct scpi_type *val, YYLTYPE *loc)
+{
+    parser_update_location(loc, strlen(s));
+    (void)val;
 }
