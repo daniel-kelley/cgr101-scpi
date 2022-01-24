@@ -49,5 +49,6 @@ extern void parser_eol(const char *s,
                        struct scpi_type *val,
                        YYLTYPE *loc);
 extern void parser_cleanup(void);
+extern void parser_separator(struct info *info, int value);
 
 #endif /* PARSER_H_ */

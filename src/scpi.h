@@ -46,7 +46,7 @@ extern void scpi_status_questionable_enable(struct info *info,
 extern void scpi_status_questionable_enableq(struct info *info);
 
 extern void scpi_core_top(struct info *info);
-extern void scpi_core_cmd_sep(struct info *info);
+extern void scpi_core_cmd_sep(struct info *info, int value);
 
 extern int scpi_dev_abort(struct info *info);
 

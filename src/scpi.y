@@ -180,12 +180,13 @@ cmd-list
 
 semis
     : SEMIS
-    { scpi_core_cmd_sep(info); }
+    { scpi_core_cmd_sep(info, 1); }
     ;
 
 cmd-path
     : cmd
     | COLON cmd
+    {  scpi_core_cmd_sep(info, 0); $$=$2; }
     ;
 
 cmd

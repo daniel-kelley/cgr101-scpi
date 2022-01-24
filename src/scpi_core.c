@@ -418,8 +418,9 @@ void scpi_core_top(struct info *info)
     info->busy = 0;
 }
 
-void scpi_core_cmd_sep(struct info *info)
+void scpi_core_cmd_sep(struct info *info, int value)
 {
+    parser_separator(info, value);
     scpi_output_cmd_sep(info->output);
 }
 

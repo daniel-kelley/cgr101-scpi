@@ -15,6 +15,9 @@
 #include "scpi.tab.h"
 #include "scanner.h"
 
+/* Maximum command depth in grammar, i.e. maximum number of ':' separators. */
+#define MAX_CMD_DEPTH 5
+
 struct lexer {
     yyscan_t scanner;
 };
@@ -26,6 +29,8 @@ struct parser {
         struct parser_msg_loc data;
     } error;
     int trace_yyerror;
+    int separator;
+    int prefix[MAX_CMD_DEPTH];
 };
 
 struct parser_strpool_s {
@@ -131,6 +136,11 @@ static void parser_loop(struct info *info,
 
 }
 
+void parser_separator(struct info *info, int value)
+{
+    info->parser->separator = value;
+}
+
 /*
  * Lexer/Parser feedback: to accommodate 488.2 7.6.1.5 Header
  * Compounding, the lexer needs to keep track of leading program
@@ -166,6 +176,7 @@ int parser_send(struct info *info, char *line, int len)
             }
             info->busy = 1;
             info->rsp.valid = 0;
+            parser_separator(info, 0);
         }
 
         parser_loop(info, scanner);
