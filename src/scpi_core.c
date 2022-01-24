@@ -249,8 +249,9 @@ void scpi_system_internal_quit(struct info *info)
 }
 
 static int scpi_core_parser_error(struct info *info,
+                                  const char *buf,
                                   int err_in,
-                                  const char *msg)
+                                  const struct parser_msg_loc *data)
 {
     int err = 1;
     char *syndrome;
@@ -262,21 +263,21 @@ static int scpi_core_parser_error(struct info *info,
     } else {
         char *p;
 
-        syndrome = strdup(info->cli_buf);
+        syndrome = strdup(buf);
         p = strchr(syndrome, '\n');
         if (p) {
             *p = 0;
         }
         assert(syndrome);
 
-        if (msg) {
+        if (data) {
             /* syndrome appended with ;<msg> */
             size_t slen = strlen(syndrome);
-            size_t mlen = strlen(msg);
+            size_t mlen = strlen(data->msg);
             syndrome = realloc(syndrome, mlen+slen+2);
             assert(syndrome);
             syndrome[slen] = ';';
-            memcpy(syndrome+slen+1,msg,mlen+1);
+            memcpy(syndrome+slen+1,data->msg,mlen+1);
         }
 
         scpi_error(info->error,
@@ -306,10 +307,11 @@ int scpi_core_send(struct info *info, char *buf, int len)
         }
 
         if (err) {
-            const char *errmsg;
+            struct parser_msg_loc data;
             int trace = 0;
-            err = parser_error_get(info, &errmsg, &trace);
-            err = scpi_core_parser_error(info, err, trace ? errmsg : NULL);
+            err = parser_error_get(info, &data, &trace);
+            assert(!err);
+            err = scpi_core_parser_error(info, buf, err, trace ? &data : NULL);
         }
 
     } while (0);

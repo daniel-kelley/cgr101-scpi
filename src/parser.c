@@ -23,8 +23,7 @@ struct parser {
     yypstate *ps;
     struct {
         int valid;
-        const YYLTYPE *loc;
-        char *msg;
+        struct parser_msg_loc data;
     } error;
     int trace_yyerror;
 };
@@ -40,11 +39,11 @@ static struct parser_strpool_s parser_strpool;
 void yyerror(const YYLTYPE *loc, struct info *info, const char *s)
 {
     /* 's' may be transient, (it is last I looked) so make a copy. */
-    if (info->parser->error.msg) {
-        free(info->parser->error.msg);
+    if (info->parser->error.data.msg) {
+        free(info->parser->error.data.msg);
     }
-    info->parser->error.loc = loc;
-    info->parser->error.msg = strdup(s);
+    info->parser->error.data.loc = loc;
+    info->parser->error.data.msg = strdup(s);
     info->parser->error.valid = 1;
     info->busy = 0;
     if (info->verbose) {
@@ -104,8 +103,8 @@ int parser_done(struct info *info)
         free(info->lexer);
     }
 
-    if (info->parser->error.msg) {
-        free(info->parser->error.msg);
+    if (info->parser->error.data.msg) {
+        free(info->parser->error.data.msg);
     }
 
     if (info->parser) {
@@ -129,6 +128,7 @@ static void parser_loop(struct info *info,
         c = yylex(&yys, &yyl, scanner);
         status = yypush_parse(info->parser->ps, c, &yys, &yyl, info);
     } while (status == YYPUSH_MORE);
+
 }
 
 /*
@@ -179,12 +179,16 @@ int parser_send(struct info *info, char *line, int len)
     return err;
 }
 
-int parser_error_get(struct info *info, const char **msg, int *trace)
+int parser_error_get(struct info *info,
+                     struct parser_msg_loc *data,
+                     int *trace)
 {
     int err = 1;
 
-    if (msg != NULL && trace != NULL && info->parser->error.valid) {
-        *msg = info->parser->error.msg;
+    assert(data);
+    assert(trace);
+    if (info->parser->error.valid) {
+        *data = info->parser->error.data;
         *trace = info->parser->trace_yyerror;
         info->parser->error.valid = 0;
         err = 0;
@@ -319,6 +323,11 @@ void parser_blank(const char *s, struct scpi_type *val, YYLTYPE *loc)
 
 void parser_eol(const char *s, struct scpi_type *val, YYLTYPE *loc)
 {
-    parser_update_location(loc, strlen(s));
+    assert(s[0] == '\n');
+    assert(s[1] == 0);
+    loc->first_line = loc->last_line + 1;
+    loc->first_column = 0;
+    loc->last_line = loc->first_line;
+    loc->last_column = 0;
     (void)val;
 }
