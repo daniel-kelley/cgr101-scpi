@@ -30,7 +30,12 @@ struct parser {
     } error;
     int trace_yyerror;
     int separator;
+    int prefix_length;
     int prefix[MAX_CMD_DEPTH];
+    struct {
+        int active;
+        int idx;
+    } replay;
 };
 
 struct parser_strpool_s {
@@ -119,6 +124,83 @@ int parser_done(struct info *info)
     return 0;
 }
 
+static int parser_replay_token(int token)
+{
+    switch (token) {
+    case LPAREN:
+    case RPAREN:
+    case COMMA:
+    case SEMIS:
+    case COLON:
+    case DASH:
+    case AT:
+    case FLOAT:
+    case NUM:
+    case IDENT:
+    case YYEOF:
+    case OTHER:
+        return 0;
+    default:
+        return 1;
+    }
+    assert(0);
+}
+
+static void parser_replay_reset(struct parser *parser)
+{
+    parser->replay.active = 0;
+    parser->replay.idx = 0;
+}
+
+static int parser_replay_prefix(struct parser *parser)
+{
+    int token;
+
+    assert(parser->replay.active);
+    token = parser->prefix[parser->replay.idx++];
+
+    if (parser->replay.idx == parser->prefix_length) {
+        parser_replay_reset(parser);
+    }
+
+    return token;
+}
+
+static int parser_replay_active(struct parser *parser)
+{
+    /*
+     * If not currently active and a separator is seen, make replay
+     * active.
+     */
+    if (!parser->replay.active && parser->separator) {
+        parser->replay.active = 1;
+    }
+
+    return  parser->replay.active;
+}
+
+static void parser_reset_prefix(struct parser *parser)
+{
+    parser->prefix_length = 0;
+    memset(parser->prefix, 0, sizeof(parser->prefix));
+}
+
+static void parser_add_prefix(struct parser *parser, int token)
+{
+    if (parser_replay_token(token)) {
+        assert(parser->prefix_length < MAX_CMD_DEPTH);
+        parser->prefix[parser->prefix_length++] = token;
+    }
+}
+
+void parser_separator(struct info *info, int value)
+{
+    info->parser->separator = value;
+    if (!value) {
+        parser_reset_prefix(info->parser);
+    }
+}
+
 static void parser_loop(struct info *info,
                         yyscan_t scanner)
 {
@@ -127,18 +209,19 @@ static void parser_loop(struct info *info,
     YYSTYPE yys;
     YYLTYPE yyl;
 
+    parser_replay_reset(info->parser);
     do {
         memset(&yys, 0, sizeof(yys));
         memset(&yyl, 0, sizeof(yyl));
-        c = yylex(&yys, &yyl, scanner);
+        if (parser_replay_active(info->parser)) {
+            c = parser_replay_prefix(info->parser);
+        } else {
+            c = yylex(&yys, &yyl, scanner);
+            parser_add_prefix(info->parser, c);
+        }
         status = yypush_parse(info->parser->ps, c, &yys, &yyl, info);
     } while (status == YYPUSH_MORE);
 
-}
-
-void parser_separator(struct info *info, int value)
-{
-    info->parser->separator = value;
 }
 
 /*
