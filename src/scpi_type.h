@@ -35,6 +35,7 @@ struct scpi_type {
     enum scpi_type_name type;
     union scpi_type_val val;
     const char *src;
+    int token;
 };
 
 #endif /* SCPI_TYPE_H_ */

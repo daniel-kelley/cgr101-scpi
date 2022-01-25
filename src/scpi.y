@@ -249,6 +249,7 @@ numeric_value
 status
     : STATUS
     | STAT
+    { scpi_core_add_prefix(info, $1.token); }
     ;
 
 stateq
@@ -270,6 +271,137 @@ boolean
     : ON
     | OFF
     ;
+
+
+/*
+ * Manage command prefixes
+ */
+
+syst: SYST
+    { scpi_core_add_prefix(info, $1.token); }
+    ;
+
+syst_err
+    : syst COLON ERR
+    { scpi_core_add_prefix(info, $3.token); }
+    ;
+
+syst_int
+    : syst COLON internal
+    { scpi_core_add_prefix(info, $3.token); }
+    ;
+
+stat_oper
+    : status COLON OPER
+    { scpi_core_add_prefix(info, $3.token); }
+    ;
+
+stat_ques
+    : status COLON QUES
+    { scpi_core_add_prefix(info, $3.token); }
+    ;
+
+conf: CONF
+    { scpi_core_add_prefix(info, $1.token); }
+    ;
+
+conf_dig
+    : conf COLON DIG
+    { scpi_core_add_prefix(info, $3.token); }
+    ;
+
+fetc_dig
+    : FETC COLON DIG
+    { scpi_core_add_prefix(info, $3.token); }
+    ;
+
+form: FORM
+    { scpi_core_add_prefix(info, $1.token); }
+    ;
+
+init: INIT
+    { scpi_core_add_prefix(info, $1.token); }
+    ;
+
+init_imm: init COLON IMM
+    { scpi_core_add_prefix(info, $3.token); }
+    ;
+
+meas: MEAS
+    { scpi_core_add_prefix(info, $1.token); }
+    ;
+
+meas_dig
+    : meas COLON DIG
+    { scpi_core_add_prefix(info, $3.token); }
+    ;
+
+read: READ
+    { scpi_core_add_prefix(info, $1.token); }
+    ;
+
+read_dig
+    : read COLON DIG
+    { scpi_core_add_prefix(info, $3.token); }
+    ;
+
+sens: SENS
+    { scpi_core_add_prefix(info, $1.token); }
+    ;
+
+sens_func
+    : sens COLON FUNC
+    { scpi_core_add_prefix(info, $3.token); }
+    ;
+
+sens_swe
+    : sens COLON SWE
+    { scpi_core_add_prefix(info, $3.token); }
+    ;
+
+sens_swe_offs
+    : sens_swe COLON OFFS
+    { scpi_core_add_prefix(info, $3.token); }
+    ;
+
+sens_swe_oref
+    : sens_swe COLON OREF
+    { scpi_core_add_prefix(info, $3.token); }
+    ;
+
+sens_volt
+    : sens COLON VOLT
+    { scpi_core_add_prefix(info, $3.token); }
+    ;
+
+sens_volt_dc
+    : sens_volt COLON DC
+    { scpi_core_add_prefix(info, $3.token); }
+    ;
+
+sour: SOUR
+    { scpi_core_add_prefix(info, $1.token); }
+    ;
+
+sour_dig
+    : sour COLON DIG
+    { scpi_core_add_prefix(info, $3.token); }
+    ;
+
+sour_func
+    : sour COLON FUNC
+    { scpi_core_add_prefix(info, $3.token); }
+    ;
+
+sour_puls
+    : sour COLON PULS
+    { scpi_core_add_prefix(info, $3.token); }
+    ;
+
+trig: TRIG
+    { scpi_core_add_prefix(info, $1.token); }
+    ;
+
 
 sys-cmd
     /* 488.2 10.3 */
@@ -325,35 +457,35 @@ sys-cmd
     | WAI
     { scpi_common_wai(info); }
 
-    | SYST COLON ERRQ
+    | syst COLON ERRQ
     { scpi_system_error_nextq(info); }
 
-    | SYST COLON ERR COLON NEXTQ
+    | syst_err COLON NEXTQ
     { scpi_system_error_nextq(info); }
 
-    | SYST COLON ERR COLON COUNQ
+    | syst_err COLON COUNQ
     { scpi_system_error_countq(info); }
 
-    | SYST COLON VERSQ
+    | syst COLON VERSQ
     { scpi_system_versionq(info); }
 
-    | SYST COLON CAPQ
+    | syst COLON CAPQ
     { scpi_system_capabilityq(info); }
 
     /* SCPI Command Reference Chapter 20 */
     | status COLON OPERQ
     { scpi_status_operation_eventq(info); }
 
-    | status COLON OPER COLON EVENQ
+    | stat_oper COLON EVENQ
     { scpi_status_operation_eventq(info); }
 
-    | status COLON OPER COLON CONDQ
+    | stat_oper COLON CONDQ
     { scpi_status_operation_conditionq(info); }
 
-    | status COLON OPER COLON ENAB nr1
-    { scpi_status_operation_enable(info, &$6); }
+    | stat_oper COLON ENAB nr1
+    { scpi_status_operation_enable(info, &$4); }
 
-    | status COLON OPER COLON ENABQ
+    | stat_oper COLON ENABQ
     { scpi_status_operation_enableq(info); }
 
     | status COLON PRES
@@ -362,10 +494,10 @@ sys-cmd
     | status COLON QUESQ
     { scpi_status_questionableq(info); }
 
-    | status COLON QUES COLON ENAB nr1
-    { scpi_status_questionable_enable(info, &$6); }
+    | stat_ques COLON ENAB nr1
+    { scpi_status_questionable_enable(info, &$4); }
 
-    | status COLON QUES COLON ENABQ
+    | stat_ques COLON ENABQ
     { scpi_status_questionable_enableq(info); }
 
     ;
@@ -449,264 +581,264 @@ dev-cmd
     : ABOR
     { scpi_dev_abort(info); }
 
-    | CONF COLON DIG COLON DAT
+    | conf_dig COLON DAT
     { scpi_dev_conf_digital_data(info); }
 
-    | CONF COLON DIG COLON EVEN int_sel NUM channel
-    { scpi_dev_conf_digital_event(info, &$6, &$7, &$8); }
+    | conf_dig COLON EVEN int_sel NUM channel
+    { scpi_dev_conf_digital_event(info, &$4, &$5, &$6); }
 
-    | CONF COLON DIG COLON EVEN NUM channel
-    { scpi_dev_conf_digital_event(info, NULL, &$6, &$7); }
+    | conf_dig COLON EVEN NUM channel
+    { scpi_dev_conf_digital_event(info, NULL, &$4, &$5); }
 
     | CONFQ
     { scpi_dev_confq(info); }
 
-    | FETC COLON DIG COLON DATQ
+    | fetc_dig COLON DATQ
     { scpi_dev_fetch_digital_dataq(info); }
 
-    | FETC COLON DIG COLON EVENQ
+    | fetc_dig COLON EVENQ
     { scpi_dev_fetch_digital_eventq(info); }
 
-    | FORM format_arg
+    | form format_arg
     { scpi_core_format(info, &$2); }
 
-    | FORM COLON DAT format_arg
+    | form COLON DAT format_arg
     { scpi_core_format(info, &$4); }
 
     | FORMQ
     { scpi_core_formatq(info); }
 
-    | FORM COLON DATQ
+    | form COLON DATQ
     { scpi_core_formatq(info); }
 
 
-    | INIT
+    | init
     { scpi_dev_initiate(info); }
 
-    | INIT COLON IMM
+    | init_imm
     { scpi_dev_initiate_immediate(info); }
 
-    | INIT COLON IMM COLON ALL
+    | init_imm COLON ALL
     { scpi_dev_initiate_immediate(info); }
 
 
     | INP COLON COUP coupling_arg
     { scpi_dev_input_coupling(info, &$4); }
 
-    | MEAS COLON DIG COLON DATQ
+    | meas_dig COLON DATQ
     { scpi_dev_measure_digital_dataq(info); }
 
-    | MEAS COLON DIG COLON EVENQ int_sel NUM channel
-    { scpi_dev_measure_digital_eventq(info, &$6, &$7, &$8); }
+    | meas_dig COLON EVENQ int_sel NUM channel
+    { scpi_dev_measure_digital_eventq(info, &$4, &$5, &$6); }
 
-    | MEAS COLON DIG COLON EVENQ NUM channel
-    { scpi_dev_measure_digital_eventq(info, NULL, &$6, &$7); }
+    | meas_dig COLON EVENQ NUM channel
+    { scpi_dev_measure_digital_eventq(info, NULL, &$4, &$5); }
 
-    | READ COLON DIG COLON DATQ
+    | read_dig COLON DATQ
     { scpi_dev_read_digital_dataq(info); }
 
-    | READ COLON DIG COLON EVENQ
+    | read_dig COLON EVENQ
     { scpi_dev_read_digital_eventq(info); }
 
-    | SENS COLON DATQ channel
+    | sens COLON DATQ channel
     { scpi_dev_sense_dataq(info, &$4); }
 
-    | SENS COLON FUNC COLON CONC boolean
-    { scpi_dev_sense_function_concurrent(info, &$6); }
+    | sens_func COLON CONC boolean
+    { scpi_dev_sense_function_concurrent(info, &$4); }
 
-    | SENS COLON FUNC COLON OFF channel
-    { scpi_dev_sense_function_off(info, &$6); }
+    | sens_func COLON OFF channel
+    { scpi_dev_sense_function_off(info, &$4); }
 
-    | SENS COLON FUNC COLON stateq channel
-    { scpi_dev_sense_function_stateq(info, &$6); }
+    | sens_func COLON stateq channel
+    { scpi_dev_sense_function_stateq(info, &$4); }
 
-    | SENS COLON FUNC COLON ON channel
-    { scpi_dev_sense_function_on(info, &$6); }
+    | sens_func COLON ON channel
+    { scpi_dev_sense_function_on(info, &$4); }
 
-    | SENS COLON STATQ
+    | sens COLON STATQ
     { scpi_dev_sense_statq(info); }
 
-    | SENS COLON RES
+    | sens COLON RES
     { scpi_dev_sense_reset(info); }
 
-    | SENS COLON SWE COLON POINQ
+    | sens_swe COLON POINQ
     { scpi_dev_sense_sweep_pointq(info); }
 
-    | SENS COLON SWE COLON OFFS COLON POIN numeric_value
-    { scpi_dev_sense_sweep_offset_point(info, &$8); }
+    | sens_swe_offs COLON POIN numeric_value
+    { scpi_dev_sense_sweep_offset_point(info, &$4); }
 
-    | SENS COLON SWE COLON OFFS COLON POINQ
+    | sens_swe_offs COLON POINQ
     { scpi_dev_sense_sweep_offset_pointq(info); }
 
-    | SENS COLON SWE COLON OFFS COLON TIME numeric_value
-    { scpi_dev_sense_sweep_offset_time(info, &$8); }
+    | sens_swe_offs COLON TIME numeric_value
+    { scpi_dev_sense_sweep_offset_time(info, &$4); }
 
-    | SENS COLON SWE COLON OFFS COLON TIMEQ
+    | sens_swe_offs COLON TIMEQ
     { scpi_dev_sense_sweep_offset_timeq(info); }
 
-    | SENS COLON SWE COLON OREF COLON LOC numeric_value
-    { scpi_dev_sense_sweep_oref_loc(info, &$8); }
+    | sens_swe_oref COLON LOC numeric_value
+    { scpi_dev_sense_sweep_oref_loc(info, &$4); }
 
-    | SENS COLON SWE COLON OREF COLON LOCQ
+    | sens_swe_oref COLON LOCQ
     { scpi_dev_sense_sweep_oref_locq(info); }
 
-    | SENS COLON SWE COLON OREF COLON POIN numeric_value
-    { scpi_dev_sense_sweep_oref_point(info, &$8); }
+    | sens_swe_oref COLON POIN numeric_value
+    { scpi_dev_sense_sweep_oref_point(info, &$4); }
 
-    | SENS COLON SWE COLON OREF COLON POINQ
+    | sens_swe_oref COLON POINQ
     { scpi_dev_sense_sweep_oref_pointq(info); }
 
-    | SENS COLON SWE COLON TIME numeric_value
-    { scpi_dev_sense_sweep_time(info, &$6); }
+    | sens_swe COLON TIME numeric_value
+    { scpi_dev_sense_sweep_time(info, &$4); }
 
-    | SENS COLON SWE COLON TIMEQ
+    | sens_swe COLON TIMEQ
     { scpi_dev_sense_sweep_timeq(info); }
 
-    | SENS COLON SWE COLON TINT numeric_value
-    { scpi_dev_sense_sweep_time_interval(info, &$6); }
+    | sens_swe COLON TINT numeric_value
+    { scpi_dev_sense_sweep_time_interval(info, &$4); }
 
-    | SENS COLON SWE COLON TINTQ
+    | sens_swe COLON TINTQ
     { scpi_dev_sense_sweep_time_intervalq(info); }
 
-    | SENS COLON VOLT COLON LOW numeric_value channel
-    { scpi_dev_sense_voltage_low(info, &$6, &$7); }
+    | sens_volt COLON LOW numeric_value channel
+    { scpi_dev_sense_voltage_low(info, &$4, &$5); }
 
-    | SENS COLON VOLT COLON DC COLON LOW numeric_value channel
-    { scpi_dev_sense_voltage_low(info, &$8, &$9); }
+    | sens_volt_dc COLON LOW numeric_value channel
+    { scpi_dev_sense_voltage_low(info, &$4, &$5); }
 
-    | SENS COLON VOLT COLON OFFS numeric_value channel
-    { scpi_dev_sense_voltage_offset(info, &$6, &$7); }
+    | sens_volt COLON OFFS numeric_value channel
+    { scpi_dev_sense_voltage_offset(info, &$4, &$5); }
 
-    | SENS COLON VOLT COLON DC COLON OFFS numeric_value channel
-    { scpi_dev_sense_voltage_offset(info, &$8, &$9); }
+    | sens_volt_dc COLON OFFS numeric_value channel
+    { scpi_dev_sense_voltage_offset(info, &$4, &$5); }
 
-    | SENS COLON VOLT COLON PTP numeric_value channel
-    { scpi_dev_sense_voltage_ptp(info, &$6, &$7); }
+    | sens_volt COLON PTP numeric_value channel
+    { scpi_dev_sense_voltage_ptp(info, &$4, &$5); }
 
-    | SENS COLON VOLT COLON DC COLON PTP numeric_value channel
-    { scpi_dev_sense_voltage_ptp(info, &$8, &$9); }
+    | sens_volt_dc COLON PTP numeric_value channel
+    { scpi_dev_sense_voltage_ptp(info, &$4, &$5); }
 
-    | SENS COLON VOLT COLON RANG numeric_value channel
-    { scpi_dev_sense_voltage_up(info, &$6, &$7); }
+    | sens_volt COLON RANG numeric_value channel
+    { scpi_dev_sense_voltage_up(info, &$4, &$5); }
 
-    | SENS COLON VOLT COLON DC COLON RANG numeric_value channel
-    { scpi_dev_sense_voltage_up(info, &$8, &$9); }
+    | sens_volt_dc COLON RANG numeric_value channel
+    { scpi_dev_sense_voltage_up(info, &$4, &$5); }
 
-    | SENS COLON VOLT COLON UPP numeric_value channel
-    { scpi_dev_sense_voltage_up(info, &$6, &$7); }
+    | sens_volt COLON UPP numeric_value channel
+    { scpi_dev_sense_voltage_up(info, &$4, &$5); }
 
-    | SENS COLON VOLT COLON DC COLON UPP numeric_value channel
-    { scpi_dev_sense_voltage_up(info, &$8, &$9); }
+    | sens_volt_dc COLON UPP numeric_value channel
+    { scpi_dev_sense_voltage_up(info, &$4, &$5); }
 
-    | SENS COLON VOLT COLON LOWQ channel
-    { scpi_dev_sense_voltage_lowq(info, &$6); }
+    | sens_volt COLON LOWQ channel
+    { scpi_dev_sense_voltage_lowq(info, &$4); }
 
-    | SENS COLON VOLT COLON DC COLON LOWQ channel
-    { scpi_dev_sense_voltage_lowq(info, &$8); }
+    | sens_volt_dc COLON LOWQ channel
+    { scpi_dev_sense_voltage_lowq(info, &$4); }
 
-    | SENS COLON VOLT COLON OFFSQ  channel
-    { scpi_dev_sense_voltage_offsetq(info, &$6); }
+    | sens_volt COLON OFFSQ  channel
+    { scpi_dev_sense_voltage_offsetq(info, &$4); }
 
-    | SENS COLON VOLT COLON DC COLON OFFSQ channel
-    { scpi_dev_sense_voltage_offsetq(info, &$8); }
+    | sens_volt_dc COLON OFFSQ channel
+    { scpi_dev_sense_voltage_offsetq(info, &$4); }
 
-    | SENS COLON VOLT COLON PTPQ channel
-    { scpi_dev_sense_voltage_ptpq(info, &$6); }
+    | sens_volt COLON PTPQ channel
+    { scpi_dev_sense_voltage_ptpq(info, &$4); }
 
-    | SENS COLON VOLT COLON DC COLON PTPQ channel
-    { scpi_dev_sense_voltage_ptpq(info, &$8); }
+    | sens_volt_dc COLON PTPQ channel
+    { scpi_dev_sense_voltage_ptpq(info, &$4); }
 
-    | SENS COLON VOLT COLON RANGQ channel
-    { scpi_dev_sense_voltage_upq(info, &$6); }
+    | sens_volt COLON RANGQ channel
+    { scpi_dev_sense_voltage_upq(info, &$4); }
 
-    | SENS COLON VOLT COLON DC COLON RANGQ channel
-    { scpi_dev_sense_voltage_upq(info, &$8); }
+    | sens_volt_dc COLON RANGQ channel
+    { scpi_dev_sense_voltage_upq(info, &$4); }
 
-    | SENS COLON VOLT COLON UPPQ channel
-    { scpi_dev_sense_voltage_upq(info, &$6); }
+    | sens_volt COLON UPPQ channel
+    { scpi_dev_sense_voltage_upq(info, &$4); }
 
-    | SENS COLON VOLT COLON DC COLON UPPQ channel
-    { scpi_dev_sense_voltage_upq(info, &$8); }
+    | sens_volt_dc COLON UPPQ channel
+    { scpi_dev_sense_voltage_upq(info, &$4); }
 
-    | SOUR COLON DIG COLON DAT nr1
-    { scpi_dev_source_digital_data(info, &$6); }
+    | sour_dig COLON DAT nr1
+    { scpi_dev_source_digital_data(info, &$4); }
 
-    | SOUR COLON DIG COLON DATQ
+    | sour_dig COLON DATQ
     { scpi_dev_source_digital_dataq(info); }
 
-    | SOUR COLON FREQ numeric_value
+    | sour COLON FREQ numeric_value
     { scpi_dev_source_waveform_frequency(info, &$4); }
 
-    | SOUR COLON FREQQ
+    | sour COLON FREQQ
     { scpi_dev_source_waveform_frequencyq(info); }
 
-    | SOUR COLON FUNC source_function
-    { scpi_dev_source_waveform_function(info, &$4); }
+    | sour_func source_function
+    { scpi_dev_source_waveform_function(info, &$2); }
 
-    | SOUR COLON FUNCQ
+    | sour COLON FUNCQ
     { scpi_dev_source_waveform_functionq(info); }
 
-    | SOUR COLON FUNC COLON USER block
-    { scpi_dev_source_waveform_user(info, &$6); }
+    | sour_func COLON USER block
+    { scpi_dev_source_waveform_user(info, &$4); }
 
-    | SOUR COLON FUNC COLON USERQ
+    | sour_func COLON USERQ
     { scpi_dev_source_waveform_userq(info); }
 
-    | SOUR COLON FUNC COLON LEV numeric_value
-    { scpi_dev_source_waveform_level(info, &$6); }
+    | sour_func COLON LEV numeric_value
+    { scpi_dev_source_waveform_level(info, &$4); }
 
-    | SOUR COLON FUNC COLON LEVQ
+    | sour_func COLON LEVQ
     { scpi_dev_source_waveform_levelq(info); }
 
-    | SOUR COLON PULS COLON DCYC numeric_value
-    { scpi_dev_source_pwm_duty_cycle(info, &$6); }
+    | sour_puls COLON DCYC numeric_value
+    { scpi_dev_source_pwm_duty_cycle(info, &$4); }
 
-    | SOUR COLON PULS COLON DCYCQ
+    | sour_puls COLON DCYCQ
     { scpi_dev_source_pwm_duty_cycleq(info); }
 
-    | SOUR COLON PULS COLON FREQ numeric_value
-    { scpi_dev_source_pwm_frequency(info, &$6); }
+    | sour_puls COLON FREQ numeric_value
+    { scpi_dev_source_pwm_frequency(info, &$4); }
 
-    | SOUR COLON PULS COLON FREQQ
+    | sour_puls COLON FREQQ
     { scpi_dev_source_pwm_frequencyq(info); }
 
-    | TRIG COLON COUP coupling_arg
+    | trig COLON COUP coupling_arg
     { scpi_dev_trigger_coupling(info, &$4); }
 
-    | TRIG COLON LEV numeric_value
+    | trig COLON LEV numeric_value
     { scpi_dev_trigger_level(info, &$4); }
 
-    | TRIG COLON LEVQ
+    | trig COLON LEVQ
     { scpi_dev_trigger_levelq(info); }
 
-    | TRIG COLON SLOP trigger_slope
+    | trig COLON SLOP trigger_slope
     { scpi_dev_trigger_slope(info, &$4); }
 
-    | TRIG COLON SLOPQ
+    | trig COLON SLOPQ
     { scpi_dev_trigger_slopeq(info); }
 
-    | TRIG COLON SOUR trigger_source
+    | trig COLON sour trigger_source
     { scpi_dev_trigger_source(info, &$4); }
 
-    | TRIG COLON SOURQ
+    | trig COLON SOURQ
     { scpi_dev_trigger_sourceq(info); }
 
-    | SYST COLON COMM COLON TCP COLON CONTQ
+    | syst COLON COMM COLON TCP COLON CONTQ
     { scpi_system_communicate_tcp_controlq(info); }
 
-    | SYST COLON internal COLON QUIT
+    | syst_int COLON QUIT
     { scpi_system_internal_quit(info); }
 
-    | SYST COLON internal COLON CAL
+    | syst_int COLON CAL
     { scpi_system_internal_calibrate(info); }
 
-    | SYST COLON internal COLON CONF
+    | syst_int COLON CONF
     { scpi_system_internal_configure(info); }
 
-    | SYST COLON internal COLON SHOWQ
+    | syst_int COLON SHOWQ
     { scpi_system_internal_showq(info); }
 
-    | SYST COLON internal COLON SETUQ
+    | syst_int COLON SETUQ
     { scpi_system_internal_setupq(info); }
     ;
 

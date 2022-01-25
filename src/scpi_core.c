@@ -524,3 +524,8 @@ void scpi_system_internal_showq(struct info *info)
     (void)info;
 }
 
+void scpi_core_add_prefix(struct info *info, int token)
+{
+    parser_add_prefix(info, token);
+}
+

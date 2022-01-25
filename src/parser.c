@@ -124,28 +124,6 @@ int parser_done(struct info *info)
     return 0;
 }
 
-static int parser_replay_token(int token)
-{
-    switch (token) {
-    case LPAREN:
-    case RPAREN:
-    case COMMA:
-    case SEMIS:
-    case COLON:
-    case DASH:
-    case AT:
-    case FLOAT:
-    case NUM:
-    case IDENT:
-    case YYEOF:
-    case OTHER:
-        return 0;
-    default:
-        return 1;
-    }
-    assert(0);
-}
-
 static void parser_replay_reset(struct parser *parser)
 {
     parser->replay.active = 0;
@@ -185,14 +163,6 @@ static void parser_reset_prefix(struct parser *parser)
     memset(parser->prefix, 0, sizeof(parser->prefix));
 }
 
-static void parser_add_prefix(struct parser *parser, int token)
-{
-    if (parser_replay_token(token)) {
-        assert(parser->prefix_length < MAX_CMD_DEPTH);
-        parser->prefix[parser->prefix_length++] = token;
-    }
-}
-
 void parser_separator(struct info *info, int value)
 {
     info->parser->separator = value;
@@ -217,7 +187,6 @@ static void parser_loop(struct info *info,
             c = parser_replay_prefix(info->parser);
         } else {
             c = yylex(&yys, &yyl, scanner);
-            parser_add_prefix(info->parser, c);
         }
         status = yypush_parse(info->parser->ps, c, &yys, &yyl, info);
     } while (status == YYPUSH_MORE);
@@ -391,6 +360,7 @@ int parser_ident(const char *s,
                  int token)
 {
     parser_update_location(loc, strlen(s));
+    val->token = token;
     val->type = SCPI_TYPE_STR;
     val->src = parser_ident_add(&parser_strpool, s);
 
@@ -403,6 +373,7 @@ int parser_punct(const char *s,
                  int token)
 {
     parser_update_location(loc, strlen(s));
+    val->token = token;
     val->type = SCPI_TYPE_STR;
     val->src = parser_ident_add(&parser_strpool, s);
 
@@ -425,3 +396,12 @@ void parser_eol(const char *s, struct scpi_type *val, YYLTYPE *loc)
     loc->last_column = 0;
     (void)val;
 }
+
+void parser_add_prefix(struct info *info, int token)
+{
+    assert(info);
+    assert(info->parser->prefix_length < MAX_CMD_DEPTH);
+
+    info->parser->prefix[info->parser->prefix_length++] = token;
+}
+
