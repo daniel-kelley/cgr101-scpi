@@ -15,8 +15,11 @@
 #include "scpi.tab.h"
 #include "scanner.h"
 
-/* Maximum command depth in grammar, i.e. maximum number of ':' separators. */
-#define MAX_CMD_DEPTH 5
+/*
+ * Maximum command depth in grammar, i.e. maximum number of ':'
+ * separators, including separators.
+ */
+#define MAX_CMD_DEPTH (5*2)
 
 struct lexer {
     yyscan_t scanner;
@@ -128,6 +131,7 @@ static void parser_replay_reset(struct parser *parser)
 {
     parser->replay.active = 0;
     parser->replay.idx = 0;
+    parser->separator = 0;
 }
 
 static int parser_replay_prefix(struct parser *parser)
@@ -136,7 +140,9 @@ static int parser_replay_prefix(struct parser *parser)
 
     assert(parser->replay.active);
     token = parser->prefix[parser->replay.idx++];
+    assert(token);
 
+    /* Reset when the last prefix token is returned. */
     if (parser->replay.idx == parser->prefix_length) {
         parser_replay_reset(parser);
     }
@@ -397,11 +403,19 @@ void parser_eol(const char *s, struct scpi_type *val, YYLTYPE *loc)
     (void)val;
 }
 
-void parser_add_prefix(struct info *info, int token)
+static void parser_add_prefix_(struct info *info, int token)
 {
     assert(info);
     assert(info->parser->prefix_length < MAX_CMD_DEPTH);
 
     info->parser->prefix[info->parser->prefix_length++] = token;
+}
+
+void parser_add_prefix(struct info *info, int token)
+{
+    if (!info->parser->replay.active) {
+        parser_add_prefix_(info, token);
+        parser_add_prefix_(info, COLON);
+    }
 }
 
