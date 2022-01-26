@@ -98,7 +98,17 @@ int scpi_output_str(struct scpi_output *output, const char *value)
 
 int scpi_output_cmd_sep(struct scpi_output *output)
 {
-    return scpi_output_str(output, ";");
+    int err = 1;
+
+    if ((OUTPUT_SIZE - output->len - 1) > 1) {
+        output->buf[output->len++] = ';';
+        err = 0;
+    } else {
+        output->overflow = 1;
+    }
+    output->num_elem = 0;
+
+    return err;
 }
 
 void scpi_output_clear(struct scpi_output *output)
