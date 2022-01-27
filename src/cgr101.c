@@ -816,16 +816,19 @@ static int cgr101_digitizer_start(struct info *info, int manual)
 static int cgr101_rcv_scope_addr(struct info *info, char c)
 {
     int err = 0;
+    unsigned char uc = (unsigned char)c;
 
     switch (info->device->scope.addr_state) {
     case STATE_SCOPE_ADDR_EXPECT_HIGH:
         assert(c >= 0);
         assert(c <= 3);
-        info->device->scope.addr = (unsigned int)(c<<8);
+        info->device->scope.addr = (unsigned int)(uc<<8);
+        assert(info->device->scope.addr < SCOPE_NUM_SAMPLE);
         info->device->scope.addr_state = STATE_SCOPE_ADDR_EXPECT_LOW;
         break;
     case STATE_SCOPE_ADDR_EXPECT_LOW:
-        info->device->scope.addr |= (unsigned int)(c);
+        info->device->scope.addr |= (unsigned int)(uc);
+        assert(info->device->scope.addr < SCOPE_NUM_SAMPLE);
         info->device->scope.addr_state = STATE_SCOPE_ADDR_COMPLETE;
         cgr101_rcv_idle(info);
         /* Get the buffer. */
