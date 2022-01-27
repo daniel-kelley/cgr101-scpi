@@ -418,10 +418,18 @@ void scpi_core_top(struct info *info)
     info->busy = 0;
 }
 
+/*   prev current output
+ *      0       0 no  - this is a ':' not preceded by ';'
+ *      0       1 yes - this is a ';'
+ *      1       0 no  - this is a ':' resetting the path from previous ';'
+ *      1       1 yes - this is another ';'
+ */
 void scpi_core_cmd_sep(struct info *info, int value)
 {
     parser_separator(info, value);
-    scpi_output_cmd_sep(info->output);
+    if (value) {
+        scpi_output_cmd_sep(info->output);
+    }
 }
 
 struct scpi_type *scpi_core_format_type(struct info *info,

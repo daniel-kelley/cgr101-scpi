@@ -32,6 +32,7 @@ struct parser {
         struct parser_msg_loc data;
     } error;
     int trace_yyerror;
+    int trace_loop;
     int separator;
     int prefix_length;
     int prefix[MAX_CMD_DEPTH];
@@ -39,6 +40,11 @@ struct parser {
         int active;
         int idx;
     } replay;
+};
+
+enum parser_loop_state {
+    LEX,
+    PREFIX,
 };
 
 struct parser_strpool_s {
@@ -100,6 +106,9 @@ int parser_init(struct info *info)
             if (strchr(info->debug,'y')) {
                 info->parser->trace_yyerror = 1;
             }
+            if (strchr(info->debug,'L')) {
+                info->parser->trace_loop = 1;
+            }
         }
 
         rv = 0;
@@ -160,23 +169,34 @@ static int parser_replay_active(struct parser *parser)
         parser->replay.active = 1;
     }
 
-    return  parser->replay.active;
+    return parser->replay.active;
 }
 
 static void parser_reset_prefix(struct parser *parser)
 {
+    parser->replay.active = 0;
     parser->prefix_length = 0;
     memset(parser->prefix, 0, sizeof(parser->prefix));
 }
 
-void parser_separator(struct info *info, int value)
+int parser_separator(struct info *info, int value)
 {
+    int separator = info->parser->separator;
+
+    if (info->parser->trace_loop) {
+        fprintf(stderr, "[LOOP] %s: separator:%d->%d\n",
+                __func__, separator, value);
+    }
     info->parser->separator = value;
     if (!value) {
         parser_reset_prefix(info->parser);
     }
+
+    return separator;
 }
 
+/* Somewhat complicated by the interaction of ':' cancelling
+ * prefixes. */
 static void parser_loop(struct info *info,
                         yyscan_t scanner)
 {
@@ -184,15 +204,45 @@ static void parser_loop(struct info *info,
     int c;
     YYSTYPE yys;
     YYLTYPE yyl;
+    enum parser_loop_state state = LEX;
+    int suffix = 0;
+    int active;
 
     parser_replay_reset(info->parser);
     do {
         memset(&yys, 0, sizeof(yys));
         memset(&yyl, 0, sizeof(yyl));
-        if (parser_replay_active(info->parser)) {
-            c = parser_replay_prefix(info->parser);
-        } else {
+        switch (state) {
+        case LEX:
             c = yylex(&yys, &yyl, scanner);
+            /* If replay is active, then the previous token was ';'
+             * and the current token needs to be saved as 'suffix' and
+             * the next state becomes PREFIX, *UNLESS* the current
+             * token is ':', which cancels the replay, and the state
+             * remains LEX.
+             */
+            active = parser_replay_active(info->parser);
+            if (active && c != COLON) {
+                suffix = c;
+                state = PREFIX;
+                c = parser_replay_prefix(info->parser);
+            }
+            break;
+        case PREFIX:
+            /* Replay the saved prefix. When done, the next state is
+             * LEX with the previously saved 'suffix' token. */
+            if (parser_replay_active(info->parser)) {
+                c = parser_replay_prefix(info->parser);
+            } else {
+                c = suffix;
+                state = LEX;
+            }
+            break;
+        default:
+            assert(0);
+        }
+        if (info->parser->trace_loop) {
+            fprintf(stderr, "[LOOP] %s: %d %d\n", __func__, state, c);
         }
         status = yypush_parse(info->parser->ps, c, &yys, &yyl, info);
     } while (status == YYPUSH_MORE);

@@ -358,6 +358,33 @@ module CGR101Core
     assert_equal(0, self.class.hdl.err_length)
   end
 
+  #
+  # Command prefix
+  #
+  def test_core_022
+    self.class.hdl.send("SYST:ERR:COUN?;COUN?;COUN?")
+    out = self.class.hdl.recv
+    assert_equal("0;0;0", out)
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+  end
+
+  def test_core_023
+    self.class.hdl.send(":SYST:ERR?")
+    out = self.class.hdl.recv
+    assert_equal("0,\"No error\"", out)
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+  end
+
+  def test_core_024
+    self.class.hdl.send("SYST:ERR:COUN?;:SYST:ERR:COUN?;COUN?")
+    out = self.class.hdl.recv
+    assert_equal("0;0;0", out)
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+  end
+
   def no_test_core_outline
     self.class.hdl.send("SYSTem:CAPability?")
     sleep(5)

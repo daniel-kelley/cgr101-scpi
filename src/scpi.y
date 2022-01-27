@@ -185,8 +185,12 @@ semis
 
 cmd-path
     : cmd
-    | COLON cmd
-    {  scpi_core_cmd_sep(info, 0); $$=$2; }
+    | leading-colon cmd
+    ;
+
+leading-colon
+    : COLON
+    {  scpi_core_cmd_sep(info, 0); }
     ;
 
 cmd
