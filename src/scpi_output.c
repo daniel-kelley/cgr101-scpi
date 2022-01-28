@@ -15,7 +15,7 @@
 #define OUTPUT_SIZE (1024*32)
 
 struct scpi_output {
-    int                 num_sep;
+    int                 need_sep;
     int                 num_elem;
     int                 overflow;
     size_t              len;
@@ -39,6 +39,21 @@ int scpi_output_done(struct scpi_output *output)
     return 0;
 }
 
+static size_t scpi_output_append_char(struct scpi_output *output, char c)
+{
+    size_t current = OUTPUT_SIZE - output->len - 1;
+
+    if (current > 1) {
+        *((char *)output->buf + output->len) = c;
+        current -= 1;
+        output->len += 1;
+    } else {
+        output->overflow = 1;
+    }
+
+    return current;
+}
+
 int scpi_output_printf(struct scpi_output *output,
                        const char *format,
                        ...)
@@ -49,13 +64,17 @@ int scpi_output_printf(struct scpi_output *output,
     va_list ap;
 
     assert(format != NULL);
+
+    /* Handle output separator. */
+    if (output->need_sep) {
+        current = scpi_output_append_char(output, ';');
+        output->need_sep = 0;
+        output->num_elem = 0;
+    }
+
     /* Append ',' after the first element if any except if newline. */
-    if (current > 1 && output->num_elem > 0 && *format != '\n') {
-        *((char *)output->buf + output->len) = ',';
-        current -= 1;
-        output->len += 1;
-    } else {
-        output->overflow = 1;
+    if (output->num_elem > 0 && *format != '\n') {
+        current = scpi_output_append_char(output, ',');
     }
 
     va_start(ap, format);
@@ -98,17 +117,9 @@ int scpi_output_str(struct scpi_output *output, const char *value)
 
 int scpi_output_cmd_sep(struct scpi_output *output)
 {
-    int err = 1;
+    output->need_sep = 1;
 
-    if ((OUTPUT_SIZE - output->len - 1) > 1) {
-        output->buf[output->len++] = ';';
-        err = 0;
-    } else {
-        output->overflow = 1;
-    }
-    output->num_elem = 0;
-
-    return err;
+    return 0;
 }
 
 void scpi_output_clear(struct scpi_output *output)
