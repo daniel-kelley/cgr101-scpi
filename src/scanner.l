@@ -155,6 +155,7 @@ USER\?                  { return parser_ident(yytext, yylval, yylloc, USERQ); }
 -                       { return parser_punct(yytext, yylval, yylloc, DASH); }
 @                       { return parser_punct(yytext, yylval, yylloc, AT); }
 
+^[[:blank:]]*#.*        /* # comment */
 [+-]*[[:digit:]]*\.[[:digit:]]+ { return parser_num(yytext, yylval, yylloc, FLOAT); }
 
 [+-]*[[:digit:]]+\.[[:digit:]]* { return parser_num(yytext, yylval, yylloc, FLOAT); }
