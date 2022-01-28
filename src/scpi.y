@@ -116,6 +116,7 @@
 %token SHAP
 %token SHOWQ
 %token SIN
+%token SLE
 %token SLOP
 %token SLOPQ
 %token SOUR
@@ -844,6 +845,12 @@ dev-cmd
 
     | syst_int COLON SETUQ
     { scpi_system_internal_setupq(info); }
+
+    | SLE nr1
+    { scpi_system_internal_sleep(info, &$2); }
+
+    | SLE nrf
+    { scpi_system_internal_sleep(info, &$2); }
     ;
 
 %%

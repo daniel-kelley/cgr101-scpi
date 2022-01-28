@@ -121,6 +121,7 @@ REAL                    { return parser_ident(yytext, yylval, yylloc, REAL); }
 (SHAP|SHAPe)            { return parser_ident(yytext, yylval, yylloc, SHAP); }
 SHOW\?                  { return parser_ident(yytext, yylval, yylloc, SHOWQ); }
 (SIN|SINusoid)          { return parser_ident(yytext, yylval, yylloc, SIN); }
+(SLE|SLEep)             { return parser_ident(yytext, yylval, yylloc, SLE); }
 (SLOP|SLOPe)            { return parser_ident(yytext, yylval, yylloc, SLOP); }
 (SLOP|SLOPe)\?          { return parser_ident(yytext, yylval, yylloc, SLOPQ); }
 (SOUR|SOURce)           { return parser_ident(yytext, yylval, yylloc, SOUR); }

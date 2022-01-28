@@ -385,6 +385,18 @@ module CGR101Core
     assert_equal(0, self.class.hdl.err_length)
   end
 
+  def test_core_025a
+    self.class.hdl.send("SLEEP 1")
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+  end
+
+  def test_core_025b
+    self.class.hdl.send("SLEEP 0.1")
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+  end
+
   def no_test_core_outline
     self.class.hdl.send("SYSTem:CAPability?")
     sleep(5)

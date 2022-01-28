@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include "scpi.h"
 #include "scpi_core.h"
 #include "scpi_error.h"
@@ -535,5 +536,14 @@ void scpi_system_internal_showq(struct info *info)
 void scpi_core_add_prefix(struct info *info, int token)
 {
     parser_add_prefix(info, token);
+}
+
+void scpi_system_internal_sleep(struct info *info, struct scpi_type *v)
+{
+    double value;
+
+    scpi_input_fp(info, v, &value);
+
+    usleep((useconds_t)(value*1000000.0));
 }
 
