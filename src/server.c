@@ -207,6 +207,35 @@ int server_listen(struct info *info)
     return rc;
 }
 
+static int server_timed_block(struct info *info)
+{
+    struct timeval tv;
+    int err;
+    int rv = 0;
+
+    err = gettimeofday(&tv, NULL);
+    assert(!err);
+    rv = timercmp(&tv, &info->block_until.tv, <);
+    if (!rv) {
+        info->block_until.active = 0;
+    }
+
+    return rv;
+}
+
+static int server_block_input(struct info *info)
+{
+    int rv = 0;
+
+    if (info->block_until.active) {
+        rv = server_timed_block(info);
+    } else {
+        rv = info->block_input;
+    }
+
+    return rv;
+}
+
 static int server_select(struct info *info)
 {
     fd_set fds;
@@ -253,7 +282,9 @@ static int server_select(struct info *info)
         return rc;
     }
 
-    if (FD_ISSET(info->cli_in_fd, &fds) && !info->block_input) {
+    if (FD_ISSET(info->cli_in_fd, &fds) &&
+        !info->cli_line &&
+        !server_block_input(info)) {
         srv_event |= SERVER_CLI;
     }
 
@@ -335,30 +366,39 @@ static int server_scpi_send(struct info *info, char *buf, size_t len)
     return rc;
 }
 
-static int server_cli_lines(struct info *info, char *buf, size_t len)
+static int server_cli_line(struct info *info)
 {
     char *eol;
     size_t llen;
     int rc = 0;
 
-    while ((eol = strchr(buf, '\n')) != NULL) {
-        llen = (size_t)(eol - buf);
+    assert(info->cli_line);
+    assert(info->cli_line_len > 0);
+    eol = strchr(info->cli_line, '\n');
+    if (eol) {
+        llen = (size_t)(eol - info->cli_line);
         assert(llen < INFO_CLI_LEN);
         if (llen) {
-            rc = server_scpi_send(info, buf, llen);
+            rc = server_scpi_send(info, info->cli_line, llen);
         }
-        len -= (llen + 1);
-        buf = eol + 1;
+        info->cli_line = eol + 1;
+        info->cli_line_len -= (llen + 1);
+        if (info->cli_line_len == 0) {
+            info->cli_line = NULL;
+        }
+    } else {
+        /* Do something with the leftovers */
+        assert(info->cli_line_len < INFO_CLI_LEN);
+        memmove(info->cli_buf, info->cli_line, info->cli_line_len);
+        info->cli_offset = info->cli_line_len;
+        info->cli_line = NULL;
+        info->cli_line_len = 0;
     }
-    /* Do something with the leftovers */
-    assert(len < INFO_CLI_LEN);
-    memmove(info->cli_buf, buf, len);
-    info->cli_offset = len;
 
     return rc;
 }
 
-static int server_cli(struct info *info)
+static int server_cli_read(struct info *info)
 {
     int rc;
     char *cli_buf;
@@ -388,8 +428,9 @@ static int server_cli(struct info *info)
             }
         }
     } else {
-        /* Handle buffer line by line. */
-        rc = server_cli_lines(info, cli_buf, (size_t)rc);
+        info->cli_line = cli_buf;
+        info->cli_line_len = (size_t)rc;
+        rc = 0;
     }
 
     return rc;
@@ -409,12 +450,16 @@ static int server_action(struct info *info, int event)
     }
 
     if (event & SERVER_CLI) {
-        if (server_cli(info)) {
+        if (server_cli_read(info)) {
             err = 1;
             if (info->verbose) {
-                fprintf(stderr, "server_cli() failed.\n");
+                fprintf(stderr, "server_cli_read() failed.\n");
             }
         }
+    }
+
+    if (info->cli_line && !server_block_input(info)) {
+        server_cli_line(info);
     }
 
     if (event & SERVER_WORKER) {

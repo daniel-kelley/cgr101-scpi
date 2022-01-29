@@ -10,6 +10,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <sys/time.h>
 
 #define INFO_CLI_LEN 1024
 
@@ -40,9 +41,15 @@ struct info {
     int busy;
     int overlapped;
     int block_input;
+    struct {
+        int active;
+        struct timeval tv;
+    } block_until;
     const char *debug;
     size_t cli_offset;
     char cli_buf[INFO_CLI_LEN];
+    char *cli_line;
+    size_t cli_line_len;
     struct response rsp;
     const char *conf_rsp;
     void *hdl;

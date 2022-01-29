@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <math.h>
 #include "scpi.h"
 #include "scpi_core.h"
 #include "scpi_error.h"
@@ -541,9 +542,27 @@ void scpi_core_add_prefix(struct info *info, int token)
 void scpi_system_internal_sleep(struct info *info, struct scpi_type *v)
 {
     double value;
+    double sec;
+    double usec;
+    struct timeval now;
+    struct timeval interval;
+    int err;
 
     scpi_input_fp(info, v, &value);
 
-    usleep((useconds_t)(value*1000000.0));
+    err = gettimeofday(&now, NULL);
+    assert(!err);
+    sec = floor(value);
+    usec = floor((value - sec)*1000000.0);
+    assert(sec >= 0.0);
+    assert(usec >= 0.0);
+
+    interval.tv_sec = (time_t)sec;
+    interval.tv_usec = (suseconds_t)usec;
+
+    /* Block until some future time. */
+    timeradd(&now, &interval, &info->block_until.tv);
+    assert(!info->block_until.active);
+    info->block_until.active = 1;
 }
 
