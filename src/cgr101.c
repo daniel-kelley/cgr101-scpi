@@ -214,6 +214,7 @@ struct cgr101 {
     enum cgr101_rcv_state rcv_state;
     char rcv_data[RCV_MAX];
     char err_data[ERR_MAX];
+    int sent;
     /* Digital Data Input */
     enum cgr101_digital_read_state digital_read_state;
     int digital_read_requested;
@@ -295,6 +296,9 @@ static int cgr101_device_send(struct info *info, const char *str)
     len_out = write(info->device->child.stdin, str, len_in);
     result = (len_out > 0) ? ((size_t)len_out == len_in) : 0;
 
+    if (result) {
+        info->device->sent = 1;
+    }
     /*
      * Seems that we need to be gentle, otherwise one gets various
      * error responses if commands are sent too quickly back to back.
@@ -667,6 +671,19 @@ static void cgr101_scope_status_completion(void *arg)
     struct info *info = arg;
 
     event_send(info->event, EVENT_SCOPE_STATUS_OUTPUT);
+}
+
+/*
+ * Oscilloscope Offset Handling
+ */
+
+static void cgr101_scope_offset_start(void *arg)
+{
+    struct info *info = arg;
+    int err;
+
+    err = cgr101_device_send(info, "S O\n"); /* Get offsets. */
+    assert(!err);
 }
 
 /*
@@ -1105,6 +1122,12 @@ static void cgr101_event_init(struct info *info)
                     info);
     assert(!err);
 
+    err = event_add(info->event,
+                    EVENT_SCOPE_OFFSET_START,
+                    cgr101_scope_offset_start,
+                    info);
+    assert(!err);
+
 }
 
 /*
@@ -1180,7 +1203,9 @@ static int cgr101_out(void *arg)
             assert(0); /*FIXME: DEBUG*/
             err = 1;
         }
-    } else if (len != 0) {
+    } else if (len != 0 && info->device->sent) {
+        /* Only receive data once a command has been sent to flush any
+         pending stale data. */
         err = cgr101_rcv_data(info, info->device->rcv_data, (size_t)len);
     }
 
@@ -1532,7 +1557,6 @@ static void cgr101_device_reset(struct info *info)
 
 static void cgr101_device_init(struct info *info)
 {
-    int err;
     int chan;
 
     cgr101_device_reset(info);
@@ -1540,10 +1564,10 @@ static void cgr101_device_init(struct info *info)
         cgr101_digitizer_set_range(info, chan);
     }
 
-    /* Query device for offsets. */
+    /* Query device for offsets. Send as an event to allow any stale
+     data still being sent by the device to be flushed. */
     if (info->device->scope.offset_state != STATE_SCOPE_OFFSET_EXPECT_A_HIGH) {
-        err = cgr101_device_send(info, "S O\n"); /* Get offsets. */
-        assert(!err);
+        event_send(info->event, EVENT_SCOPE_OFFSET_START);
     }
 }
 
