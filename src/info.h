@@ -11,7 +11,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define INFO_CLI_LEN 80
+#define INFO_CLI_LEN 1024
 
 struct scpi_output;
 struct scpi_errq;
@@ -41,6 +41,7 @@ struct info {
     int overlapped;
     int block_input;
     const char *debug;
+    size_t cli_offset;
     char cli_buf[INFO_CLI_LEN];
     struct response rsp;
     const char *conf_rsp;

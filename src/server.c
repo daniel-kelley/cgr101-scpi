@@ -325,39 +325,35 @@ static void server_scpi_recv(struct info *info)
     }
 }
 
-static int server_scpi_send(struct info *info)
+static int server_scpi_send(struct info *info, char *buf, size_t len)
 {
     int rc = 0;
-    char *buf = info->cli_buf;
+
+    rc = scpi_core_send(info, buf, (int)len);
+    server_scpi_recv(info);
+
+    return rc;
+}
+
+static int server_cli_lines(struct info *info, char *buf, size_t len)
+{
     char *eol;
-    int len;
+    size_t llen;
+    int rc = 0;
 
-    do {
-        /* Find EOL */
-        eol = strchr(buf, '\n');
-        if (eol) {
-            len = (int)(eol - buf);
-        } else {
-            len = (int)strlen(buf);
+    while ((eol = strchr(buf, '\n')) != NULL) {
+        llen = (size_t)(eol - buf);
+        assert(llen < INFO_CLI_LEN);
+        if (llen) {
+            rc = server_scpi_send(info, buf, llen);
         }
-
-        if (len) {
-            rc = scpi_core_send(info, buf, len);
-            server_scpi_recv(info);
-        } else {
-            break;
-        }
-
-        if (eol) {
-            buf = eol + 1;
-
-            if (*buf == 0) {
-                /* no more */
-                break;
-            }
-        }
-
-    } while (!rc && eol != NULL);
+        len -= (llen + 1);
+        buf = eol + 1;
+    }
+    /* Do something with the leftovers */
+    assert(len < INFO_CLI_LEN);
+    memmove(info->cli_buf, buf, len);
+    info->cli_offset = len;
 
     return rc;
 }
@@ -365,12 +361,19 @@ static int server_scpi_send(struct info *info)
 static int server_cli(struct info *info)
 {
     int rc;
+    char *cli_buf;
+    size_t cli_len;
 
-    /* Was recv(...,0), but we want to read from a file too. */
-    memset(info->cli_buf, 0, sizeof(info->cli_buf));
+    /* Append to leftovers from the previous pass. */
+    cli_buf = info->cli_buf;
+    cli_len = sizeof(info->cli_buf);
+    cli_buf += info->cli_offset;
+    cli_len -= info->cli_offset;
+
+    memset(cli_buf, 0, cli_len);
 
     do {
-        rc = (int)read(info->cli_in_fd, info->cli_buf, sizeof(info->cli_buf));
+        rc = (int)read(info->cli_in_fd, cli_buf, cli_len);
     } while (rc < 0 && errno == EAGAIN);
 
     if (rc < 0) {
@@ -385,7 +388,8 @@ static int server_cli(struct info *info)
             }
         }
     } else {
-        rc = server_scpi_send(info);
+        /* Handle buffer line by line. */
+        rc = server_cli_lines(info, cli_buf, (size_t)rc);
     }
 
     return rc;
