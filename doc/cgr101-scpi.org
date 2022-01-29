@@ -1,0 +1,685 @@
+
+* Instrument sections
+** system
+** oscilloscope
+** signal generator
+** digital IO
+
+* SCPI channels
+
+  | 1 | Oscilloscope channel A |
+  | 2 | Oscilloscope channel B |
+  | 3 | Signal generator       |
+  | 4 | Interrupt              |
+  | 5 | PWM                    |
+  | 6 | Digital Input Byte     |
+  | 7 | Digital Output Byte    |
+  |   |                        |
+
+* SCPI commands
+    /* IEEE Mandated Commands (SCPI std V1999.0 4.1.1) */
+** *CLS
+   Clear Standard Event Status Register (SESR) (488.2-11.5.1)
+   Clear OPERation Status Register (SCPI-99-9.1)
+   Clear QUEStionable Status Register (SCPI-99-9.1)
+   Clear Error Queue
+   Clear Message Queue
+   Clear Message Available MAV
+   State->IDLE
+** *ESE {N}
+   Set Standard Event Status Enable Register
+   N: 0..255; out-of-range - execution error
+** *ESE?
+   Return Standard Event Status Enable Register as decimal integer 0..255
+** *ESR?
+   Return Standard Event Status Register as decimal integer 0..255
+** *IDN?
+   Return Identification "Manufacturer;Model;Serial;Firmware version"
+** *OPC
+   Set SESR.0 when all pending operations are complete. Non-blocking
+** *OPC?
+   \*WAI then output a 1
+** *RST
+   Reset system
+** *SRE {N}
+   Set service request enable register
+   N: 0..255; out-of-range - execution error
+** *SRE?
+   Return service request enable register
+** *STB?
+   Read status byte
+** *TST?
+   Self test; return response
+** *WAI
+   Block all pending operations are complete
+** SYSTEM
+    /* Required SCPI commands (SCPI std V1999.0 4.2.1) */
+SYSTem:ERRor[:NEXT]?
+    Return an item from the queue or 0 if queue empty
+SYSTem:ERRor:COUNt?
+    Return number of items in error queue
+
+SYSTem:VERSion?
+    Returns 1999.0
+
+    /* SYSTem:CAPability? SCPI-99 4.1 */
+SYSTem:CAPability?
+    Returns "DIGITIZER"
+** STATUS (20-1)
+    /* STATus:OPERation[:EVENt]? SCPI-99 1.9 */
+STATus:OPERation[:EVENt]?
+STATus:OPERation:CONDition?
+STATus:OPERation:ENABle
+STATus:OPERation:ENABle?
+STATus:QUEStionable[:EVENt]?
+STATus:QUEStionable:CONDition?
+STATus:QUEStionable:ENABle
+STATus:QUEStionable:ENABle?
+STATus:PRESet
+** <DEVICE>
+ABORt
+CONFigure:DIGital:DATA # digital input
+CONFigure?
+FETCh:DIGital:DATA?
+FORMat <type>[,<nrf>]
+FORMat?
+INITiate
+INPut:COUPling DC
+MEASure:DIGital:DATA? # digital input
+READ:DIGital:DATA?
+SENSe:DATA? (@<chan-list>)
+SENSe:FUNCtion:CONCurrent <boolean>
+SENSe:FUNCtion:OFF <sensor_function>
+SENSe:FUNCtion:STATe? <sensor_function>
+SENSe:FUNCtion[:ON] {VOLTage:DC} (@<chan-list>)
+SENSe:SWEep:POINts,:TIME,:TINTerval <numeric_value>
+SENSe:SWEep:PRETrigger <count>
+SENSe:VOLTage[:DC]:LOWer <numeric_value> (etc.)
+SENSe:VOLTage[:DC]:OFFSet <numeric_value>
+SENSe:VOLTage[:DC]:PTPeak <numeric_value>
+SENSe:VOLTage[:DC]:RANGe {<numeric_value>|MIN|MAX|DEF} (@<chan-list>)
+SENSe:VOLTage[:DC][:UPPER] <numeric_value>
+SOURce:DIGital:DATA (@<chan>) # digital output
+SOURce:DIGital:DATA? (@<chan>) # digital output
+SOURce:FREQuency <value>
+SOURce:FUNCtion:USER <block>
+SOURce:FUNCtion {RANDom|SINusoid|SQUare|TRIangle}
+SOURce:PULSe:DCYCLe <value>
+SOURce:PULSe:FREQuency <value>
+SYSTem:COMMunicate:TCPip:CONTrol?
+SYSTem:INTernal:CALibrate
+SYSTem:INTernal:CONFigure
+SYSTem:INTernal:QUIt
+SYSTem:INTernal:SETup?
+SYSTem:INTernal:SHOW?
+* Scanner
+ABORt
+AC
+ALL
+CALibrate
+COMMunicate
+CONCurrent
+CONFigure
+CONFigure?
+CONTrol?
+COUPling
+CW
+DATA
+DATA?
+DC
+DCYCLe
+DEF
+DIGital
+FETCh
+FIXed
+FORMat
+FREQuency
+FUNCtion
+GND
+IMMediate
+INITiate
+INPut
+INTernal
+LOWer
+MAX
+MEASure
+MIN
+OFF
+OFFSet
+ON
+POINts
+PRETrigger
+PTPeak
+PULSe
+QUIt
+RANDom
+RANGe
+READ
+SENSe
+SETup?
+SHAPe
+SHOW?
+SINusoid
+SOURce
+STATe?
+SWEep
+SYSTem
+TCPip
+TIME
+TINTerval
+TRIangle
+UPPer
+USER
+VOLTage
+
+* SCPI Errors
+  See scpi-99 p.21-16
+  
+* SCPI Digitizer
+  Instrument class DIGITIZER
+INPut:COUPling  DC (only DC supported)
+SENSe:VOLTage:RANGe {<numeric_value>|MIN|MAX|DEF} (@<chan-list>)
+SENSe:VOLTage:LOWer <numeric_value> (etc.)
+SENSe:VOLTage:OFFSet <numeric_value>
+SENSe:VOLTage:PTPeak <numeric_value>
+SENSe:VOLTage[:UPPER] <numeric_value>
+SENSe:SWEep::TIME <numeric_value>
+SENSe:SWEep:TINTerval <numeric_value>
+SENSe:DATA? (@<chan-list>)
+SENSe:FUNCtion:CONCurrent <boolean>
+SENSe:FUNCtion:OFF <sensor_function>
+SENSe:FUNCtion[:ON] {VOLTage:DC} (@<chan-list>)
+SENSe:FUNCtion:STATe? <sensor_function>
+:FORMat[:DATA] <type>[,<numeric_value>]
+:INITiate[:IMMediate][:ALL]
+ABORt
+TRIGGER:COUPling AC,DC (only DC supported)
+TRIGGER:LEVel {<numeric_value>|MIN|MAX|DEF(=0)}
+TRIGGER:LEVel?
+TRIGGER:SLOPe {POSitive,NEGative,EITher}
+TRIGGER:SLOPe?
+TRIGGER:SOURce {IMMediate|INTernal|EXTernal}
+TRIGGER:SOURce?
+
+** sweep interactions
+
+*** SENSe:SWEep:COUNt <numeric_value>
+    N/A, equals 1
+*** SENSe:SWEep:DIRection UP|DOWN
+    N/A, equals UP
+*** SENSe:SWEep:DWELl <numeric_value>
+    N/A - effectively the same as SWEep:TINTerval with <stepping_time>=0
+*** SENSe:SWEep:DWELl:AUTO <Boolean>|ONCE
+    N/A
+*** SENSe:SWEep:GENeration STEPped|ANALog
+    ANALog: The sweep or acquisition is controlled by an analog
+    signal. SWEep:POINts is not applicable.
+*** SENSe:SWEep:MODE AUTO|MANual
+    N/A
+*** SENSe:SWEep:OFFSet:POINts <numeric_value>
+    Sets the offset in terms of points. This value may be positive or
+    negative. A positive value specifies that the offset reference
+    point occurs after the trigger point.
+
+    The following coupling equation applies.
+
+      SWEep:OFFSet:POINts = SWEep:OFFSet:TIME / SWEep:TINTerval
+
+    Changing SWEep:OFFSet:POINts will cause SWEep:OFFSet:TIME to
+    change, but not SWEep:TINTerval. See also introductory comments in
+    the SWEep subsystem.  At *RST, this value is set to 0.
+*** SENSe:SWEep:OFFSet:TIME <numeric_value>
+    Sets the offset in units of time. This value may be positive or
+    negative. A positive value specifies that the offset reference
+    point occurs after the trigger point.
+
+    The following coupling equation applies.
+
+      SWEep:OFFSet:POINts = SWEep:OFFSet:TIME / SWEep:TINTerval
+
+    Changing SWEep:OFFSet:TIME will cause SWEep:OFFSet:POINts to
+    change, but not SWEep:TINTerval. See also introductory comments in
+    the SWEep subsystem.  At *RST, this value is set to 0.
+
+*** SENSe:SWEep:OREFerence:LOCation <numeric_value>
+
+  Sets the offset reference by specifying a relative
+  location. SWEep:OREFerence:LOCation accepts a range of values from 0
+  to 1. A value of 0 selects the first point of acquisition as the
+  reference. A value of 1 selects the last point.
+
+  The following coupling equation applies.
+
+        SWEep:OREFerence:LOCation =
+                    (SWEep:OREFerence:POINts - 1) / (SWEep:POINts - 1)
+
+  Changing SWEep:OREFerence:LOCation will cause
+  SWEep:OREFerence:POINts to change, but not SWEep:POINts.
+
+*** SENSe:SWEep:OREFerence:POINts <numeric_value>
+
+  Sets the offset reference by specifying a number of
+  points. SWEep:OREFerence:POINts accepts values from 1 to N, where N
+  is the maximum value of SWEep:POINts. A value of 1 selects the first
+  point of acquisition as the reference.
+
+  The following coupling equation applies.
+
+  SWEep:OREFerence:LOCation =
+    (SWEep:OREFerence:POINts - 1) / (SWEep:POINts - 1)
+
+  Changing SWEep:OREFerence:POINts will cause
+  SWEep:OREFerence:LOCation to change, but not SWEep:POINts. See also
+  introductory comments in the SWEep subsystem.  At *RST, this value
+  is device-dependent.
+
+  1 based.
+
+*** SENSe:SWEep:POINts <numeric_value>
+
+    Sets the number of points in a stepped sweep or
+    acquisition. POINts is ignored when GENeration is ANALog.
+
+    The remaining SCPI commenmtary for this can be ignored.
+
+    For the CGR-101 this value is fixed at 4096.
+
+*** SENSe:SWEep:REALtime
+    N/A
+
+*** SENSe:SWEep:REALtime[:STATe] <Boolean>
+    N/A
+*** SENSe:SWEep:SPACing LINear|LOGarithmic
+    N/A
+*** SENSe:SWEep:STEP <numeric_value>
+    N/A
+    
+*** SENSe:SWEep:TIME <numeric_value>
+
+  Sets the duration of the sweep or acquisition. Note that this does
+  not turn sweeping or acquisition on. Explicitly setting a value for
+  SWEep:TINTerval or SWEep:TIME sets SWEep:TIME:AUTO OFF.
+
+  The following coupling equation applies.
+
+        SWEep:TINTerval = SWEep:TIME / (SWEep:POINts - 1)
+
+  Changing SWEep:TIME will cause SWEep:TINTerval to change, but not
+  SWeep:POINts.
+
+  At *RST, this value is device-dependent.
+
+*** SENSe:SWEep:TIME:AUTO <Boolean>|ONCE
+    N/A
+*** SENSe:SWEep:TIME:LLIMit <numeric_value>
+    N/A
+*** SENSe:SWEep:TINTerval <numeric_value>
+
+  Sets the time interval between points of the sweep or
+  acquisition. Explicitly setting a value for SWEep:TINTerval or
+  SWEep:TIME sets SWEep:TIME:AUTO OFF.
+
+  The following coupling equations apply.
+
+        SWEep:TINTerval = SWEep:TIME / (SWEep:POINts - 1)
+
+  Changing SWEep:TINTerval will cause SWEep:TIME to change, but not
+  SWeep:POINts.
+
+        SWEep:OFFSet:POINts = SWEep:OFFSet:TIME / SWEep:TINTerval
+
+  Changing SWEep:TINTerval will cause either SWEep:OFFSet:POINts or
+  SWEep:OFFSet:TIME to change in a device dependent manner. See also
+  introductory comments in the SWEep subsystem.
+
+  At *RST, this value is device-dependent.
+
+** impl
+
+   Sample Rates
+
+   | SR | 2**SR |      TIME | TINTerval |
+   |----+-------+-----------+-----------|
+   |  0 |     1 |   5.0e-08 | 0.0002048 |
+   |  1 |     2 |   1.0e-07 | 0.0004096 |
+   |  2 |     4 |   2.0e-07 | 0.0008192 |
+   |  3 |     8 |   4.0e-07 | 0.0016384 |
+   |  4 |    16 |   8.0e-07 | 0.0032768 |
+   |  5 |    32 |   1.6e-06 | 0.0065536 |
+   |  6 |    64 |   3.2e-06 | 0.0131072 |
+   |  7 |   128 |   6.4e-06 | 0.0262144 |
+   |  8 |   256 |  1.28e-05 | 0.0524288 |
+   |  9 |   512 |  2.56e-05 | 0.1048576 |
+   | 10 |  1024 |  5.12e-05 | 0.2097152 |
+   | 11 |  2048 | 0.0001024 | 0.4194304 |
+   | 12 |  4096 | 0.0002048 | 0.8388608 |
+   | 13 |  8192 | 0.0004096 | 1.6777216 |
+   | 14 | 16384 | 0.0008192 | 3.3554432 |
+   | 15 | 32768 | 0.0016384 | 6.7108864 |
+
+*** Couplings:
+ SWEep:POINts = 4096 (SP)
+ SWEep:OREFerence:POINts (ORP) 1..4096
+ SWEep:OREFerence:LOCation = (SWEep:OREFerence:POINts-1)/(SWEep:POINts-1)
+ SWEep:OFFSet:POINts (OP) -4096..4096  = SWEep:OFFSet:TIME/SWEep:TINTerval
+ SWEep:TINTerval = SWEep:TIME/(SWEep:POINts-1)
+ CGR101.post-trigger (PT) 0..4095 =
+   SWEep:POINts - (SWEep:OREFerence:POINts - SWEep:OFFSet:POINts)
+
+*** PT derivation
+ TP = SP - PT # Trigger Point
+ TP = ORP - OP
+
+ SP - PT = ORP - OP
+ SP = (ORP - OP) + PT
+ SP - (ORP - OP) = PT
+ PT = SP - (ORP - OP)
+
+ SP:4096 ORP:2048 OP:0 PT=4096-(2048-0)=4096-2048=2048 (makes sense)
+
+
+
+*** SENSe:SWEep:OFFSet:POINts <numeric_value>
+    Add SCPI command (setter + query)
+    Set scope.offset
+    Adjust PT
+    At RST: 0
+    Primary for scope.offset
+
+*** SENSe:SWEep:OFFSet:TIME <numeric_value>
+    Add SCPI command (setter + query)
+    Set scope.offset
+    Adjust PT
+    Derived from scope.offset
+
+*** SENSe:SWEep:OREFerence:LOCation <numeric_value>
+    Add SCPI command (setter + query)
+    Add scanner.l OREF, LOC
+    Valid range: 0..1
+    Derived from scope.reference
+    At RST: 0.5
+
+*** SENSe:SWEep:OREFerence:POINts <numeric_value>
+    Add SCPI command (setter + query)
+    Valid range: 1..4096
+    At RST: POINTS/2
+    Primary for scope.reference
+
+*** SENSe:SWEep:POINts?
+    Add scanner.l POINQ
+    Add SCPI command (query only)
+    Remove SCPI command SENSe:SWEep:POINts (setter)
+    Fixed at 4096
+    *done*
+*** SENSe:SWEep:TIME <numeric_value>
+    No SCPI grammar changes
+    Set scope.control SR as above
+*** SENSe:SWEep:TINTerval <numeric_value>
+    No SCPI grammar changes
+    Set scope.control SR as above
+* Subsystems
+** Oscilloscope
+   <DIGITIZER>
+*** pretrigger
+    *NONSTANDARD*
+   SENSe:SWEep:PRETrigger <count> [REMOVE]
+   SENSe:SAMPle <sample_rate> [REMOVE]
+   SENSe:RESet
+   SENSe:IMMediate [REMOVE]
+
+   TIMEBASE:REFERENCE... what is corresponding SCPI standard?
+** Signal generator
+   SOURce:FUNCtion {RANDom|SINusoid|SQUare|TRIangle}
+   SOURce:FUNCtion USER <block>
+   SOURce:FREQuency <value>
+   SOURce:VOLTage <value>
+** Digital read
+   CONFigure:DIGital:DATA # digital input
+   MEASure:DIGital:DATA?
+** Digital Write
+   SOURce:DIGital:DATA <value> # digital output
+   SOURce:DIGital:DATA?
+** PWM
+   SOURce:PULSe:DCYCLe <value>
+   SOURce:PULSe:FREQuency <value>
+** Interrupt
+   <set user status byte>
+
+* Protocol
+** Command
+| input           | output   | desc                             |
+|-----------------+----------+----------------------------------|
+| i               | <str>    | Identify                         |
+|-----------------+----------+----------------------------------|
+| W F <s_uint32>  | -        | Set Waveform Frequency           |
+| W A <s_uint8>   | -        | Set Waveform Amplitude           |
+| W S <s_uint8>*2 | -        | Set Waveform sample (addr,data)  |
+| W P             | -        | Waveform program                 |
+| W W             | -        | Signal generator waveform        |
+| W N             | -        | Signal generator noise           |
+|-----------------+----------+----------------------------------|
+| S T <s_uint16>  | -        | Scope: Set trigger value         |
+| S C <s_uint16>  | -        | Scope: Post trigger samples      |
+| S R <s_uint8>   | -        | Scope: Control                   |
+| S D <s_uint8>   | -        | Scope: Debug                     |
+| S G             | <sdata>  | Scope: Go                        |
+| S S             | -        | Scope: Query State               |
+| S P <AaBb>      | <state>  | Scope: Set preamp                |
+| S O             | <offset> | Scope: Read offsets              |
+| S F <s_uint8>*4 | -        | Scope: Store Offsets             |
+|-----------------+----------+----------------------------------|
+| D O <s_uint8>   | -        | Digital: Set output              |
+| D I             | <din>    | Digital: Read input              |
+| D F <s_uint8>   | -        | Digital: Set PWM Frequency       |
+| D D <s_uint8>   | -        | Digital: Set PWM Duty Cycle      |
+| D A             | -        | Digital: enable update on state  |
+| D a             |          | Digital: disable update on state |
+|-----------------+----------+----------------------------------|
+| D ! <char>      |          | Interrupt mode                   |
+
+** Response
+| output           |                  |             |
+|------------------+------------------+-------------|
+| D<p_uint16>*2048 | <buf>=4096 bytes | <sdata>     |
+| State N\r\n?     |                  | <state>     |
+| O<p_uint8>*4     |                  | <offset>    |
+| I<p_uint8>       |                  | <din>       |
+| \!\r\n           |                  | <interrupt> |
+| E<str>\r\n       |                  | <error>     |
+| *<str>\r\n       |                  | <identify>  |
+| A<p_uint8>*2     |                  | <scope>     |
+
+* NEEDS TEST
+
+| FORM format_arg                         |
+| FORM:DAT format_arg                     |
+| FORM:DATQ                               |
+| FORMQ                                   |
+| INIT:IMM                                |
+| INIT:IMM:ALL                            |
+| INP:COUP coupling_arg                   |
+| SENS:DATQ channel                       |
+| SENS:FUNC:CONC boolean                  |
+| SENS:FUNC:OFF channel                   |
+| SENS:FUNC:ON channel                    |
+| SENS:FUNC:stateq channel                |
+| SENS:RES                                |
+| SENS:SWE:OFFS:POIN numeric_value        |
+| SENS:SWE:OFFS:POINQ                     |
+| SENS:SWE:OFFS:TIME numeric_value        |
+| SENS:SWE:OFFS:TIMEQ                     |
+| SENS:SWE:OREF:LOC numeric_value         |
+| SENS:SWE:OREF:LOCQ                      |
+| SENS:SWE:OREF:POIN numeric_value        |
+| SENS:SWE:OREF:POINQ                     |
+| SENS:SWE:POINQ                          |
+| SENS:SWE:TIME numeric_value             |
+| SENS:SWE:TINT numeric_value             |
+| SENS:VOLT:DC:LOW numeric_value channel  |
+| SENS:VOLT:DC:LOWQ channel               |
+| SENS:VOLT:DC:OFFS numeric_value channel |
+| SENS:VOLT:DC:OFFSQ channel              |
+| SENS:VOLT:DC:PTP numeric_value channel  |
+| SENS:VOLT:DC:PTPQ channel               |
+| SENS:VOLT:DC:RANG numeric_value channel |
+| SENS:VOLT:DC:RANGQ channel              |
+| SENS:VOLT:DC:UPP numeric_value channel  |
+| SENS:VOLT:DC:UPPQ channel               |
+| SENS:VOLT:LOW numeric_value channel     |
+| SENS:VOLT:LOWQ channel                  |
+| SENS:VOLT:OFFS numeric_value channel    |
+| SENS:VOLT:OFFSQ  channel                |
+| SENS:VOLT:PTP numeric_value channel     |
+| SENS:VOLT:PTPQ channel                  |
+| SENS:VOLT:RANG numeric_value channel    |
+| SENS:VOLT:RANGQ channel                 |
+| SENS:VOLT:UPP numeric_value channel     |
+| SENS:VOLT:UPPQ channel                  |
+| SOUR:DIG:DATQ                           |
+| SOUR:FREQ numeric_value                 |
+| SOUR:FREQQ                              |
+| SOUR:FUNC:LEV numeric_value             |
+| SOUR:FUNC:LEVQ                          |
+| SOUR:FUNC source_function               |
+| SOUR:FUNC:USER block                    |
+| SOUR:FUNC:USERQ                         |
+| SOUR:FUNCQ                              |
+| SOUR:PULS:DCYC numeric_value            |
+| SOUR:PULS:DCYCQ                         |
+| SOUR:PULS:FREQ numeric_value            |
+| SOUR:PULS:FREQQ                         |
+| STAT:OPER:CONDQ                         |
+| STAT:OPER:ENAB nr1                      |
+| STAT:OPER:ENABQ                         |
+| STAT:OPER:EVENQ                         |
+| STAT:OPERQ                              |
+| STAT:PRES                               |
+| STAT:QUES:ENAB nr1                      |
+| STAT:QUES:ENABQ                         |
+| STAT:QUESQ                              |
+| SYST:internal:CAL                       |
+| SYST:internal:CONF                      |
+| SYST:internal:QUIT                      |
+| SYST:internal:SETUQ                     |
+| SYST:internal:SHOWQ                     |
+| TRIG:COUP coupling_arg                  |
+| TRIG:LEV numeric_value                  |
+| TRIG:LEVQ                               |
+| TRIG:SLOP trigger_slope                 |
+| TRIG:SLOPQ                              |
+| TRIG:SOUR trigger_source                |
+| TRIG:SOURQ                              |
+
+
+* OPC
+
+  Operation Complete Command Idle State (OCIS)
+The following conditions place the device into OCIS:
+  1) Power-on, see 5.12.
+  2) Receipt of the dcas message, see 5.8.
+  3) *CLS is executed, see 10.3.
+  4) *RST is executed, see 10.32.
+
+  The device shall exit OCIS and enter Operation Complete Command
+Active State (OCAS) when the *OPC command is executed.
+
+From 10.12 - *ESR? Clears on read
+
+12.4: The No-Operation-Pending Flag is TRUE if the device has no
+selected Overlapped Commands.
+
+12.5.2.1:
+The OPC event bit is set when the No-operation-pending bit is set.
+
+12.5.3: Note that, unlike the *OPC command described in 12.5.2, the
+*OPC? query does not in any way affect the OPC Event bit in the
+Standard Event Status Register (ESR).
+
+Sequential commands: always sets No-operation-pending
+Overlapped commands: only sets No-operation-pending when completed
+
+* DIG:EVENT
+
+  Timestamped digital event recorder
+
+  chan 4 = interrupt
+  chan 6 = digital inputs
+  OPER Status bit 8 for status
+  blocking
+
+
+
+  Needs (POS|NEG) grammar selection int_sel
+
+  Turns out that the interrupt needs to be re-armed after receipt, so
+  "HIGH" and "LOW" don't make sense, because re-arming would cause a
+  useless continuous event stream.
+
+| CONFigure:DIGital:EVENt |
+| FETCh:DIGital:EVENt?    |
+| MEASure:DIGital:EVENt?  |
+| READ:DIGital:EVENt?     |
+
+
+
+CONFigure:DIGital:EVENt HIGH|LOW|POS|NEG count (@chan) # digital event recorder
+   prepare to obtain 'count' events on given channels
+   HLPN is interrupt mode (chan 6 must be enabled else error)
+   chan must be 4 or 6
+
+CONFigure:DIGital:EVENt count (@chan) # digital event recorder
+   prepare to obtain 'count' events on given channels
+   chan must be 6
+
+FETCh:DIGital:EVENt?
+   overlapped; blocking
+   fetch timestamped buffer:
+     1st field: timestamp in seconds
+     2nd field: 0-255: digital in; 256: interrupt
+
+MEASure:DIGital:EVENt? HIGH|LOW|POS|NEG count (@chan) # digital input
+    CONFigure:DIGital:EVENt <params>
+    READ:DIGital:EVENt?
+
+MEASure:DIGital:EVENt? count (@chan) # digital input
+    CONFigure:DIGital:EVENt <params>
+    READ:DIGital:EVENt?
+
+READ:DIGital:EVENt?
+    ABORT
+    Initiate
+    FETCh:DIGital:EVENt?
+
+digital event data
+  enable
+  buffer size
+  buffer {
+    timestamp
+    interrupt|digital-in
+    data
+  }
+
+interrupt reader
+digital-reader recorder
+
+* test jig
+
+  | out  | in            |
+  |------+---------------|
+  | DO-0 | DI-0          |
+  | DO-1 | DI-1          |
+  | DO-2 | DI-2          |
+  | DO-3 | DI-3          |
+  | DO-4 | DI-4          |
+  | DO-5 | DI-5          |
+  | DO-6 | DI-6, ExtTrig |
+  | DO-7 | DI-7, INT     |
+  | WAV  | A             |
+  | PWM  | B             |
+
+* DEBUG CRASH
+
+  (gdb) print len
+$4 = 8
+(gdb) p/x info->device->rcv_data
+$5 = {0x4f, 0x77, 0x79, 0x82, 0x82, 0x41, 0x0, 0x8b, 0x0 <repeats 4092 times>}
