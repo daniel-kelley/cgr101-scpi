@@ -426,6 +426,7 @@ static int server_cli_read(struct info *info)
             if (info->verbose) {
                 printf("Done.\r\n");
             }
+            info->quit = 1;
         }
     } else {
         info->cli_line = cli_buf;
