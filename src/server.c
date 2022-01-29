@@ -310,6 +310,21 @@ static int server_rsp(struct info *info)
     return (outlen <= 0);
 }
 
+static void server_scpi_recv(struct info *info)
+{
+    int err;
+
+    if (scpi_core_recv_ready(info)) {
+        scpi_core_recv(info);
+        if (info->rsp.valid) {
+            err = server_rsp(info);
+            if (err && info->verbose) {
+                fprintf(stderr, "server_rsp() failed.\n");
+            }
+        }
+    }
+}
+
 static int server_scpi_send(struct info *info)
 {
     int rc = 0;
@@ -328,6 +343,7 @@ static int server_scpi_send(struct info *info)
 
         if (len) {
             rc = scpi_core_send(info, buf, len);
+            server_scpi_recv(info);
         } else {
             break;
         }
@@ -405,16 +421,7 @@ static int server_action(struct info *info, int event)
             }
         }
     }
-
-    if (scpi_core_recv_ready(info)) {
-        scpi_core_recv(info);
-        if (info->rsp.valid) {
-            err = server_rsp(info);
-            if (err && info->verbose) {
-                fprintf(stderr, "server_rsp() failed.\n");
-            }
-        }
-    }
+    server_scpi_recv(info);
 
     return err;
 }
