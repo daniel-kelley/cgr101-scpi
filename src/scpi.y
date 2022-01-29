@@ -846,11 +846,9 @@ dev-cmd
     | syst_int COLON SETUQ
     { scpi_system_internal_setupq(info); }
 
-    | SLE nr1
+    | SLE numeric_value
     { scpi_system_internal_sleep(info, &$2); }
 
-    | SLE nrf
-    { scpi_system_internal_sleep(info, &$2); }
     ;
 
 %%
