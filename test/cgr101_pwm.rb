@@ -8,9 +8,9 @@
 # PWM Interfaces
 #
 # | SOURce:PULSe:DCYcle      | +
-# | SOURce:PULSe:DCYcle?    | +
-# | SOURce:PULSe:FREQuency   |
-# | SOURce:PULSe:FREQuency? |
+# | SOURce:PULSe:DCYcle?     | +
+# | SOURce:PULSe:FREQuency   | +
+# | SOURce:PULSe:FREQuency?  | +
 
 module CGR101PWM
 
