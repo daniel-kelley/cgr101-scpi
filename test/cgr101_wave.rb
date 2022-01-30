@@ -11,10 +11,10 @@
 # | SOUR:FREQ?                              | +
 # | SOUR:FUNC:LEV numeric_value             | +
 # | SOUR:FUNC:LEV?                          | +
-# | SOUR:FUNC source_function               | WIP
-# | SOUR:FUNC?                              | WIP
-# | SOUR:FUNC:USER block                    |
-# | SOUR:FUNC:USER?                         |
+# | SOUR:FUNC source_function               | +
+# | SOUR:FUNC?                              | +
+# | SOUR:FUNC:USER block                    | +
+# | SOUR:FUNC:USER?                         | +
 
 module CGR101Wave
 
@@ -157,5 +157,57 @@ module CGR101Wave
     assert_equal('USER', v1[0])
 
   end
+
+  # single point user waveform
+  def test_wave_005
+    # set it
+    self.class.hdl.send("SOUR:FUNC:USER 0.0")
+
+    # get it
+    self.class.hdl.send("SOUR:FUNC:USER?")
+    out = self.class.hdl.recv
+    v0 = out.split(',')
+    assert_equal(256, v0.length)
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+  end
+
+  # interpolated line segment user waveform
+  def test_wave_006
+    # set it
+    self.class.hdl.send <<EOS
+SOUR:FUNC:USER -1.0,-1.0,-1.0,-1.0,-1.0,-1.0,1.0,-1.0
+EOS
+
+    # get it
+    self.class.hdl.send("SOUR:FUNC:USER?")
+    out = self.class.hdl.recv
+    v0 = out.split(',')
+    assert_equal(256, v0.length)
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+  end
+
+  # non-interpolated full strength user waveform
+  def test_wave_007
+    # set it
+    a = []
+    256.times do |n|
+      p = 1.0/Math::PI # lots of significant digits
+      v = n.odd? ? -p : p
+      a << v
+    end
+    w = a.join(',')
+    self.class.hdl.send("SOUR:FUNC:USER #{w}")
+
+    # get it
+    self.class.hdl.send("SOUR:FUNC:USER?")
+    out = self.class.hdl.recv
+    v0 = out.split(',')
+    assert_equal(256, v0.length)
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+  end
+
 
 end

@@ -12,7 +12,7 @@
 #include <stdint.h>
 #include <sys/time.h>
 
-#define INFO_CLI_LEN 1024
+#define INFO_CLI_LEN (16*1024)
 
 struct scpi_output;
 struct scpi_errq;
