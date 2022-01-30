@@ -809,6 +809,9 @@ static int cgr101_digitizer_start(struct info *info, int manual)
             break;
         }
 
+        /* Update control */
+        cgr101_digitizer_update_control(info);
+
         /* GO */
 
         err = cgr101_device_send(info, "S G\n");
