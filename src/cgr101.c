@@ -1339,7 +1339,7 @@ static double cgr101_fn_interp(double phase, void *arg)
     assert(start_idx < segments);
     assert(end_idx < interp->len);
     assert(end_idx > start_idx);
-    interp_phase = phase - start_phase;
+    interp_phase = in_phase - start_phase;
     assert(interp_phase >= 0);
     assert(interp_phase < 1.0);
 
@@ -1407,17 +1407,25 @@ static void cgr101_waveform_create(struct info *info,
 
 }
 
+static int cgr101_waveform_conv(double value)
+{
+    return (255 - (int)ceil((value * 127.5) + 127.0));
+}
+
 static void cgr101_waveform_program(struct info *info)
 {
     int err;
+    size_t i;
+    double f;
+    int val;
 
     if (info->device->waveform.shape == WAV_RAND) {
         err = cgr101_device_printf(info, "W N\n");
         assert(!err);
     } else {
-        size_t i;
         for (i=0; i<COUNT_OF(info->device->waveform.user); i++) {
-            int val = 128 + (int)floor(info->device->waveform.user[i]*127);
+            f = info->device->waveform.user[i];
+            val = cgr101_waveform_conv(f);
             assert(val >= 0);
             assert(val <= 255);
             err = cgr101_device_printf(info, "W S %d %d\n", i, val);
