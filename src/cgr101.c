@@ -1615,7 +1615,7 @@ static void cgr101_pwm_frequency(struct info *info, double value)
             break;
         }
     }
-    err = cgr101_device_printf(info, "D D %d\n", idx);
+    err = cgr101_device_printf(info, "D F %d\n", idx);
     assert(!err);
 
 }
