@@ -1294,9 +1294,9 @@ static double cgr101_fn_squ(double phase, void *arg)
 
 static double cgr101_fn_tri(double phase, void *arg)
 {
-    double amp = phase * 2.0;
     (void)arg;
-    return (double)((phase < 0.5) ? (amp - 1.0) : (1.0 - amp));
+    phase *= 4.0;
+    return (phase < 2.0) ? (phase - 1.0) : (3.0 - phase);
 }
 
 static double cgr101_fn_const(double phase, void *arg)
