@@ -13,15 +13,16 @@ enum scpi_type_name {
     SCPI_TYPE_INT,
     SCPI_TYPE_FLOAT,
     SCPI_TYPE_STR,
+    SCPI_TYPE_DSTR,
     SCPI_TYPE_CHAN,
     SCPI_TYPE_LIST,
 };
 
-struct scpi_type_str {
+struct scpi_type_dstr {
     char *s;    /* Beginning */
-    char *p;    /* Insertion point */
     size_t len; /* Current Length */
     size_t max; /* Maximum length */
+    int frozen;
 };
 
 union scpi_type_val {
@@ -29,7 +30,7 @@ union scpi_type_val {
     double fval;
     long chan;
     struct scpi_type_list *list;
-    struct scpi_type_str *str;
+    struct scpi_type_dstr dstr;
 };
 
 struct scpi_type_list {

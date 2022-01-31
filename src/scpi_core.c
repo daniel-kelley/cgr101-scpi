@@ -568,6 +568,5 @@ void scpi_system_internal_sleep(struct info *info, struct scpi_type *v)
 
 void scpi_system_internal_echo(struct info *info, struct scpi_type *v)
 {
-    (void)info;
-    (void)v;
+    scpi_output_str(info->output, v->src);
 }

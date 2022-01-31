@@ -374,11 +374,10 @@ int parser_num(const char *s,
     return token;
 }
 
-#define IDENT_CHUNK 256
+#define STRPOOL_CHUNK 256
 
-
-static const char *parser_ident_add(struct parser_strpool_s *pool,
-                                    const char *s)
+static const char *parser_strpool_add(struct parser_strpool_s *pool,
+                                      const char *s)
 {
     char *t;
     void *buf;
@@ -386,7 +385,7 @@ static const char *parser_ident_add(struct parser_strpool_s *pool,
     t = strdup(s);
     assert(t);
     if (pool->len >= pool->max) {
-        pool->max += IDENT_CHUNK;
+        pool->max += STRPOOL_CHUNK;
         buf = realloc(pool->pool, sizeof(pool->pool[0])*pool->max);
         assert(buf);
         pool->pool = buf;
@@ -418,7 +417,7 @@ int parser_ident(const char *s,
     parser_update_location(loc, strlen(s));
     val->token = token;
     val->type = SCPI_TYPE_STR;
-    val->src = parser_ident_add(&parser_strpool, s);
+    val->src = parser_strpool_add(&parser_strpool, s);
 
     return token;
 }
@@ -431,7 +430,7 @@ int parser_punct(const char *s,
     parser_update_location(loc, strlen(s));
     val->token = token;
     val->type = SCPI_TYPE_STR;
-    val->src = parser_ident_add(&parser_strpool, s);
+    val->src = parser_strpool_add(&parser_strpool, s);
 
     return token;
 }
@@ -469,41 +468,67 @@ void parser_add_prefix(struct info *info, int token)
     }
 }
 
-void parser_str_new(const char *s,
-                    struct scpi_type *val,
-                    YYLTYPE *loc)
+#define DSTR_CHUNK 256
+
+void parser_dstr_add(const char *s,
+                     struct scpi_type *val,
+                     YYLTYPE *loc)
 {
-    (void)s;
-    (void)val;
-    (void)loc;
+    assert(s[0] != 0);
+    assert(s[1] == 0);
+    assert(val->type == SCPI_TYPE_DSTR);
+    assert(!val->val.dstr.frozen);
+    parser_update_location(loc, strlen(s));
+
+    if (val->val.dstr.len >= val->val.dstr.max) {
+        val->val.dstr.max += DSTR_CHUNK;
+        val->val.dstr.s = realloc(val->val.dstr.s, val->val.dstr.max);
+    }
+    val->val.dstr.s[val->val.dstr.len++] = s[0];
+    val->val.dstr.s[val->val.dstr.len] = 0;
 }
 
-void parser_str_quote(const char *s,
-                      struct scpi_type *val,
-                      YYLTYPE *loc)
+void parser_dstr_new(const char *s,
+                     struct scpi_type *val,
+                     YYLTYPE *loc)
 {
-    (void)s;
-    (void)val;
-    (void)loc;
+    assert(s[0] != 0);
+    assert(s[1] == 0);
+    parser_update_location(loc, strlen(s));
+    val->type = SCPI_TYPE_DSTR;
+    val->val.dstr.s = NULL;
+    val->val.dstr.len = 0;
+    val->val.dstr.max = 0;
+    val->val.dstr.frozen = 0;
 }
 
-void parser_str_add(const char *s,
-                    struct scpi_type *val,
-                    YYLTYPE *loc)
+void parser_dstr_quote(const char *s,
+                       struct scpi_type *val,
+                       YYLTYPE *loc)
 {
-    (void)s;
-    (void)val;
-    (void)loc;
+    assert(s[0] != 0);
+    assert(s[0] == s[1]);
+    assert(s[2] == 0);
+    assert(val->type == SCPI_TYPE_DSTR);
+    assert(!val->val.dstr.frozen);
+    parser_update_location(loc, strlen(s));
+    parser_dstr_add(s+1,val,loc);
 }
 
-int parser_str(const char *s,
-               struct scpi_type *val,
-               YYLTYPE *loc,
-               int token)
+int parser_dstr(const char *s,
+                struct scpi_type *val,
+                YYLTYPE *loc,
+                int token)
 {
-    (void)s;
-    (void)val;
-    (void)loc;
+    assert(val->type == SCPI_TYPE_DSTR);
+    assert(!val->val.dstr.frozen);
+    parser_update_location(loc, strlen(s));
+    /* Tricky: SCPI_TYPE_DSTR is a temporary type; convert to final
+     * STR type and free the string accumulation buffer. */
+    val->type = SCPI_TYPE_STR;
+    val->src = parser_strpool_add(&parser_strpool, val->val.dstr.s);
+    val->val.dstr.frozen = 1;
+    free(val->val.dstr.s);
 
     return token;
 }

@@ -25,15 +25,21 @@
 
 %%
 
-\"                      { parser_str_new(yytext, yylval, yylloc); BEGIN(dstr); }
-<dstr>\"                { return parser_str(yytext, yylval, yylloc, STRING);}
-<dstr>\"\"              { parser_str_quote(yytext, yylval, yylloc); }
-<dstr>.                 { parser_str_add(yytext, yylval, yylloc); }
+\"                      { parser_dstr_new(yytext, yylval, yylloc); BEGIN(dstr); }
+<dstr>\"                {
+                          BEGIN(INITIAL);
+                          return parser_dstr(yytext, yylval, yylloc, STRING);
+                        }
+<dstr>\"\"              { parser_dstr_quote(yytext, yylval, yylloc); }
+<dstr>.                 { parser_dstr_add(yytext, yylval, yylloc); }
 
-\'                      { parser_str_new(yytext, yylval, yylloc); BEGIN(sstr); }
-<sstr>\'                { return parser_str(yytext, yylval, yylloc, STRING);}
-<sstr>\'\'              { parser_str_quote(yytext, yylval, yylloc); }
-<sstr>.                 { parser_str_add(yytext, yylval, yylloc); }
+\'                      { parser_dstr_new(yytext, yylval, yylloc); BEGIN(sstr); }
+<sstr>\'                {
+                          BEGIN(INITIAL);
+                          return parser_dstr(yytext, yylval, yylloc, STRING);
+                        }
+<sstr>\'\'              { parser_dstr_quote(yytext, yylval, yylloc); }
+<sstr>.                 { parser_dstr_add(yytext, yylval, yylloc); }
 
 \*CLS                   { return parser_ident(yytext, yylval, yylloc, CLS); }
 \*ESE                   { return parser_ident(yytext, yylval, yylloc, ESE); }
