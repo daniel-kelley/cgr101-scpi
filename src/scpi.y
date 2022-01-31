@@ -129,6 +129,7 @@
 %token STATEQ
 %token STATUS
 %token STBQ
+%token STRING
 %token SQU
 %token SWE
 %token SYST

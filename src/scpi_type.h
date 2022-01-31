@@ -17,11 +17,19 @@ enum scpi_type_name {
     SCPI_TYPE_LIST,
 };
 
+struct scpi_type_str {
+    char *s;    /* Beginning */
+    char *p;    /* Insertion point */
+    size_t len; /* Current Length */
+    size_t max; /* Maximum length */
+};
+
 union scpi_type_val {
     long ival;
     double fval;
     long chan;
     struct scpi_type_list *list;
+    struct scpi_type_str *str;
 };
 
 struct scpi_type_list {

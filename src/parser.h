@@ -51,5 +51,18 @@ extern void parser_eol(const char *s,
 extern void parser_cleanup(void);
 extern int parser_separator(struct info *info, int value);
 extern void parser_add_prefix(struct info *info, int token);
+extern void parser_str_new(const char *s,
+                           struct scpi_type *val,
+                           YYLTYPE *loc);
+extern void parser_str_quote(const char *s,
+                             struct scpi_type *val,
+                             YYLTYPE *loc);
+extern void parser_str_add(const char *s,
+                           struct scpi_type *val,
+                           YYLTYPE *loc);
+extern int parser_str(const char *s,
+                      struct scpi_type *val,
+                      YYLTYPE *loc,
+                      int token);
 
 #endif /* PARSER_H_ */

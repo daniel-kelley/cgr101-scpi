@@ -469,3 +469,41 @@ void parser_add_prefix(struct info *info, int token)
     }
 }
 
+void parser_str_new(const char *s,
+                    struct scpi_type *val,
+                    YYLTYPE *loc)
+{
+    (void)s;
+    (void)val;
+    (void)loc;
+}
+
+void parser_str_quote(const char *s,
+                      struct scpi_type *val,
+                      YYLTYPE *loc)
+{
+    (void)s;
+    (void)val;
+    (void)loc;
+}
+
+void parser_str_add(const char *s,
+                    struct scpi_type *val,
+                    YYLTYPE *loc)
+{
+    (void)s;
+    (void)val;
+    (void)loc;
+}
+
+int parser_str(const char *s,
+               struct scpi_type *val,
+               YYLTYPE *loc,
+               int token)
+{
+    (void)s;
+    (void)val;
+    (void)loc;
+
+    return token;
+}
