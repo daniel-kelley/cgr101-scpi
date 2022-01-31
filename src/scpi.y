@@ -44,6 +44,7 @@
 %token DCYCQ
 %token DEF
 %token DIG
+%token ECHO_
 %token ENAB
 %token ENABQ
 %token ERR
@@ -849,6 +850,9 @@ dev-cmd
 
     | SLE numeric_value
     { scpi_system_internal_sleep(info, &$2); }
+
+    | ECHO_ STRING
+    { scpi_system_internal_echo(info, &$2); }
 
     ;
 

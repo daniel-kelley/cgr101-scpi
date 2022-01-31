@@ -566,3 +566,8 @@ void scpi_system_internal_sleep(struct info *info, struct scpi_type *v)
     info->block_until.active = 1;
 }
 
+void scpi_system_internal_echo(struct info *info, struct scpi_type *v)
+{
+    (void)info;
+    (void)v;
+}

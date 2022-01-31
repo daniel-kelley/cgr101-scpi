@@ -70,6 +70,7 @@ DC                      { return parser_ident(yytext, yylval, yylloc, DC); }
 (DCYC|DCYcLe)\?         { return parser_ident(yytext, yylval, yylloc, DCYCQ); }
 DEF                     { return parser_ident(yytext, yylval, yylloc, DEF); }
 (DIG|DIGital)           { return parser_ident(yytext, yylval, yylloc, DIG); }
+ECHO                    { return parser_ident(yytext, yylval, yylloc, ECHO_); }
 (ENAB|ENABle)           { return parser_ident(yytext, yylval, yylloc, ENAB); }
 (ENAB|ENABle)\?         { return parser_ident(yytext, yylval, yylloc, ENABQ); }
 (ERR|ERRor)             { return parser_ident(yytext, yylval, yylloc, ERR); }
