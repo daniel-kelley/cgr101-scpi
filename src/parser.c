@@ -532,3 +532,9 @@ int parser_dstr(const char *s,
 
     return token;
 }
+
+void parser_include(struct info *info, const char *file)
+{
+    (void)info;
+    (void)file;
+}

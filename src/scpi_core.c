@@ -570,3 +570,8 @@ void scpi_system_internal_echo(struct info *info, struct scpi_type *v)
 {
     scpi_output_str(info->output, v->src);
 }
+
+void scpi_system_internal_include(struct info *info, struct scpi_type *v)
+{
+    parser_include(info, v->src);
+}

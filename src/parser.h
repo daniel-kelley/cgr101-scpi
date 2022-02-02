@@ -64,5 +64,6 @@ extern int parser_dstr(const char *s,
                        struct scpi_type *val,
                        YYLTYPE *loc,
                        int token);
+extern void parser_include(struct info *info, const char *file);
 
 #endif /* PARSER_H_ */

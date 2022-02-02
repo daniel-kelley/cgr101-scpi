@@ -187,5 +187,6 @@ extern void scpi_dev_read_digital_eventq(struct info *info);
 
 extern void scpi_system_internal_sleep(struct info *info, struct scpi_type *v);
 extern void scpi_system_internal_echo(struct info *info, struct scpi_type *v);
+extern void scpi_system_internal_include(struct info *info, struct scpi_type *v);
 
 #endif /* SCPI_H_ */

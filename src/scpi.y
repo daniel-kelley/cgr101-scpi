@@ -69,6 +69,7 @@
 %token IMM
 %token INIT
 %token INP
+%token INCL
 %token INT
 %token INTEGER
 %token INTERNAL
@@ -853,6 +854,9 @@ dev-cmd
 
     | ECHO_ STRING
     { scpi_system_internal_echo(info, &$2); }
+
+    | INCL STRING
+    { scpi_system_internal_include(info, &$2); }
 
     ;
 

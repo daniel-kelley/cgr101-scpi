@@ -94,6 +94,7 @@ ECHO                    { return parser_ident(yytext, yylval, yylloc, ECHO_); }
 (FUNC|FUNCtion)\?       { return parser_ident(yytext, yylval, yylloc, FUNCQ); }
 (HEX|HEXadecimal)       { return parser_ident(yytext, yylval, yylloc, HEX); }
 (IMM|IMMediate)         { return parser_ident(yytext, yylval, yylloc, IMM); }
+(INCL|INCLUDE)          { return parser_ident(yytext, yylval, yylloc, INCL); }
 (INIT|INITiate)         { return parser_ident(yytext, yylval, yylloc, INIT); }
 (INP|INPut)             { return parser_ident(yytext, yylval, yylloc, INP); }
 INT                     { return parser_ident(yytext, yylval, yylloc, INT); }
