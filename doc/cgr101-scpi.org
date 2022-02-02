@@ -698,6 +698,9 @@ digital-reader recorder
   | 1.6000 |     |  14 |
   | 3.2000 |     |  15 |
 
+* Plotting
+  cat P0 | src/cgr101-scpi | sed 's/,/\n/g' > W
+  LC_ALL=en_US.utf8 gnuplot -e "plot 'W' with lines;pause -1"
 
 * DEBUG CRASH
 
