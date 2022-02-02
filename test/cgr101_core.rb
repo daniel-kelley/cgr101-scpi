@@ -397,6 +397,46 @@ module CGR101Core
     assert_equal(0, self.class.hdl.err_length)
   end
 
+  def test_core_26a
+    self.class.hdl.send("echo 'abcdefg'")
+    out = self.class.hdl.recv
+    assert_equal("abcdefg", out)
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+  end
+
+  def test_core_26b
+    self.class.hdl.send("echo 'abc\"defg'")
+    out = self.class.hdl.recv
+    assert_equal("abc\"defg", out)
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+  end
+
+  def test_core_26c
+    self.class.hdl.send("echo 'abc\003defg'")
+    out = self.class.hdl.recv
+    assert_equal("abc\003defg", out)
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+  end
+
+  def test_core_26d
+    self.class.hdl.send("echo 'abc''defg'")
+    out = self.class.hdl.recv
+    assert_equal("abc'defg", out)
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+  end
+
+  def test_core_26e
+    self.class.hdl.send("echo \"abc\"\"defg\"")
+    out = self.class.hdl.recv
+    assert_equal("abc\"defg", out)
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+  end
+
   def no_test_core_outline
     self.class.hdl.send("SYSTem:CAPability?")
     sleep(5)
