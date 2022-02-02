@@ -65,5 +65,8 @@ extern int parser_dstr(const char *s,
                        YYLTYPE *loc,
                        int token);
 extern void parser_include(struct info *info, const char *file);
+extern int parser_eof(struct info *info,
+                      const char *s,
+                      int token);
 
 #endif /* PARSER_H_ */

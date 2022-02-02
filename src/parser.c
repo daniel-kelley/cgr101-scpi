@@ -20,6 +20,7 @@
  * separators, including separators.
  */
 #define MAX_CMD_DEPTH (5*2)
+#define MAX_INCL_DEPTH 10
 
 struct lexer {
     yyscan_t scanner;
@@ -40,6 +41,11 @@ struct parser {
         int active;
         int idx;
     } replay;
+    int incl_depth;
+    struct {
+        FILE *fp;
+    } incl[MAX_INCL_DEPTH];
+
 };
 
 enum parser_loop_state {
@@ -535,6 +541,31 @@ int parser_dstr(const char *s,
 
 void parser_include(struct info *info, const char *file)
 {
-    (void)info;
-    (void)file;
+    YY_BUFFER_STATE bs;
+    FILE *fp;
+
+    assert(info->parser->incl_depth < MAX_INCL_DEPTH);
+
+    fp = fopen(file, "r");
+    if (fp) {
+        bs = yy_create_buffer(fp, YY_BUF_SIZE, &info->lexer->scanner);
+        assert(bs);
+        yypush_buffer_state(bs, &info->lexer->scanner);
+        info->parser->incl[info->parser->incl_depth++].fp = fp;
+    } else {
+        /* SOME ERROR */
+    }
+}
+
+int parser_eof(struct info *info, const char *s, int token)
+{
+    assert(s[0] == 0);
+
+    assert(info->parser->incl_depth >= 0);
+    if (info->parser->incl_depth > 0) {
+        yypop_buffer_state(&info->lexer->scanner);
+        fclose(info->parser->incl[--info->parser->incl_depth].fp);
+    }
+
+    return token;
 }

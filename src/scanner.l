@@ -190,5 +190,5 @@ USER\?                  { return parser_ident(yytext, yylval, yylloc, USERQ); }
 [[:alpha:]]+[[:alnum:]]* { return parser_ident(yytext, yylval, yylloc, IDENT); }
 [[:blank:]]*            { parser_blank(yytext, yylval, yylloc); }
 \n                      { parser_eol(yytext, yylval, yylloc); }
-\0                      { return parser_punct(yytext, yylval, yylloc, YYEOF); }
+\0                      { return parser_eof(yyextra, yytext, YYEOF); }
 .                       { return parser_punct(yytext, yylval, yylloc, OTHER); }
