@@ -7,7 +7,6 @@
 /*%option nodefault*/
 /*%option yylineno*/
 %option case-insensitive
-%option stack
 %option noyywrap
 %option fast
 %option debug
