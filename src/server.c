@@ -386,6 +386,9 @@ static int server_cli_line(struct info *info)
         if (info->cli_line_len == 0) {
             info->cli_line = NULL;
         }
+    } else if (info->cli_line[0] == 0) {
+        /* EOF */
+        rc = server_scpi_send(info, info->cli_line, info->cli_line_len);
     } else {
         /* Do something with the leftovers */
         assert(info->cli_line_len < INFO_CLI_LEN);
@@ -426,7 +429,11 @@ static int server_cli_read(struct info *info)
             if (info->verbose) {
                 printf("Done.\r\n");
             }
-            info->quit = 1;
+            /* EOF */
+            assert(cli_buf[0] == 0);
+            assert(cli_buf[1] == 0);
+            info->cli_line = cli_buf;
+            info->cli_line_len = 1;
         }
     } else {
         info->cli_line = cli_buf;

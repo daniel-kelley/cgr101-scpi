@@ -43,7 +43,7 @@ struct parser {
     } replay;
     int incl_depth;
     struct {
-        FILE *fp;
+        YY_BUFFER_STATE bs;     /* flex buffer */
     } incl[MAX_INCL_DEPTH];
 
 };
@@ -275,7 +275,10 @@ int parser_send(struct info *info, char *line, int len)
     int err = 1;
 
     bs = yy_scan_bytes(line, len, scanner);
-
+    if (info->parser->incl_depth == 0) {
+        info->parser->incl[info->parser->incl_depth].bs = bs;
+        info->parser->incl_depth++;
+    }
     do {
         if (bs == NULL) {
             fprintf(stderr, "yy_scan_bytes(%s)[%d] failed\n", line, len);
@@ -297,7 +300,6 @@ int parser_send(struct info *info, char *line, int len)
         if (!info->busy) {
             yypstate_delete(info->parser->ps);
         }
-        yy_delete_buffer(bs, scanner);
         err = (info->parser->error.valid);
     } while (0);
 
@@ -541,31 +543,24 @@ int parser_dstr(const char *s,
 
 void parser_include(struct info *info, const char *file)
 {
-    YY_BUFFER_STATE bs;
-    FILE *fp;
-
-    assert(info->parser->incl_depth < MAX_INCL_DEPTH);
-
-    fp = fopen(file, "r");
-    if (fp) {
-        bs = yy_create_buffer(fp, YY_BUF_SIZE, &info->lexer->scanner);
-        assert(bs);
-        yypush_buffer_state(bs, &info->lexer->scanner);
-        info->parser->incl[info->parser->incl_depth++].fp = fp;
-    } else {
-        /* SOME ERROR */
-    }
+    (void)info;
+    (void)file;
 }
 
 int parser_eof(struct info *info, const char *s, int token)
 {
+    struct parser *parser = info->parser;
+
+    /* Minimimal implementation */
     assert(s[0] == 0);
+    assert(parser->incl_depth > 0);
+    yy_delete_buffer(parser->incl[info->parser->incl_depth].bs,
+                     info->lexer->scanner);
+    info->parser->incl_depth--;
 
-    assert(info->parser->incl_depth >= 0);
-    if (info->parser->incl_depth > 0) {
-        yypop_buffer_state(&info->lexer->scanner);
-        fclose(info->parser->incl[--info->parser->incl_depth].fp);
+    if (info->parser->incl_depth == 0) {
+        /* Signal 'quit' when EOF at bottom of include stack. */
+        info->quit = 1;
     }
-
     return token;
 }
