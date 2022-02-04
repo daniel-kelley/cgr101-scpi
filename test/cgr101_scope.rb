@@ -541,4 +541,26 @@ module CGR101Scope
     assert_equal(points, v1.length)
   end
 
+  #
+  # Abort Test
+  #
+  def test_scope_data_abort
+    self.class.hdl.send("SENS:FUNC:ON (@1)")
+    self.class.hdl.send("INIT:IMM")
+    # Use STAT:OPER:COND? bit 3 (SWEEP status)
+    self.class.hdl.send("STAT:OPER:COND?")
+    out = self.class.hdl.recv
+    # Send abort ASAP
+    self.class.hdl.send("ABORT")
+    status = Integer(out)
+    # status should have indicated sweep
+    assert_equal(status & 8, 8)
+    # after ABORt, status should be 0
+    self.class.hdl.send("STAT:OPER:COND?")
+    out = self.class.hdl.recv
+    status = Integer(out)
+    assert_equal(status & 8, 0)
+    # May or may not have data so don't count on it.
+  end
+
 end
