@@ -151,6 +151,7 @@
 %token VERSQ
 %token VOLT
 %token WAI
+%token EOF_
 
 %start top
 
