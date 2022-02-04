@@ -160,7 +160,7 @@
 %define api.push-pull push
 %define parse.assert
 %define parse.trace
-%define parse.error detailed
+%define parse.error verbose
 %define parse.lac full
 %param {struct info *info}
 %define api.value.type {struct scpi_type}
