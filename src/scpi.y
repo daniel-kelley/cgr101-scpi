@@ -151,6 +151,7 @@
 %token VERSQ
 %token VOLT
 %token WAI
+%token EOF_
 
 %start top
 
@@ -160,7 +161,7 @@
 %define api.push-pull push
 %define parse.assert
 %define parse.trace
-%define parse.error detailed
+%define parse.error verbose
 %define parse.lac full
 %param {struct info *info}
 %define api.value.type {struct scpi_type}

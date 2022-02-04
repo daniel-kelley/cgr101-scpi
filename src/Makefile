@@ -86,7 +86,7 @@ $(NAME): $(OBJ)
 	$(CC) $(LDFLAGS) -o $@ $(OBJ) $(LDLIBS)
 
 scpi.tab.c: scpi.y
-	bison --report all -Wcounterexamples -d $<
+	bison --report all -Wall -d $<
 
 scanner.c: scanner.l
 	flex $<
