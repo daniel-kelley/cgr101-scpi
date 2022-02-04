@@ -387,6 +387,13 @@ static void cgr101_interrupt_mode(struct info *info)
     assert(!err);
 }
 
+static void cgr101_digital_event_done(struct info *info)
+{
+    info->device->event.chan_mask = 0;
+    info->digital_event_status = 0;
+    event_send(info->event, EVENT_UNBLOCK);
+}
+
 static void cgr101_digital_event(struct info *info, int data)
 {
     struct timeval tv;
@@ -409,13 +416,10 @@ static void cgr101_digital_event(struct info *info, int data)
     current++;
     info->device->event.current = current;
     if (current == info->device->event.max) {
-        info->device->event.chan_mask = 0;
-        info->digital_event_status = 0;
         if (info->device->event.output_pending) {
             cgr101_digital_event_output(info);
         }
-        event_send(info->event, EVENT_UNBLOCK);
-
+        cgr101_digital_event_done(info);
     } else if (data == DIGITAL_EVENT_INTERRUPT) {
         cgr101_interrupt_mode(info); /* Re-arm */
     }
@@ -916,6 +920,15 @@ static void cgr101_rcv_scope_data_chan(struct info *info,
     }
 }
 
+static void cgr101_scope_data_done(struct info *info,
+                                   enum cgr101_scope_data_state state)
+{
+    info->device->scope.data_state = state;
+    info->overlapped = 0;
+    info->sweep_status = 0;
+    event_send(info->event, EVENT_UNBLOCK);
+}
+
 static int cgr101_rcv_scope_data(struct info *info, char c)
 {
     int err = 0;
@@ -937,16 +950,12 @@ static int cgr101_rcv_scope_data(struct info *info, char c)
         cgr101_rcv_scope_data_chan(info, 1, 0, c);
         info->device->scope.data_count++;
         if (info->device->scope.data_count == SCOPE_NUM_SAMPLE) {
-            info->device->scope.data_state = STATE_SCOPE_DATA_COMPLETE;
-            info->overlapped = 0;
-            info->sweep_status = 0;
             if (info->device->scope.output_pending) {
                 cgr101_scope_data_output(info);
             }
-            event_send(info->event, EVENT_UNBLOCK);
-            /* Unblock. */
-            cgr101_rcv_idle(info);
+            cgr101_scope_data_done(info, STATE_SCOPE_DATA_COMPLETE);
             /* Done receiving. */
+            cgr101_rcv_idle(info);
         } else {
             info->device->scope.data_state = STATE_SCOPE_DATA_EXPECT_A_HIGH;
         }
@@ -2268,8 +2277,15 @@ void cgr101_rst(struct info *info)
 void cgr101_abort(struct info *info)
 {
     /* Scope */
+    if (info->sweep_status) {
+        cgr101_scope_data_done(info, STATE_SCOPE_DATA_IDLE);
+    }
+
     /* Digital Event */
-    /* FIXME: STUB */
+    if (info->digital_event_status) {
+        cgr101_digital_event_done(info);
+    }
+
     (void)info;
 }
 
