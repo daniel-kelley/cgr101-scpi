@@ -1,0 +1,9 @@
+SCPI interface for SYSCOMP CircuitGear CGR-101
+
+Work in progress!
+
+Device functions largely feature complete.
+
+CLI interface is terminal only at this time.
+
+See tests to see what is actually implemented.
