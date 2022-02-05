@@ -24,6 +24,10 @@ jobs:
         make
         # needs emulator
         # make SANITIZE=address check
+    - name: scan-build
+      run: |
+        make clean
+        scan-build make
     - name: make check clang
       run: |
         make clean

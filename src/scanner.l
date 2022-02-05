@@ -8,6 +8,7 @@
 /*%option yylineno*/
 %option case-insensitive
 %option noyywrap
+%option noyyrealloc
 %option fast
 %option debug
 /*%option perf-report*/
@@ -17,9 +18,22 @@
 %x sstr
 
 %{
+#include <assert.h>
 #include "scanner_intf.h"
 
 #pragma GCC diagnostic ignored "-Wunused-function"
+
+/*
+ * Use our own yyrealloc to suppress the scan-build complaint of using a zero
+ * length buffer. We simply assert that the realloc size is non-zero.
+ */
+void *yyrealloc(void *ptr, size_t size, yyscan_t yyscanner)
+{
+    (void)yyscanner;
+    assert(size);
+    return realloc(ptr, size);
+}
+
 %}
 
 %%
