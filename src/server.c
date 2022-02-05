@@ -56,6 +56,7 @@ static int server_trap(struct info *info)
     return 0;
 }
 
+#if 0
 static int server_conf_get(struct info *info)
 {
     int conf_in_fd = 0;
@@ -91,17 +92,20 @@ static int server_conf_get(struct info *info)
 
     return err;
 }
+#endif
 
 static int server_init(struct info *info)
 {
     int err = 0;
     int on = 1;
+#if 0
     int conf_out_fd;
-
+#endif
     /* default in/out from console */
     info->cli_in_fd = STDIN_FILENO;
     info->cli_out_fd = STDOUT_FILENO;
 
+#if 0
     /* Open conf_in */
     (void)server_conf_get(info);
 
@@ -114,6 +118,7 @@ static int server_init(struct info *info)
             perror(info->conf_rsp);
         }
     }
+#endif
 
     err = ioctl(info->cli_in_fd, FIONBIO, (char *) &on);
     if (err < 0) {
@@ -207,35 +212,6 @@ int server_listen(struct info *info)
     return rc;
 }
 
-static int server_timed_block(struct info *info)
-{
-    struct timeval tv;
-    int err;
-    int rv = 0;
-
-    err = gettimeofday(&tv, NULL);
-    assert(!err);
-    rv = timercmp(&tv, &info->block_until.tv, <);
-    if (!rv) {
-        info->block_until.active = 0;
-    }
-
-    return rv;
-}
-
-static int server_block_input(struct info *info)
-{
-    int rv = 0;
-
-    if (info->block_until.active) {
-        rv = server_timed_block(info);
-    } else {
-        rv = info->block_input;
-    }
-
-    return rv;
-}
-
 static int server_select(struct info *info)
 {
     fd_set fds;
@@ -284,7 +260,7 @@ static int server_select(struct info *info)
 
     if (FD_ISSET(info->cli_in_fd, &fds) &&
         !info->cli_line &&
-        !server_block_input(info)) {
+        !scpi_core_block_input(info)) {
         srv_event |= SERVER_CLI;
     }
 
@@ -330,120 +306,6 @@ static int server_accept(struct info *info)
     return err;
 }
 
-static int server_rsp(struct info *info)
-{
-    ssize_t outlen;
-
-    outlen = write(info->cli_out_fd, info->rsp.buf, info->rsp.len);
-
-    /* Handle truncated writes. */
-
-    return (outlen <= 0);
-}
-
-static void server_scpi_recv(struct info *info)
-{
-    int err;
-
-    if (scpi_core_recv_ready(info)) {
-        scpi_core_recv(info);
-        if (info->rsp.valid) {
-            err = server_rsp(info);
-            if (err && info->verbose) {
-                fprintf(stderr, "server_rsp() failed.\n");
-            }
-        }
-    }
-}
-
-static int server_scpi_send(struct info *info, char *buf, size_t len)
-{
-    int rc = 0;
-
-    rc = scpi_core_send(info, buf, (int)len);
-    server_scpi_recv(info);
-
-    return rc;
-}
-
-static int server_cli_line(struct info *info)
-{
-    char *eol;
-    size_t llen;
-    int rc = 0;
-
-    assert(info->cli_line);
-    assert(info->cli_line_len > 0);
-    eol = strchr(info->cli_line, '\n');
-    if (eol) {
-        llen = (size_t)(eol - info->cli_line);
-        assert(llen < INFO_CLI_LEN);
-        if (llen) {
-            rc = server_scpi_send(info, info->cli_line, llen);
-        }
-        info->cli_line = eol + 1;
-        info->cli_line_len -= (llen + 1);
-        if (info->cli_line_len == 0) {
-            info->cli_line = NULL;
-        }
-    } else if (info->cli_line[0] == 0) {
-        /* EOF */
-        rc = server_scpi_send(info, info->cli_line, info->cli_line_len);
-    } else {
-        /* Do something with the leftovers */
-        assert(info->cli_line_len < INFO_CLI_LEN);
-        memmove(info->cli_buf, info->cli_line, info->cli_line_len);
-        info->cli_offset = info->cli_line_len;
-        info->cli_line = NULL;
-        info->cli_line_len = 0;
-    }
-
-    return rc;
-}
-
-static int server_cli_read(struct info *info)
-{
-    int rc;
-    char *cli_buf;
-    size_t cli_len;
-
-    /* Append to leftovers from the previous pass. */
-    cli_buf = info->cli_buf;
-    cli_len = sizeof(info->cli_buf);
-    cli_buf += info->cli_offset;
-    cli_len -= info->cli_offset;
-
-    memset(cli_buf, 0, cli_len);
-
-    do {
-        rc = (int)read(info->cli_in_fd, cli_buf, cli_len);
-    } while (rc < 0 && errno == EAGAIN);
-
-    if (rc < 0) {
-        if (errno != EWOULDBLOCK) {
-            perror("read() failed");
-        }
-    } else if (rc == 0) {
-        /* Get the next conf file, if any. */
-        if (!server_conf_get(info)) {
-            if (info->verbose) {
-                printf("Done.\r\n");
-            }
-            /* EOF */
-            assert(cli_buf[0] == 0);
-            assert(cli_buf[1] == 0);
-            info->cli_line = cli_buf;
-            info->cli_line_len = 1;
-        }
-    } else {
-        info->cli_line = cli_buf;
-        info->cli_line_len = (size_t)rc;
-        rc = 0;
-    }
-
-    return rc;
-}
-
 static int server_quit(const struct info *info)
 {
     return (server_exit || info->quit);
@@ -458,7 +320,7 @@ static int server_action(struct info *info, int event)
     }
 
     if (event & SERVER_CLI) {
-        if (server_cli_read(info)) {
+        if (scpi_core_cli_read(info)) {
             err = 1;
             if (info->verbose) {
                 fprintf(stderr, "server_cli_read() failed.\n");
@@ -466,9 +328,7 @@ static int server_action(struct info *info, int event)
         }
     }
 
-    if (info->cli_line && !server_block_input(info)) {
-        server_cli_line(info);
-    }
+    scpi_core_line(info);
 
     if (event & SERVER_WORKER) {
         if (worker_run_ready(info->worker)) {
@@ -478,7 +338,7 @@ static int server_action(struct info *info, int event)
             }
         }
     }
-    server_scpi_recv(info);
+    scpi_core_scpi_recv(info);
 
     return err;
 }

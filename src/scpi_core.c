@@ -12,6 +12,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <math.h>
+#include <errno.h>
 #include "scpi.h"
 #include "scpi_core.h"
 #include "scpi_error.h"
@@ -575,3 +576,153 @@ void scpi_system_internal_include(struct info *info, struct scpi_type *v)
 {
     parser_include(info, v->src);
 }
+
+static int scpi_core_rsp(struct info *info)
+{
+    ssize_t outlen;
+
+    outlen = write(info->cli_out_fd, info->rsp.buf, info->rsp.len);
+
+    /* Handle truncated writes. */
+
+    return (outlen <= 0);
+}
+
+static int scpi_core_scpi_send(struct info *info, char *buf, size_t len)
+{
+    int rc = 0;
+
+    rc = scpi_core_send(info, buf, (int)len);
+    scpi_core_scpi_recv(info);
+
+    return rc;
+}
+
+static int scpi_core_cli_line(struct info *info)
+{
+    char *eol;
+    size_t llen;
+    int rc = 0;
+
+    assert(info->cli_line);
+    assert(info->cli_line_len > 0);
+    eol = strchr(info->cli_line, '\n');
+    if (eol) {
+        llen = (size_t)(eol - info->cli_line);
+        assert(llen < INFO_CLI_LEN);
+        if (llen) {
+            rc = scpi_core_scpi_send(info, info->cli_line, llen);
+        }
+        info->cli_line = eol + 1;
+        info->cli_line_len -= (llen + 1);
+        if (info->cli_line_len == 0) {
+            info->cli_line = NULL;
+        }
+    } else if (info->cli_line[0] == 0) {
+        /* EOF */
+        rc = scpi_core_scpi_send(info, info->cli_line, info->cli_line_len);
+    } else {
+        /* Do something with the leftovers */
+        assert(info->cli_line_len < INFO_CLI_LEN);
+        memmove(info->cli_buf, info->cli_line, info->cli_line_len);
+        info->cli_offset = info->cli_line_len;
+        info->cli_line = NULL;
+        info->cli_line_len = 0;
+    }
+
+    return rc;
+}
+
+void scpi_core_line(struct info *info)
+{
+    if (info->cli_line && !scpi_core_block_input(info)) {
+        scpi_core_cli_line(info);
+    }
+}
+
+void scpi_core_scpi_recv(struct info *info)
+{
+    int err;
+
+    if (scpi_core_recv_ready(info)) {
+        scpi_core_recv(info);
+        if (info->rsp.valid) {
+            err = scpi_core_rsp(info);
+            if (err && info->verbose) {
+                fprintf(stderr, "scpi_core_rsp() failed.\n");
+            }
+        }
+    }
+
+}
+
+static int scpi_core_timed_block(struct info *info)
+{
+    struct timeval tv;
+    int err;
+    int rv = 0;
+
+    err = gettimeofday(&tv, NULL);
+    assert(!err);
+    rv = timercmp(&tv, &info->block_until.tv, <);
+    if (!rv) {
+        info->block_until.active = 0;
+    }
+
+    return rv;
+}
+
+int scpi_core_block_input(struct info *info)
+{
+    int rv = 0;
+
+    if (info->block_until.active) {
+        rv = scpi_core_timed_block(info);
+    } else {
+        rv = info->block_input;
+    }
+
+    return rv;
+}
+
+
+int scpi_core_cli_read(struct info *info)
+{
+    int rc;
+    char *cli_buf;
+    size_t cli_len;
+
+    /* Append to leftovers from the previous pass. */
+    cli_buf = info->cli_buf;
+    cli_len = sizeof(info->cli_buf);
+    cli_buf += info->cli_offset;
+    cli_len -= info->cli_offset;
+
+    memset(cli_buf, 0, cli_len);
+
+    do {
+        rc = (int)read(info->cli_in_fd, cli_buf, cli_len);
+    } while (rc < 0 && errno == EAGAIN);
+
+    if (rc < 0) {
+        if (errno != EWOULDBLOCK) {
+            perror("read() failed");
+        }
+    } else if (rc == 0) {
+        if (info->verbose) {
+            printf("Done.\r\n");
+        }
+        /* EOF */
+        assert(cli_buf[0] == 0);
+        assert(cli_buf[1] == 0);
+        info->cli_line = cli_buf;
+        info->cli_line_len = 1;
+    } else {
+        info->cli_line = cli_buf;
+        info->cli_line_len = (size_t)rc;
+        rc = 0;
+    }
+
+    return rc;
+}
+
