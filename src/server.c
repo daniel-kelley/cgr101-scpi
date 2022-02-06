@@ -55,40 +55,10 @@ static int server_trap(struct info *info)
     return 0;
 }
 
-static int server_io_init(struct info *info)
-{
-    int err = 0;
-    int on = 1;
-
-    /* default in/out from console */
-    info->cli_in_fd = STDIN_FILENO;
-    info->cli_out_fd = STDOUT_FILENO;
-
-    err = ioctl(info->cli_in_fd, FIONBIO, (char *) &on);
-    if (err < 0) {
-        perror("ioctl() failed");
-        exit(-1);
-    }
-
-    err = ioctl(info->cli_out_fd, FIONBIO, (char *) &on);
-    if (err < 0) {
-        perror("ioctl() failed");
-        exit(-1);
-    }
-
-    return err;
-}
-
 static int server_done(struct info *info)
 {
     int err = 0;
 
-    if (info->cli_in_fd != STDIN_FILENO) {
-        close(info->cli_in_fd);
-    }
-    if (info->cli_out_fd != STDOUT_FILENO) {
-        close(info->cli_out_fd);
-    }
     if (info->listen_fd) {
         close(info->listen_fd);
     }
@@ -291,12 +261,6 @@ int server_run(struct info *info)
     }
 
     do {
-        if (server_io_init(info)) {
-            if (info->verbose) {
-                fprintf(stderr, "server_init() failed.\n");
-            }
-            break;
-        }
         if (scpi_core_init(info)) {
             if (info->verbose) {
                 fprintf(stderr, "scpi_core_init() failed.\n");

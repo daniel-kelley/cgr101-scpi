@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <errno.h>
+#include <sys/ioctl.h>
 #include "scpi.h"
 #include "scpi_core.h"
 #include "scpi_error.h"
@@ -333,6 +334,21 @@ static void scpi_core_unblock_input(void *arg)
     }
 }
 
+static int scpi_core_io_done(struct info *info)
+{
+    int err = 0;
+
+    if (info->cli_in_fd != STDIN_FILENO) {
+        close(info->cli_in_fd);
+    }
+    if (info->cli_out_fd != STDOUT_FILENO) {
+        close(info->cli_out_fd);
+    }
+
+    return err;
+}
+
+
 int scpi_core_done(struct info *info)
 {
     int err;
@@ -348,6 +364,9 @@ int scpi_core_done(struct info *info)
         }
 
         err = parser_done(info);
+
+        scpi_core_io_done(info);
+
     } while (0);
 
     return err;
@@ -663,6 +682,22 @@ static int scpi_core_cli_read_worker(void *arg)
     return err;
 }
 
+static void scpi_core_io_init(struct info *info)
+{
+    int err = 0;
+    int on = 1;
+
+    /* default in/out from console */
+    info->cli_in_fd = STDIN_FILENO;
+    info->cli_out_fd = STDOUT_FILENO;
+
+    err = ioctl(info->cli_in_fd, FIONBIO, (char *) &on);
+    assert(!err);
+
+    err = ioctl(info->cli_out_fd, FIONBIO, (char *) &on);
+    assert(!err);
+}
+
 int scpi_core_init(struct info *info)
 {
     int err;
@@ -673,6 +708,8 @@ int scpi_core_init(struct info *info)
             err = -1;
             break;
         }
+
+        scpi_core_io_init(info);
 
         info->output = scpi_output_init();
         if (!info->output) {
