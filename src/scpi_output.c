@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <unistd.h>
 #include "scpi_output.h"
 
 #define OUTPUT_SIZE (1024*32)
@@ -132,25 +133,21 @@ void scpi_output_reset(struct scpi_output *output)
     output->len = 0;
 }
 
-int scpi_output_ready(struct scpi_output *output)
+void scpi_output_flush(struct scpi_output *output, int fd)
 {
-    return (output->len != 0);
-}
+    ssize_t outlen;
+    int err;
 
-int scpi_output_get(struct scpi_output *output, uint8_t **buf, size_t *sz)
-{
-    int err = 0;
-
-    if (scpi_output_ready(output)) {
-        /* If there is any output, terminate output with newline. */
+    if (output->len > 0) {
         err = scpi_output_printf(output, "\n");
+        assert(!err);
+
+        outlen = write(fd, output->buf, output->len);
+
+        /* Mark as copied out. */
+        output->len = 0;
+
+        /* Handle truncated writes. */
+        assert(outlen >= 0);
     }
-
-    *buf = output->buf;
-    *sz  = output->len;
-
-    /* Mark as copied out. */
-    output->len = 0;
-
-    return err;
 }

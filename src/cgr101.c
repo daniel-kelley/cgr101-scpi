@@ -513,6 +513,7 @@ static void cgr101_output_digital_read(struct info *info)
 {
     assert(info->device->digital_read_state == STATE_DIGITAL_READ_COMPLETE);
     scpi_output_int(info->output, info->device->digital_read_data);
+    event_send(info->event, EVENT_OUTPUT_FLUSH);
 }
 
 static int cgr101_digital_read_start(struct info *info)
@@ -1083,6 +1084,7 @@ static void cgr101_identify_output(void *arg)
         scpi_output_printf(info->output,
                            "GMP,CGR101-SCPI,1.0,%s",
                            info->device->device_id);
+        event_send(info->event, EVENT_OUTPUT_FLUSH);
         break;
     default:
         assert(0);

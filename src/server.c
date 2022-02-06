@@ -55,7 +55,7 @@ static int server_trap(struct info *info)
     return 0;
 }
 
-static int server_init(struct info *info)
+static int server_io_init(struct info *info)
 {
     int err = 0;
     int on = 1;
@@ -267,7 +267,6 @@ static int server_action(struct info *info, int event)
             }
         }
     }
-    scpi_core_scpi_recv(info);
 
     return err;
 }
@@ -301,15 +300,15 @@ int server_run(struct info *info)
     }
 
     do {
-        if (scpi_core_init(info)) {
+        if (server_io_init(info)) {
             if (info->verbose) {
-                fprintf(stderr, "scpi_core_init() failed.\n");
+                fprintf(stderr, "server_init() failed.\n");
             }
             break;
         }
-        if (server_init(info)) {
+        if (scpi_core_init(info)) {
             if (info->verbose) {
-                fprintf(stderr, "server_init() failed.\n");
+                fprintf(stderr, "scpi_core_init() failed.\n");
             }
             break;
         }

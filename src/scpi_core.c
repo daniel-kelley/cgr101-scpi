@@ -322,26 +322,6 @@ int scpi_core_send(struct info *info, char *buf, int len)
     return err;
 }
 
-int scpi_core_recv_ready(struct info *info)
-{
-    return scpi_output_ready(info->output);
-}
-
-/* call only when ready */
-int scpi_core_recv(struct info *info)
-{
-    int err = 0;
-
-    err = scpi_output_get(
-        info->output, &info->rsp.buf, &info->rsp.len);
-
-    assert(!err);
-
-    info->rsp.valid = (info->rsp.len != 0);
-
-    return err;
-}
-
 static void scpi_core_unblock_input(void *arg)
 {
     struct info *info = arg;
@@ -539,23 +519,21 @@ void scpi_system_internal_include(struct info *info, struct scpi_type *v)
     parser_include(info, v->src);
 }
 
-static int scpi_core_rsp(struct info *info)
+static void scpi_core_output_flush(void *arg)
 {
-    ssize_t outlen;
+    struct info *info = arg;
 
-    outlen = write(info->cli_out_fd, info->rsp.buf, info->rsp.len);
-
-    /* Handle truncated writes. */
-
-    return (outlen <= 0);
+    scpi_output_flush(info->output, info->cli_out_fd);
 }
+
+
 
 static int scpi_core_scpi_send(struct info *info, char *buf, size_t len)
 {
     int rc = 0;
 
     rc = scpi_core_send(info, buf, (int)len);
-    scpi_core_scpi_recv(info);
+    event_send(info->event, EVENT_OUTPUT_FLUSH);
 
     return rc;
 }
@@ -600,22 +578,6 @@ void scpi_core_line(struct info *info)
     if (info->cli_line && !scpi_core_block_input(info)) {
         scpi_core_cli_line(info);
     }
-}
-
-void scpi_core_scpi_recv(struct info *info)
-{
-    int err;
-
-    if (scpi_core_recv_ready(info)) {
-        scpi_core_recv(info);
-        if (info->rsp.valid) {
-            err = scpi_core_rsp(info);
-            if (err && info->verbose) {
-                fprintf(stderr, "scpi_core_rsp() failed.\n");
-            }
-        }
-    }
-
 }
 
 static int scpi_core_timed_block(struct info *info)
@@ -746,6 +708,12 @@ int scpi_core_init(struct info *info)
         if (err) {
             break;
         }
+
+        err = event_add(info->event,
+                        EVENT_OUTPUT_FLUSH,
+                        scpi_core_output_flush,
+                        info);
+        assert(!err);
 
     } while (0);
 
