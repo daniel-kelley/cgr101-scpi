@@ -22,7 +22,7 @@
 #include "cgr101.h"
 
 #define ID_MAX 32       /* '*' identify message */
-#define RCV_MAX 4100    /* 'D' message; 4097 plus some slop */
+#define RCV_MAX 8192    /* 'D' message; 4097 plus a lot of slop */
 #define ERR_MAX 1024    /* stderr from device interface */
 #define E_MAX 32        /* 'E' message */
 
@@ -213,6 +213,8 @@ struct cgr101 {
     /* Device Receiver */
     enum cgr101_rcv_state rcv_state;
     char rcv_data[RCV_MAX];
+    size_t rcv_data_len;
+    const char *rcv_data_ptr;
     char err_data[ERR_MAX];
     int sent;
     /* Digital Data Input */
@@ -500,7 +502,8 @@ static int cgr101_rcv_start(struct info *info, char c)
         err = 0;
         break;
     default:
-        assert(0);
+        /* ...liberal in what we receive. */
+        err = 0;
     }
 
     return err;
@@ -924,6 +927,7 @@ static void cgr101_rcv_scope_data_chan(struct info *info,
 static void cgr101_scope_data_done(struct info *info,
                                    enum cgr101_scope_data_state state)
 {
+    assert(info->device->scope.addr_state == STATE_SCOPE_ADDR_COMPLETE);
     info->device->scope.data_state = state;
     info->overlapped = 0;
     info->sweep_status = 0;
@@ -1193,6 +1197,7 @@ static int cgr101_rcv_data(struct info *info, const char *buf, size_t len)
     int err = 1;
 
     while (len--) {
+        info->device->rcv_data_ptr = buf; /* For rcv debug */
         err = cgr101_rcv_sm(info, *buf++);
         if (err) {
             assert(0); /*FIXME: DEBUG*/
@@ -1220,7 +1225,10 @@ static int cgr101_out(void *arg)
     } else if (len != 0 && info->device->sent) {
         /* Only receive data once a command has been sent to flush any
          pending stale data. */
-        err = cgr101_rcv_data(info, info->device->rcv_data, (size_t)len);
+        info->device->rcv_data_len = (size_t)len;
+        err = cgr101_rcv_data(info,
+                              info->device->rcv_data,
+                              info->device->rcv_data_len);
     }
 
     return err;
