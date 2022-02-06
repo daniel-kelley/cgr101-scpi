@@ -168,11 +168,7 @@ static int server_select(struct info *info)
     int wfd;
 
     FD_ZERO(&fds);
-#if 0
-    /* CLI fd */
-    max_fd = info->cli_in_fd;
-    FD_SET(info->cli_in_fd, &fds);
-#endif
+
     /* Listen fd */
     if (info->listen_fd) {
         if (max_fd < info->listen_fd) {
@@ -232,14 +228,7 @@ static int server_accept(struct info *info)
         if (info->verbose) {
             printf("Connection established %s\r\n", inet_ntoa(cliaddr.sin_addr));
         }
-#if 0
-        /* Replace with some 'push' to parser incl stack. */
-        if (info->cli_in_fd != STDIN_FILENO) {
-            /* Close current CLI fd if not STDIN*/
-            close(info->cli_in_fd);
-        }
-        info->cli_in_fd = clifd;
-#endif
+        /* Push clifd socket (IO) to parser incl stack. */
         err = 0;
     }
 
