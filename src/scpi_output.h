@@ -21,9 +21,6 @@ extern int scpi_output_fp(struct scpi_output *output, double value);
 extern int scpi_output_str(struct scpi_output *output, const char *value);
 extern int scpi_output_cmd_sep(struct scpi_output *output);
 extern void scpi_output_clear(struct scpi_output *output);
-extern int scpi_output_get(struct scpi_output *output,
-                           uint8_t **buf,
-                           size_t *sz);
-extern int scpi_output_ready(struct scpi_output *output);
+extern void scpi_output_flush(struct scpi_output *output, int fd);
 
 #endif /* SCPI_OUTPUT_H_ */

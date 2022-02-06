@@ -62,10 +62,12 @@ int worker_count(struct worker *worker)
 int worker_getfd(struct worker *worker, int idx)
 {
     int fd;
+
     assert(worker);
     assert(idx >= 0 && idx < worker->count);
     fd = worker->w[idx].fd;
-    assert(fd > 0);
+    assert(fd >= 0);
+
     return fd;
 }
 
@@ -73,7 +75,7 @@ static int worker_call(struct worker *worker, int idx)
 {
     assert(worker);
     assert(idx >= 0 && idx < worker->count);
-    assert(worker->w[idx].fd > 0);
+    assert(worker->w[idx].fd >= 0);
     return worker->w[idx].func(worker->w[idx].arg);
 }
 
@@ -81,7 +83,7 @@ int worker_ready(struct worker *worker, int idx)
 {
     assert(worker);
     assert(idx >= 0 && idx < worker->count);
-    assert(worker->w[idx].fd > 0);
+    assert(worker->w[idx].fd >= 0);
     worker->w[idx].ready = 1;
 
     return 0;
@@ -96,7 +98,6 @@ int worker_remove(struct worker *worker, int idx)
         /* last */
         --worker->count;
     }
-
 
     return 0;
 }
