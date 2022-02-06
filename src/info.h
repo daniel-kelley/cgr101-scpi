@@ -41,10 +41,6 @@ struct info {
     int busy;
     int overlapped;
     int block_input;
-    struct {
-        int active;
-        struct timeval tv;
-    } block_until;
     const char *debug;
     size_t cli_offset;
     char cli_buf[INFO_CLI_LEN];

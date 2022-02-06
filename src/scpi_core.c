@@ -14,12 +14,17 @@
 #include <math.h>
 #include <errno.h>
 #include <sys/ioctl.h>
+#include <sys/time.h>
+#include <signal.h>
 #include "scpi.h"
 #include "scpi_core.h"
 #include "scpi_error.h"
 #include "scpi_input.h"
 #include "parser.h"
 #include "event.h"
+
+/* Private for signal handling. */
+static int scpi_core_block_until_active;
 
 static uint8_t scpi_core_status_update(struct info *info)
 {
@@ -506,26 +511,27 @@ void scpi_system_internal_sleep(struct info *info, struct scpi_type *v)
     double value;
     double sec;
     double usec;
-    struct timeval now;
-    struct timeval interval;
+    struct itimerval itimer;
     int err;
 
     scpi_input_fp(info, v, &value);
 
-    err = gettimeofday(&now, NULL);
-    assert(!err);
     sec = floor(value);
     usec = floor((value - sec)*1000000.0);
     assert(sec >= 0.0);
     assert(usec >= 0.0);
 
-    interval.tv_sec = (time_t)sec;
-    interval.tv_usec = (suseconds_t)usec;
+    memset(&itimer, 0, sizeof(itimer));
+    itimer.it_value.tv_sec = (time_t)sec;
+    itimer.it_value.tv_usec = (suseconds_t)usec;
 
-    /* Block until some future time. */
-    timeradd(&now, &interval, &info->block_until.tv);
-    assert(!info->block_until.active);
-    info->block_until.active = 1;
+    /* Mark block_until active */
+    assert(!scpi_core_block_until_active);
+    scpi_core_block_until_active = 1;
+
+    /* Set timer. */
+    err = setitimer(ITIMER_REAL, &itimer, NULL);
+    assert(!err);
 }
 
 void scpi_system_internal_echo(struct info *info, struct scpi_type *v)
@@ -599,33 +605,9 @@ void scpi_core_line(struct info *info)
     }
 }
 
-static int scpi_core_timed_block(struct info *info)
-{
-    struct timeval tv;
-    int err;
-    int rv = 0;
-
-    err = gettimeofday(&tv, NULL);
-    assert(!err);
-    rv = timercmp(&tv, &info->block_until.tv, <);
-    if (!rv) {
-        info->block_until.active = 0;
-    }
-
-    return rv;
-}
-
 int scpi_core_block_input(struct info *info)
 {
-    int rv = 0;
-
-    if (info->block_until.active) {
-        rv = scpi_core_timed_block(info);
-    } else {
-        rv = info->block_input;
-    }
-
-    return rv;
+    return scpi_core_block_until_active || info->block_input;
 }
 
 
@@ -698,6 +680,25 @@ static void scpi_core_io_init(struct info *info)
     assert(!err);
 }
 
+static void scpi_core_sigalrm(int sig)
+{
+    (void)sig;
+
+    scpi_core_block_until_active = 0;
+}
+
+static void scpi_core_alarm_init(void)
+{
+    struct sigaction sa;
+    int err;
+
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = scpi_core_sigalrm;
+    sa.sa_flags = SA_RESTART;
+    err = sigaction(SIGALRM, &sa, NULL);
+    assert(!err);
+}
+
 int scpi_core_init(struct info *info)
 {
     int err;
@@ -710,6 +711,7 @@ int scpi_core_init(struct info *info)
         }
 
         scpi_core_io_init(info);
+        scpi_core_alarm_init();
 
         info->output = scpi_output_init();
         if (!info->output) {
