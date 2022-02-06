@@ -30,7 +30,6 @@
 #include "worker.h"
 
 /* bitwise flags */
-#define SERVER_CLI (1<<0)
 #define SERVER_ACCEPT (1<<1)
 #define SERVER_WORKER (1<<2)
 
@@ -56,69 +55,14 @@ static int server_trap(struct info *info)
     return 0;
 }
 
-#if 0
-static int server_conf_get(struct info *info)
-{
-    int conf_in_fd = 0;
-    int err = -1;
-    const char *file = NULL;
-
-#if 0
-    if (conf_valid(&info->conf)) {
-        file = conf_get(&info->conf);
-    }
-#endif
-
-    if (file) {
-        conf_in_fd = open(file, O_CLOEXEC);
-    } else {
-        conf_in_fd = STDIN_FILENO;
-    }
-
-    if (conf_in_fd >= 0) {
-        if (info->cli_in_fd != STDIN_FILENO) {
-            /* Close current CLI fd if not STDIN*/
-            close(info->cli_in_fd);
-        }
-        info->cli_in_fd = conf_in_fd;
-        if (info->cli_out_fd == 0) {
-            info->cli_out_fd = STDOUT_FILENO; /* default response to stdout */
-        }
-        err = 0;
-    } else {
-        assert(file != NULL);
-        perror(file);
-    }
-
-    return err;
-}
-#endif
-
 static int server_init(struct info *info)
 {
     int err = 0;
     int on = 1;
-#if 0
-    int conf_out_fd;
-#endif
+
     /* default in/out from console */
     info->cli_in_fd = STDIN_FILENO;
     info->cli_out_fd = STDOUT_FILENO;
-
-#if 0
-    /* Open conf_in */
-    (void)server_conf_get(info);
-
-    /* Open conf_rsp */
-    if (info->conf_rsp) {
-        conf_out_fd = open(info->conf_rsp, O_CREAT|O_WRONLY|O_TRUNC|O_CLOEXEC);
-        if (conf_out_fd > 0) {
-            info->cli_out_fd = conf_out_fd;
-        } else {
-            perror(info->conf_rsp);
-        }
-    }
-#endif
 
     err = ioctl(info->cli_in_fd, FIONBIO, (char *) &on);
     if (err < 0) {
@@ -258,12 +202,6 @@ static int server_select(struct info *info)
         return rc;
     }
 
-    if (FD_ISSET(info->cli_in_fd, &fds) &&
-        !info->cli_line &&
-        !scpi_core_block_input(info)) {
-        srv_event |= SERVER_CLI;
-    }
-
     if (info->listen_fd && FD_ISSET(info->listen_fd, &fds)) {
         srv_event |= SERVER_ACCEPT;
     }
@@ -317,15 +255,6 @@ static int server_action(struct info *info, int event)
 
     if (event & SERVER_ACCEPT) {
         server_accept(info);
-    }
-
-    if (event & SERVER_CLI) {
-        if (scpi_core_cli_read(info)) {
-            err = 1;
-            if (info->verbose) {
-                fprintf(stderr, "server_cli_read() failed.\n");
-            }
-        }
     }
 
     scpi_core_line(info);

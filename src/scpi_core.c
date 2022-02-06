@@ -353,44 +353,6 @@ static void scpi_core_unblock_input(void *arg)
     }
 }
 
-int scpi_core_init(struct info *info)
-{
-    int err;
-
-    do {
-        info->scpi = calloc(1,sizeof(*info->scpi));
-        if (!info->scpi) {
-            err = -1;
-            break;
-        }
-
-        info->output = scpi_output_init();
-        if (!info->output) {
-            err = -1;
-            break;
-        }
-
-        info->error = scpi_error_init();
-        if (!info->error) {
-            err = -1;
-            break;
-        }
-
-        err = parser_init(info);
-        if (err) {
-            break;
-        }
-
-        err = event_add(info->event,
-                        EVENT_UNBLOCK,
-                        scpi_core_unblock_input,
-                        info);
-
-    } while (0);
-
-    return err;
-}
-
 int scpi_core_done(struct info *info)
 {
     int err;
@@ -686,7 +648,7 @@ int scpi_core_block_input(struct info *info)
 }
 
 
-int scpi_core_cli_read(struct info *info)
+static int scpi_core_cli_read(struct info *info)
 {
     int rc;
     char *cli_buf;
@@ -726,3 +688,66 @@ int scpi_core_cli_read(struct info *info)
     return rc;
 }
 
+static int scpi_core_cli_read_worker(void *arg)
+{
+    struct info *info = arg;
+    int err = 0;
+
+    if (!info->cli_line &&
+        !scpi_core_block_input(info)) {
+        err = scpi_core_cli_read(info);
+    }
+
+    return err;
+}
+
+int scpi_core_init(struct info *info)
+{
+    int err;
+
+    do {
+        info->scpi = calloc(1,sizeof(*info->scpi));
+        if (!info->scpi) {
+            err = -1;
+            break;
+        }
+
+        info->output = scpi_output_init();
+        if (!info->output) {
+            err = -1;
+            break;
+        }
+
+        info->error = scpi_error_init();
+        if (!info->error) {
+            err = -1;
+            break;
+        }
+
+        err = parser_init(info);
+        if (err) {
+            break;
+        }
+
+        err = event_add(info->event,
+                        EVENT_UNBLOCK,
+                        scpi_core_unblock_input,
+                        info);
+
+        if (err) {
+            break;
+        }
+
+        err = worker_add(info->worker,
+                        info->cli_in_fd,
+                        scpi_core_cli_read_worker,
+                        info);
+
+        if (err) {
+            break;
+        }
+
+    } while (0);
+
+    return err;
+}
