@@ -22,6 +22,7 @@ enum event_id {
     EVENT_SCOPE_OFFSET_START,
     EVENT_UNBLOCK,
     EVENT_OUTPUT_FLUSH,
+    EVENT_PROCESS_LINE,
 };
 
 extern void event_send(struct event *event, enum event_id event_id);

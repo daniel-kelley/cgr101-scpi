@@ -218,8 +218,6 @@ static int server_action(struct info *info, int event)
         server_accept(info);
     }
 
-    scpi_core_line(info);
-
     if (event & SERVER_WORKER) {
         if (worker_run_ready(info->worker)) {
             err = 1;

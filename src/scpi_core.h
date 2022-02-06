@@ -47,11 +47,5 @@ struct scpi_core {
 
 extern int scpi_core_init(struct info *info);
 extern int scpi_core_done(struct info *info);
-extern int scpi_core_send(struct info *info, char *buf, int len);
-extern int scpi_core_recv(struct info *info);
-extern int scpi_core_recv_ready(struct info *info);
-extern int scpi_core_block_input(struct info *info);
-extern void scpi_core_scpi_recv(struct info *info);
-extern void scpi_core_line(struct info *info);
 
 #endif /* SCPI_CORE_H_ */

@@ -301,7 +301,7 @@ static int scpi_core_parser_error(struct info *info,
     return err;
 }
 
-int scpi_core_send(struct info *info, char *buf, int len)
+static int scpi_core_send(struct info *info, char *buf, int len)
 {
     int err;
 
@@ -328,7 +328,7 @@ int scpi_core_send(struct info *info, char *buf, int len)
     return err;
 }
 
-static void scpi_core_unblock_input(void *arg)
+static void scpi_core_unblock(void *arg)
 {
     struct info *info = arg;
 
@@ -337,6 +337,8 @@ static void scpi_core_unblock_input(void *arg)
         info->scpi->opcq = 0;
         scpi_output_int(info->output, 1);
     }
+    event_send(info->event, EVENT_OUTPUT_FLUSH);
+    event_send(info->event, EVENT_PROCESS_LINE);
 }
 
 static int scpi_core_io_done(struct info *info)
@@ -563,6 +565,10 @@ static int scpi_core_scpi_send(struct info *info, char *buf, size_t len)
     return rc;
 }
 
+/*
+ * Line processing is fairly elaborate because of the interaction of
+ * event processing, line buffering and input blocking.
+ */
 static int scpi_core_cli_line(struct info *info)
 {
     char *eol;
@@ -582,6 +588,8 @@ static int scpi_core_cli_line(struct info *info)
         info->cli_line_len -= (llen + 1);
         if (info->cli_line_len == 0) {
             info->cli_line = NULL;
+        } else {
+            event_send(info->event, EVENT_PROCESS_LINE);
         }
     } else if (info->cli_line[0] == 0) {
         /* EOF */
@@ -598,18 +606,24 @@ static int scpi_core_cli_line(struct info *info)
     return rc;
 }
 
-void scpi_core_line(struct info *info)
-{
-    if (info->cli_line && !scpi_core_block_input(info)) {
-        scpi_core_cli_line(info);
-    }
-}
-
-int scpi_core_block_input(struct info *info)
+static int scpi_core_input_blocked(struct info *info)
 {
     return scpi_core_block_until_active || info->block_input;
 }
 
+static void scpi_core_process_line(void *arg)
+{
+    struct info *info = arg;
+
+    if (info->cli_line) {
+        if (scpi_core_input_blocked(info)) {
+            /* If blocked, then keep trying... */
+            event_send(info->event, EVENT_PROCESS_LINE);
+        } else {
+            scpi_core_cli_line(info);
+        }
+    }
+}
 
 static int scpi_core_cli_read(struct info *info)
 {
@@ -642,9 +656,11 @@ static int scpi_core_cli_read(struct info *info)
         assert(cli_buf[1] == 0);
         info->cli_line = cli_buf;
         info->cli_line_len = 1;
+        event_send(info->event, EVENT_PROCESS_LINE);
     } else {
         info->cli_line = cli_buf;
         info->cli_line_len = (size_t)rc;
+        event_send(info->event, EVENT_PROCESS_LINE);
         rc = 0;
     }
 
@@ -657,7 +673,7 @@ static int scpi_core_cli_read_worker(void *arg)
     int err = 0;
 
     if (!info->cli_line &&
-        !scpi_core_block_input(info)) {
+        !scpi_core_input_blocked(info)) {
         err = scpi_core_cli_read(info);
     }
 
@@ -732,7 +748,7 @@ int scpi_core_init(struct info *info)
 
         err = event_add(info->event,
                         EVENT_UNBLOCK,
-                        scpi_core_unblock_input,
+                        scpi_core_unblock,
                         info);
 
         if (err) {
@@ -751,6 +767,12 @@ int scpi_core_init(struct info *info)
         err = event_add(info->event,
                         EVENT_OUTPUT_FLUSH,
                         scpi_core_output_flush,
+                        info);
+        assert(!err);
+
+        err = event_add(info->event,
+                        EVENT_PROCESS_LINE,
+                        scpi_core_process_line,
                         info);
         assert(!err);
 
