@@ -13,7 +13,6 @@
 #include <unistd.h>
 #include <math.h>
 #include <errno.h>
-#include <sys/ioctl.h>
 #include <sys/time.h>
 #include <signal.h>
 #include "scpi.h"
@@ -22,9 +21,6 @@
 #include "scpi_input.h"
 #include "parser.h"
 #include "event.h"
-
-/* Private for signal handling. */
-static int scpi_core_block_until_active;
 
 static uint8_t scpi_core_status_update(struct info *info)
 {
@@ -257,77 +253,6 @@ void scpi_system_internal_quit(struct info *info)
     info->quit = 1;
 }
 
-static int scpi_core_parser_error(struct info *info,
-                                  const char *buf,
-                                  int err_in,
-                                  const struct parser_msg_loc *data)
-{
-    int err = 1;
-    char *syndrome;
-
-    if (err_in) {
-        scpi_error(info->error,
-                   SCPI_ERR_INTERNAL_PARSER_ERROR,
-                   NULL);
-    } else {
-        char *p;
-
-        syndrome = strdup(buf);
-        p = strchr(syndrome, '\n');
-        if (p) {
-            *p = 0;
-        }
-        assert(syndrome);
-
-        if (data) {
-            /* syndrome appended with ;<msg> */
-            size_t slen = strlen(syndrome);
-            size_t mlen = strlen(data->msg);
-            syndrome = realloc(syndrome, mlen+slen+2);
-            assert(syndrome);
-            syndrome[slen] = ';';
-            memcpy(syndrome+slen+1,data->msg,mlen+1);
-        }
-
-        scpi_error(info->error,
-                   SCPI_ERR_UNDEFINED_HEADER,
-                   syndrome);
-
-        free(syndrome); /* scpi_error() makes own copy */
-    }
-
-    err = 0;
-
-    return err;
-}
-
-static int scpi_core_send(struct info *info, char *buf, int len)
-{
-    int err;
-
-    do {
-
-        memset(&info->rsp, 0, sizeof(info->rsp));
-        scpi_output_clear(info->output);
-
-        err = parser_send(info, buf, len);
-        if (info->busy) {
-            break;
-        }
-
-        if (err) {
-            struct parser_msg_loc data;
-            int trace = 0;
-            err = parser_error_get(info, &data, &trace);
-            assert(!err);
-            err = scpi_core_parser_error(info, buf, err, trace ? &data : NULL);
-        }
-
-    } while (0);
-
-    return err;
-}
-
 static void scpi_core_unblock(void *arg)
 {
     struct info *info = arg;
@@ -528,8 +453,8 @@ void scpi_system_internal_sleep(struct info *info, struct scpi_type *v)
     itimer.it_value.tv_usec = (suseconds_t)usec;
 
     /* Mark block_until active */
-    assert(!scpi_core_block_until_active);
-    scpi_core_block_until_active = 1;
+    assert(!parser_block_until_get());
+    parser_block_until_set(1);
 
     /* Set timer. */
     err = setitimer(ITIMER_REAL, &itimer, NULL);
@@ -553,154 +478,11 @@ static void scpi_core_output_flush(void *arg)
     scpi_output_flush(info->output, info->cli_out_fd);
 }
 
-
-
-static int scpi_core_scpi_send(struct info *info, char *buf, size_t len)
-{
-    int rc = 0;
-
-    rc = scpi_core_send(info, buf, (int)len);
-    event_send(info->event, EVENT_OUTPUT_FLUSH);
-
-    return rc;
-}
-
-/*
- * Line processing is fairly elaborate because of the interaction of
- * event processing, line buffering and input blocking.
- */
-static int scpi_core_cli_line(struct info *info)
-{
-    char *eol;
-    size_t llen;
-    int rc = 0;
-
-    assert(info->cli_line);
-    assert(info->cli_line_len > 0);
-    eol = strchr(info->cli_line, '\n');
-    if (eol) {
-        llen = (size_t)(eol - info->cli_line);
-        assert(llen < INFO_CLI_LEN);
-        if (llen) {
-            rc = scpi_core_scpi_send(info, info->cli_line, llen);
-        }
-        info->cli_line = eol + 1;
-        info->cli_line_len -= (llen + 1);
-        if (info->cli_line_len == 0) {
-            info->cli_line = NULL;
-        } else {
-            event_send(info->event, EVENT_PROCESS_LINE);
-        }
-    } else if (info->cli_line[0] == 0) {
-        /* EOF */
-        rc = scpi_core_scpi_send(info, info->cli_line, info->cli_line_len);
-    } else {
-        /* Do something with the leftovers */
-        assert(info->cli_line_len < INFO_CLI_LEN);
-        memmove(info->cli_buf, info->cli_line, info->cli_line_len);
-        info->cli_offset = info->cli_line_len;
-        info->cli_line = NULL;
-        info->cli_line_len = 0;
-    }
-
-    return rc;
-}
-
-static int scpi_core_input_blocked(struct info *info)
-{
-    return scpi_core_block_until_active || info->block_input;
-}
-
-static void scpi_core_process_line(void *arg)
-{
-    struct info *info = arg;
-
-    if (info->cli_line) {
-        if (scpi_core_input_blocked(info)) {
-            /* If blocked, then keep trying... */
-            event_send(info->event, EVENT_PROCESS_LINE);
-        } else {
-            scpi_core_cli_line(info);
-        }
-    }
-}
-
-static int scpi_core_cli_read(struct info *info)
-{
-    int rc;
-    char *cli_buf;
-    size_t cli_len;
-
-    /* Append to leftovers from the previous pass. */
-    cli_buf = info->cli_buf;
-    cli_len = sizeof(info->cli_buf);
-    cli_buf += info->cli_offset;
-    cli_len -= info->cli_offset;
-
-    memset(cli_buf, 0, cli_len);
-
-    do {
-        rc = (int)read(info->cli_in_fd, cli_buf, cli_len);
-    } while (rc < 0 && errno == EAGAIN);
-
-    if (rc < 0) {
-        if (errno != EWOULDBLOCK) {
-            perror("read() failed");
-        }
-    } else if (rc == 0) {
-        if (info->verbose) {
-            printf("Done.\r\n");
-        }
-        /* EOF */
-        assert(cli_buf[0] == 0);
-        assert(cli_buf[1] == 0);
-        info->cli_line = cli_buf;
-        info->cli_line_len = 1;
-        event_send(info->event, EVENT_PROCESS_LINE);
-    } else {
-        info->cli_line = cli_buf;
-        info->cli_line_len = (size_t)rc;
-        event_send(info->event, EVENT_PROCESS_LINE);
-        rc = 0;
-    }
-
-    return rc;
-}
-
-static int scpi_core_cli_read_worker(void *arg)
-{
-    struct info *info = arg;
-    int err = 0;
-
-    if (!info->cli_line &&
-        !scpi_core_input_blocked(info)) {
-        err = scpi_core_cli_read(info);
-    }
-
-    return err;
-}
-
-static void scpi_core_io_init(struct info *info)
-{
-    int err = 0;
-    int on = 1;
-
-    /* default in/out from console */
-    info->cli_in_fd = STDIN_FILENO;
-    info->cli_out_fd = STDOUT_FILENO;
-
-    err = ioctl(info->cli_in_fd, FIONBIO, (char *) &on);
-    assert(!err);
-
-    err = ioctl(info->cli_out_fd, FIONBIO, (char *) &on);
-    assert(!err);
-}
-
 static void scpi_core_sigalrm(int sig)
 {
     (void)sig;
 
-    scpi_core_block_until_active = 0;
+    parser_block_until_set(0);
 }
 
 static void scpi_core_alarm_init(void)
@@ -726,7 +508,6 @@ int scpi_core_init(struct info *info)
             break;
         }
 
-        scpi_core_io_init(info);
         scpi_core_alarm_init();
 
         info->output = scpi_output_init();
@@ -755,24 +536,9 @@ int scpi_core_init(struct info *info)
             break;
         }
 
-        err = worker_add(info->worker,
-                        info->cli_in_fd,
-                        scpi_core_cli_read_worker,
-                        info);
-
-        if (err) {
-            break;
-        }
-
         err = event_add(info->event,
                         EVENT_OUTPUT_FLUSH,
                         scpi_core_output_flush,
-                        info);
-        assert(!err);
-
-        err = event_add(info->event,
-                        EVENT_PROCESS_LINE,
-                        scpi_core_process_line,
                         info);
         assert(!err);
 
