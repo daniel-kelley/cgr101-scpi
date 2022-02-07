@@ -1447,7 +1447,7 @@ static void cgr101_waveform_program(struct info *info)
             val = cgr101_waveform_conv(f);
             assert(val >= 0);
             assert(val <= 255);
-            err = cgr101_device_printf(info, "W S %d %d\n", i, val);
+            err = cgr101_device_printf(info, "W S %zu %d\n", i, val);
             assert(!err);
         }
         err = cgr101_device_printf(info, "W P\n");
@@ -1634,7 +1634,7 @@ static void cgr101_pwm_frequency(struct info *info, double value)
             break;
         }
     }
-    err = cgr101_device_printf(info, "D F %d\n", idx);
+    err = cgr101_device_printf(info, "D F %zu\n", idx);
     assert(!err);
 
 }
