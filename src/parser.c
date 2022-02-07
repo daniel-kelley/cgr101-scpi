@@ -9,11 +9,15 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <string.h>
+#include <sys/ioctl.h>
 #include "parser.h"
 #include "scpi_type.h"
 #include "yyerror.h"
 #include "scpi.tab.h"
 #include "scanner.h"
+#include "scpi_error.h"
+#include "scpi_output.h"
+#include "event.h"
 
 /*
  * Maximum command depth in grammar, i.e. maximum number of ':'
@@ -60,6 +64,7 @@ struct parser_strpool_s {
 };
 
 static struct parser_strpool_s parser_strpool;
+static int parser_block_until_active;
 
 void yyerror(const YYLTYPE *loc, struct info *info, const char *s)
 {
@@ -82,64 +87,6 @@ void parser_input(struct info *info, char *buf, int result, int max_size)
     (void)buf;
     (void)result;
     (void)max_size;
-}
-
-int parser_init(struct info *info)
-{
-    int rv = -1;
-    do {
-        info->lexer = calloc(1, sizeof(*info->lexer));
-        if (!info->lexer) {
-            break;
-        }
-
-        info->parser = calloc(1, sizeof(*info->parser));
-        if (!info->parser) {
-            break;
-        }
-
-        if (yylex_init_extra(info, &info->lexer->scanner)) {
-            break;
-        }
-
-        if (info->debug) {
-            if (strchr(info->debug,'f')) {
-                yyset_debug(1, info->lexer->scanner);
-            }
-            if (strchr(info->debug,'b')) {
-                yydebug = 1;
-            }
-            if (strchr(info->debug,'y')) {
-                info->parser->trace_yyerror = 1;
-            }
-            if (strchr(info->debug,'L')) {
-                info->parser->trace_loop = 1;
-            }
-        }
-
-        rv = 0;
-
-    } while (0);
-
-    return rv;
-}
-
-int parser_done(struct info *info)
-{
-    if (info->lexer) {
-        yylex_destroy(info->lexer->scanner);
-        free(info->lexer);
-    }
-
-    if (info->parser->error.data.msg) {
-        free(info->parser->error.data.msg);
-    }
-
-    if (info->parser) {
-        free(info->parser);
-    }
-
-    return 0;
 }
 
 static void parser_replay_reset(struct parser *parser)
@@ -268,7 +215,7 @@ static void parser_loop(struct info *info,
  * This function handles exactly one line. Multiple lines need to be
  * split up by the caller.
  */
-int parser_send(struct info *info, char *line, int len)
+static int parser_send_line(struct info *info, char *line, int len)
 {
     YY_BUFFER_STATE bs;
     yyscan_t scanner = info->lexer->scanner;
@@ -306,9 +253,9 @@ int parser_send(struct info *info, char *line, int len)
     return err;
 }
 
-int parser_error_get(struct info *info,
-                     struct parser_msg_loc *data,
-                     int *trace)
+static int parser_error_get(struct info *info,
+                            struct parser_msg_loc *data,
+                            int *trace)
 {
     int err = 1;
 
@@ -322,6 +269,222 @@ int parser_error_get(struct info *info,
     }
 
     return err;
+}
+
+static int parser_error(struct info *info,
+                                  const char *buf,
+                                  int err_in,
+                                  const struct parser_msg_loc *data)
+{
+    int err = 1;
+    char *syndrome;
+
+    if (err_in) {
+        scpi_error(info->error,
+                   SCPI_ERR_INTERNAL_PARSER_ERROR,
+                   NULL);
+    } else {
+        char *p;
+
+        syndrome = strdup(buf);
+        p = strchr(syndrome, '\n');
+        if (p) {
+            *p = 0;
+        }
+        assert(syndrome);
+
+        if (data) {
+            /* syndrome appended with ;<msg> */
+            size_t slen = strlen(syndrome);
+            size_t mlen = strlen(data->msg);
+            syndrome = realloc(syndrome, mlen+slen+2);
+            assert(syndrome);
+            syndrome[slen] = ';';
+            memcpy(syndrome+slen+1,data->msg,mlen+1);
+        }
+
+        scpi_error(info->error,
+                   SCPI_ERR_UNDEFINED_HEADER,
+                   syndrome);
+
+        free(syndrome); /* scpi_error() makes own copy */
+    }
+
+    err = 0;
+
+    return err;
+}
+
+/*
+ * Line processing
+ */
+
+static int parser_send(struct info *info, char *buf, int len)
+{
+    int err;
+
+    do {
+
+        memset(&info->rsp, 0, sizeof(info->rsp));
+        scpi_output_clear(info->output);
+
+        err = parser_send_line(info, buf, len);
+        if (info->busy) {
+            break;
+        }
+
+        if (err) {
+            struct parser_msg_loc data;
+            int trace = 0;
+            err = parser_error_get(info, &data, &trace);
+            assert(!err);
+            err = parser_error(info, buf, err, trace ? &data : NULL);
+        }
+
+    } while (0);
+
+    return err;
+}
+
+static int parser_scpi_send(struct info *info, char *buf, size_t len)
+{
+    int rc = 0;
+
+    rc = parser_send(info, buf, (int)len);
+    event_send(info->event, EVENT_OUTPUT_FLUSH);
+
+    return rc;
+}
+
+/*
+ * Line processing is fairly elaborate because of the interaction of
+ * event processing, line buffering and input blocking.
+ */
+static int parser_cli_line(struct info *info)
+{
+    char *eol;
+    size_t llen;
+    int rc = 0;
+
+    assert(info->cli_line);
+    assert(info->cli_line_len > 0);
+    eol = strchr(info->cli_line, '\n');
+    if (eol) {
+        llen = (size_t)(eol - info->cli_line);
+        assert(llen < INFO_CLI_LEN);
+        if (llen) {
+            rc = parser_scpi_send(info, info->cli_line, llen);
+        }
+        info->cli_line = eol + 1;
+        info->cli_line_len -= (llen + 1);
+        if (info->cli_line_len == 0) {
+            info->cli_line = NULL;
+        } else {
+            event_send(info->event, EVENT_PROCESS_LINE);
+        }
+    } else if (info->cli_line[0] == 0) {
+        /* EOF */
+        rc = parser_scpi_send(info, info->cli_line, info->cli_line_len);
+    } else {
+        /* Do something with the leftovers */
+        assert(info->cli_line_len < INFO_CLI_LEN);
+        memmove(info->cli_buf, info->cli_line, info->cli_line_len);
+        info->cli_offset = info->cli_line_len;
+        info->cli_line = NULL;
+        info->cli_line_len = 0;
+    }
+
+    return rc;
+}
+
+static int parser_input_blocked(struct info *info)
+{
+    return parser_block_until_active || info->block_input;
+}
+
+static void parser_process_line(void *arg)
+{
+    struct info *info = arg;
+
+    if (info->cli_line) {
+        if (parser_input_blocked(info)) {
+            /* If blocked, then keep trying... */
+            event_send(info->event, EVENT_PROCESS_LINE);
+        } else {
+            parser_cli_line(info);
+        }
+    }
+}
+
+static int parser_cli_read(struct info *info)
+{
+    int rc;
+    char *cli_buf;
+    size_t cli_len;
+
+    /* Append to leftovers from the previous pass. */
+    cli_buf = info->cli_buf;
+    cli_len = sizeof(info->cli_buf);
+    cli_buf += info->cli_offset;
+    cli_len -= info->cli_offset;
+
+    memset(cli_buf, 0, cli_len);
+
+    do {
+        rc = (int)read(info->cli_in_fd, cli_buf, cli_len);
+    } while (rc < 0 && errno == EAGAIN);
+
+    if (rc < 0) {
+        if (errno != EWOULDBLOCK) {
+            perror("read() failed");
+        }
+    } else if (rc == 0) {
+        if (info->verbose) {
+            printf("Done.\r\n");
+        }
+        /* EOF */
+        assert(cli_buf[0] == 0);
+        assert(cli_buf[1] == 0);
+        info->cli_line = cli_buf;
+        info->cli_line_len = 1;
+        event_send(info->event, EVENT_PROCESS_LINE);
+    } else {
+        info->cli_line = cli_buf;
+        info->cli_line_len = (size_t)rc;
+        event_send(info->event, EVENT_PROCESS_LINE);
+        rc = 0;
+    }
+
+    return rc;
+}
+
+static int parser_cli_read_worker(void *arg)
+{
+    struct info *info = arg;
+    int err = 0;
+
+    if (!info->cli_line &&
+        !parser_input_blocked(info)) {
+        err = parser_cli_read(info);
+    }
+
+    return err;
+}
+
+static void parser_io_init(struct info *info)
+{
+    int err = 0;
+    int on = 1;
+
+    /* default in/out from console */
+    info->cli_in_fd = STDIN_FILENO;
+    info->cli_out_fd = STDOUT_FILENO;
+
+    err = ioctl(info->cli_in_fd, FIONBIO, (char *) &on);
+    assert(!err);
+
+    err = ioctl(info->cli_out_fd, FIONBIO, (char *) &on);
+    assert(!err);
 }
 
 static void parser_update_location(YYLTYPE *loc, size_t len)
@@ -563,4 +726,91 @@ int parser_eof(struct info *info, const char *s, int token)
         info->quit = 1;
     }
     return token;
+}
+
+/* Set block_until_active returning previous value. */
+int parser_block_until_set(int active)
+{
+    int rc = parser_block_until_active;
+
+    parser_block_until_active = active;
+
+    return rc;
+}
+
+int parser_block_until_get(void)
+{
+    return parser_block_until_active;
+}
+
+int parser_init(struct info *info)
+{
+    int err = -1;
+    do {
+        info->lexer = calloc(1, sizeof(*info->lexer));
+        if (!info->lexer) {
+            break;
+        }
+
+        info->parser = calloc(1, sizeof(*info->parser));
+        if (!info->parser) {
+            break;
+        }
+
+        if (yylex_init_extra(info, &info->lexer->scanner)) {
+            break;
+        }
+
+        if (info->debug) {
+            if (strchr(info->debug,'f')) {
+                yyset_debug(1, info->lexer->scanner);
+            }
+            if (strchr(info->debug,'b')) {
+                yydebug = 1;
+            }
+            if (strchr(info->debug,'y')) {
+                info->parser->trace_yyerror = 1;
+            }
+            if (strchr(info->debug,'L')) {
+                info->parser->trace_loop = 1;
+            }
+        }
+
+        parser_io_init(info);
+        err = worker_add(info->worker,
+                        info->cli_in_fd,
+                        parser_cli_read_worker,
+                        info);
+
+        if (err) {
+            break;
+        }
+
+        err = event_add(info->event,
+                        EVENT_PROCESS_LINE,
+                        parser_process_line,
+                        info);
+        assert(!err);
+
+    } while (0);
+
+    return err;
+}
+
+int parser_done(struct info *info)
+{
+    if (info->lexer) {
+        yylex_destroy(info->lexer->scanner);
+        free(info->lexer);
+    }
+
+    if (info->parser->error.data.msg) {
+        free(info->parser->error.data.msg);
+    }
+
+    if (info->parser) {
+        free(info->parser);
+    }
+
+    return 0;
 }

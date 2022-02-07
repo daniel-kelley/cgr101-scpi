@@ -26,14 +26,10 @@ struct parser_msg_loc {
 
 extern int parser_init(struct info *info);
 extern int parser_done(struct info *info);
-extern int parser_send(struct info *info, char *line, int len);
 extern int parser_num(const char *s,
                       struct scpi_type *val,
                       YYLTYPE *loc,
                       int token);
-extern int parser_error_get(struct info *info,
-                            struct parser_msg_loc *data,
-                            int *trace);
 extern int parser_ident(const char *s,
                         struct scpi_type *val,
                         YYLTYPE *loc,
@@ -68,5 +64,7 @@ extern void parser_include(struct info *info, const char *file);
 extern int parser_eof(struct info *info,
                       const char *s,
                       int token);
+extern int parser_block_until_set(int active);
+extern int parser_block_until_get(void);
 
 #endif /* PARSER_H_ */
