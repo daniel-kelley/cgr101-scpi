@@ -887,7 +887,10 @@ static void cgr101_digitizer_data_output(struct info *info, long chan_mask)
             continue;
         }
         for (j=0; j<SCOPE_NUM_SAMPLE; j++) {
-            idx = info->device->scope.addr;
+            /* scope.addr is where the capture *ended*, so the start
+             * is just past that point.
+             */
+            idx = info->device->scope.addr + 1;
             idx += j;
             if (idx >= SCOPE_NUM_SAMPLE) {
                 /* wrapped */
@@ -1519,6 +1522,7 @@ static void cgr101_digitizer_set_range(struct info *info,int chan)
                      info->device->scope.channel[chan].input_high <= 2.5);
     assert(chan >= 0 && chan < SCOPE_NUM_CHAN);
     assert(low_range >= 0 && low_range < SCOPE_NUM_RANGE);
+    info->device->scope.channel[chan].input_low_range = low_range;
     err = cgr101_device_printf(info, "S P %c\n",
                                cgr101_range_cmd[chan][low_range]);
     assert(!err);
@@ -2205,11 +2209,12 @@ void cgr101_trigger_level(struct info *info, double value)
          info->device->scope.internal_trigger_source) &&
          info->device->scope.channel[1].input_low_range) ||
         ((!info->device->scope.internal_trigger_source) &&
-         info->device->scope.channel[1].input_low_range)) {
+         info->device->scope.channel[0].input_low_range)) {
         gain = 10.0;
     }
     trigger_value = (int)floor(511.0 - gain * (value/K2));
     assert(trigger_value >= 0);
+    assert(trigger_value < 1024);
     err = cgr101_device_printf(info,
                                "S T %d %d\n",
                                trigger_value >> 8,
@@ -2227,9 +2232,9 @@ void cgr101_trigger_slope(struct info *info, const char *value)
 
     assert(value);
     if (!strcasecmp(value, "POS")) {
-        info->device->scope.trigger_polarity = 1;
-    } else if (!strcasecmp(value, "NEG")) {
         info->device->scope.trigger_polarity = 0;
+    } else if (!strcasecmp(value, "NEG")) {
+        info->device->scope.trigger_polarity = 1;
     } else {
         assert(0);
     }
