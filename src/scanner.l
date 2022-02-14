@@ -166,6 +166,7 @@ STATe\?                 { return parser_ident(yytext, yylval, yylloc, STATEQ); }
 STAT                    { return parser_ident(yytext, yylval, yylloc, STAT); }
 STAT\?                  { return parser_ident(yytext, yylval, yylloc, STATQ); }
 STATUS                  { return parser_ident(yytext, yylval, yylloc, STATUS); }
+(STOR|STORe)            { return parser_ident(yytext, yylval, yylloc, STOR); }
 (SWE|SWEep)             { return parser_ident(yytext, yylval, yylloc, SWE); }
 (SYST|SYSTem)           { return parser_ident(yytext, yylval, yylloc, SYST); }
 (TCP|TCPip)             { return parser_ident(yytext, yylval, yylloc, TCP); }

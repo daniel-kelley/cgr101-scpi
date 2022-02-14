@@ -130,6 +130,7 @@
 %token STATE
 %token STATEQ
 %token STATUS
+%token STOR
 %token STBQ
 %token STRING
 %token SQU
@@ -849,6 +850,15 @@ dev-cmd
 
     | syst_int COLON SETUQ
     { scpi_system_internal_setupq(info); }
+
+    | syst_int COLON OFFS COLON STOR
+    { scpi_system_internal_offset_store(info); }
+
+    | syst_int COLON OFFS nrf COMMA nrf COMMA nrf COMMA nrf
+    { scpi_system_internal_offset(info, &$4, &$6, &$8, &$10); }
+
+    | syst_int COLON OFFSQ
+    { scpi_system_internal_offsetq(info); }
 
     | SLE numeric_value
     { scpi_system_internal_sleep(info, &$2); }
