@@ -2186,6 +2186,38 @@ void cgr101_digitizer_immediate(struct info *info)
     cgr101_digitizer_start(info, 1);
 }
 
+void cgr101_digitizer_input_offset(struct info *info,
+                                   double f1,
+                                   double f2,
+                                   double f3,
+                                   double f4)
+{
+    info->device->scope.channel[0].offset_low  = f1;
+    info->device->scope.channel[0].offset_high = f2;
+    info->device->scope.channel[1].offset_low  = f3;
+    info->device->scope.channel[1].offset_high = f4;
+}
+
+void cgr101_digitizer_input_offset_store(struct info *info)
+{
+    int v1 = (int)floor(info->device->scope.channel[0].offset_low) + 128;
+    int v2 = (int)floor(info->device->scope.channel[0].offset_high) + 128;
+    int v3 = (int)floor(info->device->scope.channel[1].offset_low) + 128;
+    int v4 = (int)floor(info->device->scope.channel[1].offset_high) + 128;
+    int err;
+
+    err = cgr101_device_printf(info, "S F %d %d %d %d\n", v1, v2, v3, v4);
+    assert(!err);
+}
+
+void cgr101_digitizer_input_offsetq(struct info *info)
+{
+    scpi_output_fp(info->output, info->device->scope.channel[0].offset_low);
+    scpi_output_fp(info->output, info->device->scope.channel[0].offset_high);
+    scpi_output_fp(info->output, info->device->scope.channel[1].offset_low);
+    scpi_output_fp(info->output, info->device->scope.channel[1].offset_high);
+}
+
 void cgr101_trigger_coupling(struct info *info, const char *value)
 {
     /* Ignore for now. */

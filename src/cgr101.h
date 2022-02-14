@@ -81,6 +81,14 @@ extern void cgr101_digitizer_upq(struct info *info, long chan_mask);
 extern void cgr101_digitizer_statq(struct info *info);
 extern void cgr101_digitizer_reset(struct info *info);
 extern void cgr101_digitizer_immediate(struct info *info);
+extern void cgr101_digitizer_input_offset(struct info *info,
+                                          double f1,
+                                          double f2,
+                                          double f3,
+                                          double f4);
+extern void cgr101_digitizer_input_offset_store(struct info *info);
+extern void cgr101_digitizer_input_offsetq(struct info *info);
+
 extern void cgr101_trigger_coupling(struct info *info,const char *value);
 extern void cgr101_trigger_level(struct info *info, double value);
 extern void cgr101_trigger_levelq(struct info *info);

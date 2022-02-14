@@ -189,4 +189,13 @@ extern void scpi_system_internal_sleep(struct info *info, struct scpi_type *v);
 extern void scpi_system_internal_echo(struct info *info, struct scpi_type *v);
 extern void scpi_system_internal_include(struct info *info, struct scpi_type *v);
 
+extern void scpi_system_internal_offset(struct info *info,
+                                        struct scpi_type *v1,
+                                        struct scpi_type *v2,
+                                        struct scpi_type *v3,
+                                        struct scpi_type *v4);
+
+extern void scpi_system_internal_offset_store(struct info *info);
+extern void scpi_system_internal_offsetq(struct info *info);
+
 #endif /* SCPI_H_ */

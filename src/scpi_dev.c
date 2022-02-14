@@ -666,3 +666,41 @@ void scpi_dev_read_digital_eventq(struct info *info)
         scpi_dev_fetch_digital_eventq(info);
     } while (0);
 }
+
+void scpi_system_internal_offset(struct info *info,
+                                 struct scpi_type *v1,
+                                 struct scpi_type *v2,
+                                 struct scpi_type *v3,
+                                 struct scpi_type *v4)
+{
+    double f1;
+    double f2;
+    double f3;
+    double f4;
+
+    do {
+        if (scpi_input_fp(info, v1, &f1)) {
+            break;
+        }
+        if (scpi_input_fp(info, v2, &f2)) {
+            break;
+        }
+        if (scpi_input_fp(info, v3, &f3)) {
+            break;
+        }
+        if (scpi_input_fp(info, v4, &f4)) {
+            break;
+        }
+        cgr101_digitizer_input_offset(info, f1, f2, f3, f4);
+    } while (0);
+}
+
+void scpi_system_internal_offset_store(struct info *info)
+{
+    cgr101_digitizer_input_offset_store(info);
+}
+
+void scpi_system_internal_offsetq(struct info *info)
+{
+    cgr101_digitizer_input_offsetq(info);
+}
