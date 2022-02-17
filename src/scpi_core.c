@@ -207,6 +207,10 @@ void scpi_status_operation_conditionq(struct info *info)
         cond |= SCPI_OPER_DE;
     }
 
+    if (info->offset_status) {
+        cond |= SCPI_OPER_OF;
+    }
+
     info->scpi->oper.cond = cond;
 
     scpi_output_int(info->output, info->scpi->oper.cond);

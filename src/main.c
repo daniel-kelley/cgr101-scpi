@@ -82,6 +82,7 @@ static void usage(const char *prog)
     fprintf(stderr,"  -d        USB Device (default 0)\n");
     fprintf(stderr,"  -p        server port (default %d)\n", SCPI_PORT);
     fprintf(stderr,"  -v        Verbose mode\n");
+    fprintf(stderr,"  -W        Enable flash writes\n");
     fprintf(stderr,"  -c        Configuration file\n");
     fprintf(stderr,"  -D[flag]  Debug flags\n");
 }
@@ -94,7 +95,7 @@ int main(int argc, char *argv[])
     int rc = 1;
     int c;
 
-    while ((c = getopt(argc, argv, "b:c:d:p:r:D:vxh")) != EOF) {
+    while ((c = getopt(argc, argv, "b:c:d:p:r:D:vxhW")) != EOF) {
         switch (c) {
         case 'b':
             info_.bus = (int)strtol(optarg, NULL, 0);
@@ -107,6 +108,9 @@ int main(int argc, char *argv[])
             break;
         case 'r':
             info_.conf_rsp = optarg;
+            break;
+        case 'W':
+            info_.enable_flash_writes = 1;
             break;
         case 'c':
             /* FIXME */

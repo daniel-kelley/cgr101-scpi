@@ -91,6 +91,8 @@ scpi.tab.c: scpi.y
 scanner.c: scanner.l
 	flex $<
 
+cea: cea.c
+
 check: compile_commands.json
 	-$(CODECHECKER) analyze $< $(CODECHECKER_ARGS)
 	$(CODECHECKER) parse $< $(CODECHECKER_OUT)
@@ -102,6 +104,7 @@ clean:
 	-rm -rf $(OBJ) $(DEP) $(NAME) \
 		scanner.c scanner.h \
 		scpi.tab.c scpi.tab.h scpi.output \
-		compile_commands.json $(CODECHECKER_OUT)
+		compile_commands.json $(CODECHECKER_OUT) \
+		cea
 
 -include $(DEP)

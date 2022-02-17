@@ -437,6 +437,41 @@ module CGR101Core
     assert_equal(0, self.class.hdl.err_length)
   end
 
+  def test_core_27
+    # Use STAT:OPER:COND? bit 9 (OFFSET status) and poll for completion
+    status = 0
+    ostat = (1<<9)
+    20.times do
+      self.class.hdl.send("STAT:OPER:COND?")
+      out = self.class.hdl.recv
+      status = Integer(out)
+      if (status & ostat) == 0
+        break
+      end
+      sleep(0.1)
+    end
+    assert_equal(status & ostat, 0)
+
+    sleep 1
+    self.class.hdl.send("SYST:INT:OFFS?")
+    s1 = self.class.hdl.recv
+    v1 = s1.split(',')
+    v1.map! { |v| Float(v) }
+    assert_equal(4,v1.length)
+    assert_not_equal(0.0, v1[0])
+    assert_not_equal(0.0, v1[1])
+    assert_not_equal(0.0, v1[2])
+    assert_not_equal(0.0, v1[3])
+    # set them
+    self.class.hdl.send("SYST:INT:OFFS #{v1[0]},#{v1[1]},#{v1[2]},#{v1[3]}")
+    # get them again
+    self.class.hdl.send("SYST:INT:OFFS?")
+    s2 = self.class.hdl.recv
+    assert_equal(s1,s2)
+    assert_equal(0, self.class.hdl.out_length)
+    assert_equal(0, self.class.hdl.err_length)
+  end
+
   def no_test_core_outline
     self.class.hdl.send("SYSTem:CAPability?")
     sleep(5)

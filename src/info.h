@@ -41,6 +41,7 @@ struct info {
     int busy;
     int overlapped;
     int block_input;
+    int enable_flash_writes;
     const char *debug;
     size_t cli_offset;
     char cli_buf[INFO_CLI_LEN];
@@ -59,6 +60,7 @@ struct info {
     struct cgr101 *device;
     int sweep_status;
     int digital_event_status;
+    int offset_status;
 };
 
 #endif /* INFO_H_ */
