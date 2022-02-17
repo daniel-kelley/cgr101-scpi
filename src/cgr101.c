@@ -30,6 +30,12 @@
 #define FPEPSILON 0.0001
 #define FPWITHIN(a,b,e) (((a)>=((b)-(e))) && ((a)<=((b)+(e))))
 
+/* Digitizer step and format offsets */
+#define STEP_HIGH 0.0521
+#define STEP_LOW  0.00592
+#define MP8  128      /* 8 bit Input Offset midpoint */
+#define MP10 511      /* 10 bit sample midpoint */
+
 static char *CMD[] = {
     "sp",
     "-b230400",
@@ -227,6 +233,8 @@ struct cgr101 {
     char error_msg[E_MAX];
     /* Digital Data Output */
     int digital_write_data;
+    /* Enable flash writes */
+    int enable_flash_writes;
     /* Waveform */
     struct {
         enum cgr101_waveform_shape shape;
@@ -264,7 +272,7 @@ struct cgr101 {
             double offset_low;
             double offset_high;
             int enable;
-            double data[SCOPE_NUM_SAMPLE];
+            int data[SCOPE_NUM_SAMPLE];
         } channel[SCOPE_NUM_CHAN];
     } scope;
     struct {
@@ -574,32 +582,69 @@ static void cgr101_digital_read_output(void *arg)
 
 /*
  * Offset Handling
+ *
+ * Offsets are stored as 8 bit unsigned values with a midpoint at 128.
+ * They are converted here to voltages so they can be directly applied
+ * to the scope data conversion. This also facilitates external
+ * applications adjusting the offsets. This approach is different that
+ * the Syscomp scope.tcl application but is computationaly the same
+ * (see cea.c for the error analysis).
  */
+
+
+/* Convert an ADC value from an unsigned biased (at midpoint)
+ * format to a signed integer roughly += midpoint/2. Note that the
+ * forward and reverse transformation is the same in this case.
+ */
+static int cgr101_adc2c(int midpoint, int value)
+{
+    int result = (midpoint - value);
+
+    return result;
+}
+
+/* raw data to value */
+static double cgr101_digitizer_d2v(int data,
+                                   int midpoint,
+                                   double step,
+                                   double offset)
+{
+    return ((double)cgr101_adc2c(midpoint, data) * step) - offset;
+}
+
+/* value to raw data */
+static int cgr101_digitizer_v2d(double value,
+                                int midpoint,
+                                double step,
+                                double offset)
+{
+    return cgr101_adc2c(midpoint, (int)round((value + offset) / step));
+}
 
 static int cgr101_rcv_scope_offset(struct info *info, char c)
 {
     int err = 0;
-    double value = (double)(unsigned char)c;
-
-    value = 128 - value;
-    /* Offsets are expected to be relatively small. */
-    assert(value >= -10.0);
-    assert(value < 10.0);
+    int data = (unsigned char)c;
+    double value;
 
     switch (info->device->scope.offset_state) {
     case STATE_SCOPE_OFFSET_EXPECT_A_HIGH:
+        value = cgr101_digitizer_d2v(0.0, MP8, STEP_HIGH, data);
         info->device->scope.channel[0].offset_high = value;
         info->device->scope.offset_state = STATE_SCOPE_OFFSET_EXPECT_A_LOW;
         break;
     case STATE_SCOPE_OFFSET_EXPECT_A_LOW:
+        value = cgr101_digitizer_d2v(0.0, MP8, STEP_LOW, data);
         info->device->scope.channel[0].offset_low = value;
         info->device->scope.offset_state = STATE_SCOPE_OFFSET_EXPECT_B_HIGH;
         break;
     case STATE_SCOPE_OFFSET_EXPECT_B_HIGH:
+        value = cgr101_digitizer_d2v(0.0, MP8, STEP_HIGH, data);
         info->device->scope.channel[1].offset_high = value;
         info->device->scope.offset_state = STATE_SCOPE_OFFSET_EXPECT_B_LOW;
         break;
     case STATE_SCOPE_OFFSET_EXPECT_B_LOW:
+        value = cgr101_digitizer_d2v(0.0, MP8, STEP_LOW, data);
         info->device->scope.channel[1].offset_low = value;
         info->device->scope.offset_state = STATE_SCOPE_OFFSET_COMPLETE;
         /* Done receiving. */
@@ -698,35 +743,74 @@ static void cgr101_scope_offset_start(void *arg)
  * Oscilloscope Data Handling
  */
 
-#define STEP_HIGH 0.0521
-#define STEP_LOW  0.00592
+static void cgr101_digitizer_step_offset(struct info *info,
+                                         int chan,
+                                         int low_range,
+                                         double *step,
+                                         double *offset)
+{
+    assert(chan >= 0);
+    assert(chan < SCOPE_NUM_CHAN);
+
+    if (low_range) {
+        *offset = info->device->scope.channel[chan].offset_low;
+        *step = STEP_LOW;
+    } else {
+        *offset = info->device->scope.channel[chan].offset_high;
+        *step = STEP_HIGH;
+    }
+}
+
+/* Convert an internal integral representation to a display voltage. */
+static double cgr101_digitizer_data_to_voltage(struct info *info,
+                                               int chan,
+                                               int low_range,
+                                               int midpoint,
+                                               int data)
+{
+    double offset;
+    double step;
+    double value;
+
+    cgr101_digitizer_step_offset(info, chan, low_range, &step, &offset);
+
+    value = cgr101_digitizer_d2v(data, midpoint, step, offset);
+
+    return value;
+}
+
+/* Convert a display voltage value to internal integral representation. */
+static int cgr101_digitizer_voltage_to_data(struct info *info,
+                                            int chan,
+                                            int low_range,
+                                            int midpoint,
+                                            double value)
+{
+    double offset;
+    double step;
+    int data;
+
+    cgr101_digitizer_step_offset(info, chan, low_range, &step, &offset);
+    data = cgr101_digitizer_v2d(value, midpoint, step, offset);
+
+    return data;
+}
+
 
 static double cgr101_digitizer_value(struct info *info,
                                      int chan,
                                      unsigned int idx)
 {
-    double data;
-    double offset;
-    double gain;
+    int data;
     double value;
+    int range;
 
-    assert(chan >= 0);
-    assert(chan < SCOPE_NUM_CHAN);
     assert(idx < SCOPE_NUM_SAMPLE);
 
+    range = info->device->scope.channel[chan].input_low_range;
     data = info->device->scope.channel[chan].data[idx];
 
-
-    if (info->device->scope.channel[chan].input_low_range) {
-        offset = info->device->scope.channel[chan].offset_low;
-        gain = STEP_LOW;
-    } else {
-        offset = info->device->scope.channel[chan].offset_high;
-        gain = STEP_HIGH;
-    }
-
-    data += offset;
-    value = (511.0 - data) * gain;
+    value = cgr101_digitizer_data_to_voltage(info, chan, range, MP10, data);
 
     return value;
 }
@@ -920,10 +1004,10 @@ static void cgr101_rcv_scope_data_chan(struct info *info,
     assert((size_t)idx < COUNT_OF(info->device->scope.channel[chan].data));
     if (byte) {
         info->device->scope.channel[chan].data[idx] =
-            (double)((unsigned char)c<<8);
+            (int)((unsigned char)c<<8);
     } else {
         info->device->scope.channel[chan].data[idx] +=
-            (double)(unsigned char)c;
+            (int)(unsigned char)c;
     }
 }
 
@@ -2200,14 +2284,37 @@ void cgr101_digitizer_input_offset(struct info *info,
 
 void cgr101_digitizer_input_offset_store(struct info *info)
 {
-    int v1 = (int)floor(info->device->scope.channel[0].offset_low) + 128;
-    int v2 = (int)floor(info->device->scope.channel[0].offset_high) + 128;
-    int v3 = (int)floor(info->device->scope.channel[1].offset_low) + 128;
-    int v4 = (int)floor(info->device->scope.channel[1].offset_high) + 128;
+    int v1;
+    int v2;
+    int v3;
+    int v4;
     int err;
 
-    err = cgr101_device_printf(info, "S F %d %d %d %d\n", v1, v2, v3, v4);
-    assert(!err);
+    v1 = cgr101_digitizer_v2d(0.0,
+                              MP8,
+                              STEP_HIGH,
+                              info->device->scope.channel[0].offset_high);
+    v2 = cgr101_digitizer_v2d(0.0,
+                              MP8,
+                              STEP_LOW,
+                              info->device->scope.channel[0].offset_low);
+    v3 = cgr101_digitizer_v2d(0.0,
+                              MP8,
+                              STEP_HIGH,
+                              info->device->scope.channel[1].offset_high);
+    v4 = cgr101_digitizer_v2d(0.0,
+                              MP8,
+                              STEP_LOW,
+                              info->device->scope.channel[1].offset_low);
+
+    if (info->device->enable_flash_writes) {
+        err = cgr101_device_printf(info, "S F %d %d %d %d\n", v1, v2, v3, v4);
+        assert(!err);
+    }
+
+    if (info->verbose) {
+        fprintf(stderr, "Flash Write: %d %d %d %d\n", v1, v2, v3, v4);
+    }
 }
 
 void cgr101_digitizer_input_offsetq(struct info *info)
@@ -2225,26 +2332,26 @@ void cgr101_trigger_coupling(struct info *info, const char *value)
     (void)value;
 }
 
-#define K2 0.052421484375
 void cgr101_trigger_level(struct info *info, double value)
 {
     int trigger_value;
-    double gain;
+    int chan;
+    int range;
     int err;
 
     info->device->scope.trigger_level = value;
-    gain = 1.0;
-    /* Gain depends on preamp setting for the trigger source
-     * channel. If external, use B - that's what the CGR-101 TCL code
-     * does. */
-    if (((info->device->scope.trigger_external ||
-         info->device->scope.internal_trigger_source) &&
-         info->device->scope.channel[1].input_low_range) ||
-        ((!info->device->scope.internal_trigger_source) &&
-         info->device->scope.channel[0].input_low_range)) {
-        gain = 10.0;
+    if (info->device->scope.trigger_external) {
+        chan = 1;
+    } else {
+        chan = info->device->scope.internal_trigger_source;
     }
-    trigger_value = (int)floor(511.0 - gain * (value/K2));
+
+    range = info->device->scope.channel[chan].input_low_range;
+    trigger_value = cgr101_digitizer_voltage_to_data(info,
+                                                     chan,
+                                                     range,
+                                                     MP10,
+                                                     value);
     assert(trigger_value >= 0);
     assert(trigger_value < 1024);
     err = cgr101_device_printf(info,
@@ -2332,8 +2439,6 @@ void cgr101_abort(struct info *info)
     if (info->digital_event_status) {
         cgr101_digital_event_done(info);
     }
-
-    (void)info;
 }
 
 void cgr101_configure_digital_event(struct info *info,
