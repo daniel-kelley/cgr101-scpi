@@ -41,6 +41,7 @@ struct info {
     int busy;
     int overlapped;
     int block_input;
+    int enable_flash_writes;
     const char *debug;
     size_t cli_offset;
     char cli_buf[INFO_CLI_LEN];

@@ -233,8 +233,6 @@ struct cgr101 {
     char error_msg[E_MAX];
     /* Digital Data Output */
     int digital_write_data;
-    /* Enable flash writes */
-    int enable_flash_writes;
     /* Waveform */
     struct {
         enum cgr101_waveform_shape shape;
@@ -2307,7 +2305,7 @@ void cgr101_digitizer_input_offset_store(struct info *info)
                               STEP_LOW,
                               0.0);
 
-    if (info->device->enable_flash_writes) {
+    if (info->enable_flash_writes) {
         err = cgr101_device_printf(info, "S F %d %d %d %d\n", v1, v2, v3, v4);
         assert(!err);
     }
