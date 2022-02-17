@@ -1,0 +1,138 @@
+#!/usr/bin/env ruby
+#
+# Trigger Characterization
+#
+# Signal Generator Output needs to be connected to Input A
+require 'pp'
+
+io = IO.popen("src/cgr101-scpi", "r+")
+
+if ARGV.length != 2
+  puts "usage: sine-snap POS|NEG <level>"
+  exit 1
+end
+
+slope = ARGV[0]
+level = Float(ARGV[1])
+
+check = !ENV['CHECK'].nil?
+init = "INIT"
+if check
+  puts "Checking setup..."
+  init += ":IMM"
+end
+
+io.puts <<EOF
+ABORT
+SOUR:FREQ 2000.0
+SOUR:FUNC SIN
+SOUR:FUNC:LEV 0.5
+SENS:VOLT:PTP 5.0 (@1)
+TRIG:SOUR INT
+TRIG:SLOP #{slope}
+TRIG:LEV #{level}
+SENS:SWE:TIME 0.001
+SENS:FUNC:ON (@1)
+#{init}
+EOF
+# SENS:SWE:OFFS:POIN 500
+
+io.puts "SYST:ERR:COUNt?"
+num_err = Integer(io.gets)
+if num_err != 0
+  io.puts "SYST:ERR?"
+  val = io.gets
+  raise "Error: #{val}"
+end
+
+if !check
+  io.puts "STAT:OPER:COND?"
+  status = Integer(io.gets)
+  raise "Not running" if status == 0
+end
+puts "starting: status=#{status}"
+
+count = 0
+10.times do |n|
+  count = n
+  io.puts "STAT:OPER:COND?"
+  status = Integer(io.gets)
+  break if status == 0
+  puts "waiting #{n} status=#{status}"
+  sleep 1
+end
+puts "done #{count}: status=#{status}"
+
+raise "Timeout" if status != 0
+
+io.puts "SENS:DATA? (@1)"
+line = io.gets
+line.chomp!
+raise "oops: #{line.inspect}" if line !~ /^[+-]/
+
+v = line.split(',')
+raise 'oops' if v.length != 1024
+idx = 0
+
+v.map! { |vv| Float(vv) }
+
+File.open("LINE", "w") do |f|
+  f.puts line
+end
+
+File.open("A", "w") do |f|
+  v.each { |a| f.puts a }
+end
+
+io.puts "SENS:SWE:POIN?"
+poin = Integer(io.gets)
+
+io.puts "SENS:SWE:OREF:POIN?"
+oref = Integer(io.gets)
+
+io.puts "SENS:SWE:OFFS:POIN?"
+offs = Integer(io.gets)
+
+# S C post_trigger = poin - oref - offs
+pt = poin - oref - offs
+
+tp = oref + offs
+puts "poin:#{poin}"
+puts "oref:#{oref}"
+puts "offs:#{offs}"
+puts "tp:#{tp}"
+puts "pt:#{pt}"
+#puts "val[#{tp}]=#{v[tp-1..tp+1].inspect}"
+
+v.length.times do |n|
+  next if n == 0
+  prev = v[n-1]
+  cur = v[n]
+  trig = false
+  if slope == "POS"
+    if prev <= level && cur >= level
+      trig = true
+    end
+  else
+    if prev >= level && cur <= level
+      trig = true
+    end
+  end
+  if trig
+    puts "+Trigger #{slope} #{level} @ #{n}: prev:#{prev} cur:#{cur} dtp#{n-tp}"
+    # else
+    # puts "-Trigger #{slope} #{level} @ #{n}: #{prev} #{cur}"
+  end
+end
+
+#
+# Search for apparent trigger point
+#
+
+
+
+#puts "val[#{qp}]=#{v[qp-1..qp+1].inspect}"
+
+#system <<EOF
+#LC_ALL=en_US.utf8 gnuplot -e "plot 'A' with lines;pause -1"
+#EOF

@@ -1,0 +1,88 @@
+#!/usr/bin/env ruby
+#
+# Device Zero characterization
+#
+
+require 'pp'
+
+io = IO.popen("src/cgr101-scpi", "r+")
+
+if ARGV.length != 1
+  puts "usage: auto-zero cycles"
+  exit 1
+end
+
+cycles = Integer(ARGV[0])
+
+def capture(io, range=2.0)
+  io.puts <<EOF
+ABORT
+SYST:INT:OFFS 0.0, 0.0, 0.0, 0.0
+SENS:VOLT:PTP #{range} (@1,2)
+SENS:FUNC:ON (@1,2)
+INIT:IMM
+EOF
+
+  io.puts "SYST:ERR:COUNt?"
+  num_err = Integer(io.gets)
+  if num_err != 0
+    io.puts "SYST:ERR?"
+    val = io.gets
+    raise "Error: #{val}"
+  end
+
+  io.puts "STAT:OPER:COND?"
+  status = Integer(io.gets)
+  raise "Not running" if status == 0
+  # puts "starting: status=#{status}"
+
+  count = 0
+  10.times do |n|
+    count = n
+    io.puts "STAT:OPER:COND?"
+    status = Integer(io.gets)
+    break if status == 0
+    # puts "waiting #{n} status=#{status}"
+    sleep 1
+  end
+  # puts "done #{count}: status=#{status}"
+
+  raise "Timeout" if status != 0
+
+  io.puts "SENS:DATA? (@1,2)"
+  line = io.gets
+  line.chomp!
+  raise "oops: #{line.inspect}" if line !~ /^[+-]/
+
+  v = line.split(',')
+  raise 'oops' if v.length != 2048
+  avg_a = 0.0
+  avg_b = 0.0
+  v.slice(2) do |va,vb|
+    avg_a += Float(va)
+    avg_b += Float(vb)
+  end
+
+  [avg_a/1024,avg_b/1024]
+end
+
+count = 0
+cycles.times do
+  [2.0, 20.0].each do |range|
+    avg_a,avg_b = capture(io, range)
+    range_str = range < 2.5 ? "low" : "high"
+    if avg_a != 0.0
+      puts "A #{range_str}: #{avg_a}"
+      count += 1
+    end
+    if avg_b != 0.0
+      puts "B #{range_str}: #{avg_b}"
+      count += 1
+    end
+  end
+end
+
+if count == 0
+  puts "Device is zeroed."
+end
+
