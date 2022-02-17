@@ -677,22 +677,27 @@ void scpi_system_internal_offset(struct info *info,
     double f2;
     double f3;
     double f4;
+    int ok = 0;
 
-    do {
-        if (scpi_input_fp(info, v1, &f1)) {
-            break;
-        }
-        if (scpi_input_fp(info, v2, &f2)) {
-            break;
-        }
-        if (scpi_input_fp(info, v3, &f3)) {
-            break;
-        }
-        if (scpi_input_fp(info, v4, &f4)) {
-            break;
-        }
+    if (!scpi_input_fp(info, v1, &f1)) {
+        ok += 1;
+    }
+
+    if (!scpi_input_fp(info, v2, &f2)) {
+        ok += 1;
+    }
+
+    if (!scpi_input_fp(info, v3, &f3)) {
+        ok += 1;
+    }
+
+    if (!scpi_input_fp(info, v4, &f4)) {
+        ok += 1;
+    }
+
+    if (ok == 4) {
         cgr101_digitizer_input_offset(info, f1, f2, f3, f4);
-    } while (0);
+    }
 }
 
 void scpi_system_internal_offset_store(struct info *info)
