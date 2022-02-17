@@ -60,6 +60,7 @@ struct info {
     struct cgr101 *device;
     int sweep_status;
     int digital_event_status;
+    int offset_status;
 };
 
 #endif /* INFO_H_ */

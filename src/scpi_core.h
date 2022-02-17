@@ -19,8 +19,11 @@
 #define SCPI_SBR_SESR (1u<<5) /* SBR  bit 5 SESR Status */
 #define SCPI_SBR_MSS  (1u<<6) /* SBR  bit 6 Master Summary Status */
 #define SCPI_SBR_OPER (1u<<7) /* SBR  bit 7 SCPI OPERation status */
+
 #define SCPI_OPER_SWE (1u<<3) /* OPER bit 3 SCPI OPERation SWEEP */
+/* Bits 8-12 "available to designer" */
 #define SCPI_OPER_DE  (1u<<8) /* OPER bit 8 SCPI OPERation Digital Event */
+#define SCPI_OPER_OF  (1u<<9) /* OPER bit 9 SCPI OPERation Obtaining Offsets */
 
 struct scpi_reg {
     uint16_t            cond;   /* Condition Register */

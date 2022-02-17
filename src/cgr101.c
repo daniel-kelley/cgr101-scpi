@@ -645,6 +645,7 @@ static int cgr101_rcv_scope_offset(struct info *info, char c)
         value = cgr101_digitizer_d2v(data, MP8, STEP_LOW, 0.0);
         info->device->scope.channel[1].offset_low = value;
         info->device->scope.offset_state = STATE_SCOPE_OFFSET_COMPLETE;
+        info->offset_status = 0;
         /* Done receiving. */
         cgr101_rcv_idle(info);
         break;
@@ -1685,6 +1686,7 @@ static void cgr101_device_init(struct info *info)
     if (info->device->scope.offset_state != STATE_SCOPE_OFFSET_EXPECT_A_HIGH) {
         event_send(info->event, EVENT_SCOPE_OFFSET_START);
     }
+    info->offset_status = 1; /* Cleared when all offsets received. */
 }
 
 /*
