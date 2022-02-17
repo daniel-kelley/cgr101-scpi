@@ -629,22 +629,22 @@ static int cgr101_rcv_scope_offset(struct info *info, char c)
 
     switch (info->device->scope.offset_state) {
     case STATE_SCOPE_OFFSET_EXPECT_A_HIGH:
-        value = cgr101_digitizer_d2v(0.0, MP8, STEP_HIGH, data);
+        value = cgr101_digitizer_d2v(data, MP8, STEP_HIGH, 0.0);
         info->device->scope.channel[0].offset_high = value;
         info->device->scope.offset_state = STATE_SCOPE_OFFSET_EXPECT_A_LOW;
         break;
     case STATE_SCOPE_OFFSET_EXPECT_A_LOW:
-        value = cgr101_digitizer_d2v(0.0, MP8, STEP_LOW, data);
+        value = cgr101_digitizer_d2v(data, MP8, STEP_LOW, 0.0);
         info->device->scope.channel[0].offset_low = value;
         info->device->scope.offset_state = STATE_SCOPE_OFFSET_EXPECT_B_HIGH;
         break;
     case STATE_SCOPE_OFFSET_EXPECT_B_HIGH:
-        value = cgr101_digitizer_d2v(0.0, MP8, STEP_HIGH, data);
+        value = cgr101_digitizer_d2v(data, MP8, STEP_HIGH, 0.0);
         info->device->scope.channel[1].offset_high = value;
         info->device->scope.offset_state = STATE_SCOPE_OFFSET_EXPECT_B_LOW;
         break;
     case STATE_SCOPE_OFFSET_EXPECT_B_LOW:
-        value = cgr101_digitizer_d2v(0.0, MP8, STEP_LOW, data);
+        value = cgr101_digitizer_d2v(data, MP8, STEP_LOW, 0.0);
         info->device->scope.channel[1].offset_low = value;
         info->device->scope.offset_state = STATE_SCOPE_OFFSET_COMPLETE;
         /* Done receiving. */
@@ -2290,22 +2290,22 @@ void cgr101_digitizer_input_offset_store(struct info *info)
     int v4;
     int err;
 
-    v1 = cgr101_digitizer_v2d(0.0,
+    v1 = cgr101_digitizer_v2d(info->device->scope.channel[0].offset_high,
                               MP8,
                               STEP_HIGH,
-                              info->device->scope.channel[0].offset_high);
-    v2 = cgr101_digitizer_v2d(0.0,
+                              0.0);
+    v2 = cgr101_digitizer_v2d(info->device->scope.channel[0].offset_low,
                               MP8,
                               STEP_LOW,
-                              info->device->scope.channel[0].offset_low);
-    v3 = cgr101_digitizer_v2d(0.0,
+                              0.0);
+    v3 = cgr101_digitizer_v2d(info->device->scope.channel[1].offset_high,
                               MP8,
                               STEP_HIGH,
-                              info->device->scope.channel[1].offset_high);
-    v4 = cgr101_digitizer_v2d(0.0,
+                              0.0);
+    v4 = cgr101_digitizer_v2d(info->device->scope.channel[1].offset_low,
                               MP8,
                               STEP_LOW,
-                              info->device->scope.channel[1].offset_low);
+                              0.0);
 
     if (info->device->enable_flash_writes) {
         err = cgr101_device_printf(info, "S F %d %d %d %d\n", v1, v2, v3, v4);
